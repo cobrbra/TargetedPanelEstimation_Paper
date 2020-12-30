@@ -148,7 +148,7 @@ To demonstrate our proposal we make use of the non-small cell lung cancer datase
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=6in]{fig1.png}
+\includegraphics[width=6in]{figures/fig1.png}
 \vspace*{-5mm}
 \caption{Demongraphic data for the clinical cohort in \citet{campbell_distinct_2016}. \textbf{A}: Violin plots of age for patients, stratefied by sex. \textbf{B}: Stacked bar chart of patients' smoking histories. Shade corresponds to cancer stage diagnosis at time of measurement. \label{fig:1}}
 \vspace*{-2mm}
@@ -156,7 +156,7 @@ To demonstrate our proposal we make use of the non-small cell lung cancer datase
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=6in]{fig2.png}
+\includegraphics[width=6in]{figures/fig2.png}
 \vspace*{-5mm}
 \caption{ Dataset-wide distribution of mutations. \textbf{A}: Violin plot of the distribution of \acrshort{tmb} and \acrshort{tib} across training samples. \textbf{B}: The relative frequency of different mutation types. \label{fig:2}}
 \vspace*{-2mm}
@@ -296,7 +296,7 @@ The first step in our analysis is to fit the model proposed in Section \ref{sec:
 \begin{figure}[htbp]
 \centering
 \vspace*{-5mm}
-\includegraphics[width=4in]{GenModelCV.png}
+\includegraphics[width=4in]{fig3.png}
 \vspace*{0mm}
 \caption{The average deviance (with one standard deviation) across the 10 folds in our cross-validation procedure plotted against $\log(\kappa_1)$. The minimum deviance is highlighted red.\label{fig:genmodelstats}}
 \vspace*{-2mm}
@@ -304,14 +304,14 @@ The first step in our analysis is to fit the model proposed in Section \ref{sec:
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=6in]{manhat_plot.png}
+\includegraphics[width=6in]{fig4.png}
 \vspace*{0mm}
 \caption{Manhattan plot of fitted parameters $\hat{\lambda}_g$ and their associated genes' chromosomal locations. The genes with the five largest positive parameter estimates are labelled. \label{fig:manhat_plot}}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=6in]{manhat_plot_indel.png}
+\includegraphics[width=6in]{fig5.png}
 \caption{Manhattan plot of fitted parameters $\hat{\eta}_{g,\text{indel}}$ and their associated genes' chromosomal locations. The five largest positive and negative genes are labelled.  \label{fig:manhat_plot_indel}}
 \end{figure}
 In order to provide some validation of the model formulation in \eqref{eq:loglink}, we compare our model with the following alternatives: 
@@ -372,7 +372,7 @@ In order to evaluate the predictive performance of an estimator we calculate the
 \begin{figure}[ht]
 \centering
 \vspace{-5mm}
-\includegraphics[width=6in]{EstimatorPerformance.png}
+\includegraphics[width=6in]{fig6.png}
 \vspace*{-5mm}
 \caption{Performance of our first-fit and refitted estimators of \acrshort{tmb} as the selected panel size varies. \textbf{Left}: $R^2$, \textbf{Right}: \acrshort{auprc}. \label{fig:EstimatorPerformance}}
 \vspace*{-2mm}
@@ -403,7 +403,7 @@ We include our refitted estimator applied to the panel $P$ in order to demonstra
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=6in]{commercial_comparison.png}
+\includegraphics[width=6in]{fig7.png}
 \vspace*{-5mm}
 \caption{The performance of our \acrshort{tmb} estimator in comparison to existing approaches. \textbf{Left}: $R^2$, \textbf{Right}: \acrshort{auprc}. \label{fig:commercial_comparison}}
 \vspace*{-2mm}
@@ -413,7 +413,7 @@ We present results of these comparisons in  Figure~\ref{fig:commercial_compariso
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=6in]{OneMBPanelPredictions.png}
+\includegraphics[width=6in]{fig8.png}
 \vspace*{-5mm}
 \caption{Prediction of TMB on the test dataset. Dashed blue (diagonal) line represents perfect prediction, and the black dashed lines indicate true and predicted TMB values of 300. %Red shaded area delineates region for which 90\% prediction intervals contain truth.
 \label{fig:OneMBPredictions}}
@@ -463,7 +463,7 @@ We let $S_{\text{indel}}$ be the set of all frameshift insertion and deletion mu
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=6in]{indel_panel_stats.png}
+\includegraphics[width=6in]{fig9.png}
 \vspace*{-5mm}
 \caption{Performance of our first-fit and refitted estimators of \acrshort{tib} as the selected panel size varies. \textbf{Left}: $R^2$, \textbf{Right}: \acrshort{auprc}. \label{fig:indelstatsplot}}
 \vspace*{-2mm}
@@ -473,7 +473,7 @@ The results are presented in Figure \ref{fig:indelstatsplot}. We comment first o
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=6in]{indel_predictions_figure.png}
+\includegraphics[width=6in]{fig10.png}
 \vspace*{-5mm}
 \caption{Prediction of TIB on the test dataset. Dashed blue (diagonal) line represents perfect prediction, and the grey dashed lines indicate true and predicted TIB values of 11. %Red shaded area delineates region for which 90\% prediction intervals contain truth.
 \label{fig:indel_predictions_figure}}
