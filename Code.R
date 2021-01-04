@@ -1,14 +1,17 @@
-## R Packages
-#install.packages("tidyverse")
-library(tidyverse)
-#install.packages("cowplot")
-library(cowplot)
+## devtools Package
 #install.packages("devtools")
 library(devtools)
 
 ## ICBioMark Package
 #devtools::install_github("cobrbra/ICBioMark", upgrade = "ask")
 library(ICBioMark)
+
+## Other R packages needed
+#install.packages("cowplot")
+library(cowplot)
+
+
+
 
 ## Figures path
 fig_path <- "InProgress/TargetedPanelDesign/figures/"
