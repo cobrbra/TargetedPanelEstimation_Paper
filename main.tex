@@ -144,13 +144,14 @@ The remainder of the paper is as follows. In Section \ref{sec:methodology}, we i
 \section{Methodology}
 \label{sec:methodology}
 \subsection{Data and terminology \label{sec:dataterminology}}
-To demonstrate our proposal we make use of the non-small cell lung cancer dataset produced by \citet{campbell_distinct_2016}, which contains data from 1144 patient-derived tumours. The patients had a variety of prognoses and were mixed in age, sex and smoking history (see Figure~\ref{fig:1}). For each sample we have the genomic locations and variant types of all mutations identified, as well as other covariates such as gender, age and smoking history. In Figure \ref{fig:2}A we see that mutations counts are distributed over a very wide range, as is the case in many cancer types \citep{chalmers_analysis_2017}. For simplicity, we only use nonsynonymous variants, which we group into seven types: the four most common are missense mutations, nonsense mutations, frameshift insertions/deletions and splice site mutations. The final three variant types, which are in-frame insertions/deletions, nonstop mutations and translation start site mutations, are much rarer. We show the respective frequencies of the nonsynonymous mutations described in Figure \ref{fig:2}B. Frameshift insertion/deletion (also known as indel) mutations are of particular interest to us, but contribute only a small proportion ($<4\%$) of mutations, which will have important consequences when trying to predict their abundance. 
+Our methodology can be applied to any annotated mutation dataset obtained by \acrshort{wes}. 
+To demonstrate our proposal we make use of the \acrshort{nsclc} dataset produced by \citet{campbell_distinct_2016}, which contains data from 1144 patient-derived tumours.  For each sample in this dataset we have the genomic locations and variant types of all mutations identified.  The patients had a variety of prognoses and smoking histories, were aged between 39 and 90, and were approximately balanced by sex; see Figure~\ref{fig:1}. In Figure \ref{fig:2}A we see that mutations counts are distributed over a very wide range, as is the case in many cancer types \citep{chalmers_analysis_2017}. For simplicity, we only consider seven nonsynonymous variant types: missense mutations (which are the most abundant), nonsense mutations, frameshift insertions/deletions, splice site mutations, in-frame insertions/deletions, nonstop mutations and translation start site mutations.  We present the frequencies of these mutation types in Figure \ref{fig:2}B. Frameshift insertion/deletion (also known as indel) mutations are of particular interest when predicting \acrshort{tib}, but contribute only a small proportion ($<4\%$) of nonsynonymous mutations. 
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=6in]{figures/fig1.png}
 \vspace*{-5mm}
-\caption{Demongraphic data for the clinical cohort in \citet{campbell_distinct_2016}. \textbf{A}: Violin plots of age for patients, stratefied by sex. \textbf{B}: Stacked bar chart of patients' smoking histories. Shade corresponds to cancer stage diagnosis at time of measurement. \label{fig:1}}
+\caption{Demographic data for the clinical cohort in \citet{campbell_distinct_2016}. \textbf{A}: Violin plots of age for patients, stratified by sex. \textbf{B}: Stacked bar chart of patients' smoking histories, shaded according to cancer stage diagnosis. \label{fig:1}}
 \vspace*{-2mm}
 \end{figure}
 
@@ -158,22 +159,25 @@ To demonstrate our proposal we make use of the non-small cell lung cancer datase
 \centering
 \includegraphics[width=6in]{figures/fig2.png}
 \vspace*{-5mm}
-\caption{ Dataset-wide distribution of mutations. \textbf{A}: Violin plot of the distribution of \acrshort{tmb} and \acrshort{tib} across training samples. \textbf{B}: The relative frequency of different mutation types. \label{fig:2}}
+\caption{ Dataset-wide distribution of mutations. \textbf{A}: Violin plot of the distribution of \acrshort{tmb} and \acrshort{tib} across training samples. \textbf{B}: The relative frequency of different nonsynonymous mutation types. \label{fig:2}}
 \vspace*{-2mm}
 \end{figure}
 
-It is useful at this point to introduce the notation used throughout the paper. We let the set $G$ denote a relevant collection of genes. For our purposes $G$ will be considered to enumerate the entire exome. For a gene $g \in G$, let $\ell_g$ be the length of $g$ in nucleotide bases, defined by the maximum coding sequence\footnote{Maximum coding sequence is defined as the collection of codons that may be translated for some version of a gene, even if all the codons comprising the maximum coding sequence are never simultaneously translated. Gene coding lengths are extracted from the Ensembl database \citep{yates_ensembl_2020}.}.  A gene panel $P$ is a subset $P \subseteq G$, and we may write $\ell_P := \sum_{g \in P} \ell_g$ for the total length of a panel $P$. Let $S$ denote the possible variant types in our data (e.g.~in the dataset mentioned above, $S$ contains the seven possible non-synonymous variants). Now, for $i \in \{0, 1, \ldots, n\}$, let $M_{igs}$ denote the count of mutations in gene $g \in G$ of type $s \in S$ in the $i$th sample. Here $n$ refers to the number of samples in the training dataset, and the label $i=0$ will be used to refer to an unseen test sample.  In order to define the exome-wide biomarker of particular interest, we specify a subset of mutation types $\bar{S} \subset S$, and let
+It is useful at this point to introduce the notation used throughout the paper. The set $G$ denotes the collection of genes that make up the exome. For a gene $g \in G$, let $\ell_g$ be the length of $g$ in nucleotide bases, defined by the maximum coding sequence\footnote{Maximum coding sequence is defined as the collection of codons that may be translated for some version of a gene, even if all the codons comprising the maximum coding sequence are never simultaneously translated. Gene coding lengths are extracted from the \emph{Ensembl} database \citep{yates_ensembl_2020}.}.  A gene panel is a subset $P \subseteq G$, and we write $\ell_P := \sum_{g \in P} \ell_g$ for its total length. We let $S$ denote the set of variant types in our data (e.g.~in the dataset mentioned above, $S$ contains the seven possible non-synonymous variants). Now, for $i = 0, 1, \ldots, n$, let $M_{igs}$ denote the count of mutations in gene $g \in G$ of type $s \in S$ in the $i$th sample. Here the index $i=0$ is used to refer to an unseen test sample, for which we would like to make a prediction.  In order to define the exome-wide biomarker of particular interest, we specify a subset of mutation types $\bar{S} \subseteq S$, and let
 \begin{equation}
-T_{i\bar{S}} := \sum_{g \in G} \sum_{s \in \bar{S}} M_{igs}.
+T_{i\bar{S}} := \sum_{g \in G} \sum_{s \in \bar{S}} M_{igs},
 \label{eq:biomarker}
 \end{equation}
+for $i=0,\ldots, n$.
 % For example, if $\bar{S} = S$, i.e. the set of all non-synonymous mutation types in $S$, then $T_{i\bar{S}}$ is tumour mutation burden. Alternatively, if $\bar{S}$ contains only frameshift insertions and deletions, then $T_{i\bar{S}}$ refers to indel burden. Finally, let 
 % \begin{equation}
 %   \label{eq:TStest}
 % T_{\bar{S}} := \sum_{g \in G}\sum_{s \in \bar{S}} M_{gs}
 % \end{equation}
 % 
-For example, including all non-synonymous mutation types in $\bar{S}$ specifies $T_{i\bar{S}}$ as \acrshort{tmb} for sample $i$, while letting $\bar{S}$ contain only indel mutations gives \acrshort{tib}. Our main goal is to predict $T_{0\bar{S}}$ after only observing $\{M_{0gs}: g \in P, s \in S\}$, where the panel $P \subseteq G$ has length $\ell_P$ satisfying some upper bound. When it is clear from context that we are referring to a test sample and a specific choice of biomarker, we will simply write $T$ for $T_{0\bar{S}}$.
+For example, including all non-synonymous mutation types in $\bar{S}$ specifies $T_{i\bar{S}}$ as the \acrshort{tmb} of sample $i$, whereas letting $\bar{S}$ contain only indel mutations gives \acrshort{tib}. 
+
+Our main goal is to predict $T_{0\bar{S}}$ based on $\{M_{0gs}: g \in P, s \in S\}$, where the panel $P \subseteq G$ has length $\ell_P$ satisfying some upper bound. When it is clear from context that we are referring to the test sample and a specific choice of biomarker (i.e.~$\bar{S}$ is fixed), we will simply write $T$ in place of $T_{0\bar{S}}$. \jbnote{We are here}
 
 
 \subsection{Generative model \label{sec:genmodel}}
