@@ -8,6 +8,7 @@ library(ICBioMark)
 
 ## Other R packages needed
 #install.packages("cowplot")
+library(magrittr)
 library(cowplot)
 
 
