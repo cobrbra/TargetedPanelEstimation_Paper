@@ -7,7 +7,7 @@ library(devtools)
 library(ICBioMark)
 
 ## Other R packages needed
-install.packages("cowplot")
+#install.packages("cowplot")
 library(cowplot)
 
 
