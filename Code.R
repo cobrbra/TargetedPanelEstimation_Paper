@@ -59,7 +59,6 @@ smoking_groups <- c("Lifelong Non-Smoker", "Current Reformed \n Smoker (>15 Year
 names(smoking_groups) <- c("Lifelong Non-Smoker", "Current Reformed Smoker For > 15 Years",
                            "Current Reformed Smoker For < Or = 15 Years", "Current Reformed Smoker, Duration Not Specified",
                            "Current Smoker")
-plot(fig1p1)
 
 fig1p2 <- nsclc_survival %>% 
   group_by(SMOKING_HISTORY, STAGE) %>% 
@@ -79,9 +78,7 @@ fig1p2 <- nsclc_survival %>%
   theme_minimal() + theme(axis.text.x = element_text(angle = 45, vjust = 0.7)) +
   labs(y = "Frequency") + theme(axis.title.x=element_blank())
 
-plot(fig1p2)
 fig1 <- plot_grid(fig1p1, fig1p2, labels = "AUTO", align = "h")
-print(fig1)
 ggsave(paste0(fig_path, "fig1.png"), fig1, width = 12, height = 5)
 
 
@@ -102,7 +99,6 @@ fig2p1 <- tmb_tib_train %>%
   theme_minimal() +
   labs(y = "Mutation Count") + theme(axis.title.x = element_blank())
 
-print(fig2p1)
 
 ## Subfigure 2
 variant_names <- c("Missense", "Nonsense", "Splice site", "Translation start",
@@ -123,10 +119,8 @@ fig2p2 <- nsclc_maf %>%
   theme_minimal() + theme(axis.text.x = element_text(angle = 45, vjust = 0.8)) +
   theme(axis.title.x=element_blank())
 
-print(fig2p2)
 
 fig2 <- plot_grid(fig2p1, fig2p2, labels = "AUTO", align = "h")
-print(fig2)
 ggsave(paste0(fig_path, "fig2.png"), fig2, width = 12, height = 5)
 
 
