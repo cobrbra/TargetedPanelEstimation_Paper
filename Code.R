@@ -8,21 +8,29 @@ library(ICBioMark)
 
 ## Other R packages needed
 #install.packages("cowplot")
-library(magrittr)
 library(cowplot)
+#install.packages("magrittr")
+library(magrittr)
+#install.packages("ggplot2")
+library(ggplot2)
+#install.packages("dplyr")
+library(dplyr)
 
 
 
 
 ## Figures path
-fig_path <- "InProgress/TargetedPanelDesign/figures/"
+fig_path <- "figures/"
 
 
 
 ### Main workflow
-nsclc_tables <- get_mutation_tables(maf = nsclc_maf, include_synonymous = FALSE)
+nsclc_tables <- get_mutation_tables(maf = nsclc_maf, include_synonymous = FALSE,
+                                    acceptable_genes = ensembl_gene_lengths$Hugo_Symbol)
 nsclc_gen_model <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = nsclc_tables$train,
                                  progress = TRUE)
+write_rds(x = nsclc_gen_model, file = "data/results/nsclc_gen_model")
+
 nsclc_pred_first_tmb <- pred_first_fit(gen_model = nsclc_gen_model, gene_lengths = ensembl_gene_lengths,
                                        training_matrix = nsclc_tables$train$matrix)
 nsclc_pred_refit_tmb <- pred_refit_range(pred_first = nsclc_pred_first_tmb,
@@ -143,3 +151,16 @@ print(paste("TIB Mean:", tib_mean))
 
 
 ### Figure 3
+
+
+
+fig3 <- vis_model_fit(nsclc_gen_model)
+ggsave(paste0(fig_path, "fig3.png"), fig3, width = 10, height = 5)
+
+
+
+### Figure 4
+
+
+
+### Figure 5
