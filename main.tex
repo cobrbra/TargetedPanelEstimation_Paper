@@ -163,7 +163,7 @@ To demonstrate our proposal we make use of the \acrshort{nsclc} dataset produced
 \vspace*{-2mm}
 \end{figure}
 
-It is useful at this point to introduce the notation used throughout the paper. The set $G$ denotes the collection of genes that make up the exome. For a gene $g \in G$, let $\ell_g$ be the length of $g$ in nucleotide bases, defined by the maximum coding sequence\footnote{Maximum coding sequence is defined as the collection of codons that may be translated for some version of a gene, even if all the codons comprising the maximum coding sequence are never simultaneously translated. Gene coding lengths are extracted from the \emph{Ensembl} database \citep{yates_ensembl_2020}.}.  A gene panel is a subset $P \subseteq G$, and we write $\ell_P := \sum_{g \in P} \ell_g$ for its total length. We let $S$ denote the set of variant types in our data (e.g.~in the dataset mentioned above, $S$ contains the seven possible non-synonymous variants). Now, for $i = 0, 1, \ldots, n$, let $M_{igs}$ denote the count of mutations in gene $g \in G$ of type $s \in S$ in the $i$th sample. Here the index $i=0$ is used to refer to an unseen test sample, for which we would like to make a prediction.  In order to define the exome-wide biomarker of particular interest, we specify a subset of mutation types $\bar{S} \subseteq S$, and let
+It is useful at this point to introduce the notation used throughout the paper. The set $G$ denotes the collection of genes that make up the exome. For a gene $g \in G$, let $\ell_g$ be the length of $g$ in nucleotide bases, defined by the maximum coding sequence\footnote{Maximum coding sequence is defined as the collection of codons that may be translated for some version of a gene, even if all the codons comprising the maximum coding sequence are never simultaneously translated. Gene coding lengths are extracted from the \emph{Ensembl} database \citep{yates_ensembl_2020}.}.  A gene panel is a subset $P \subseteq G$, and we write $\ell_P := \sum_{g \in P} \ell_g$ for its total length. We let $S$ denote the set of variant types in our data (e.g.~in the dataset mentioned above, $S$ contains the seven possible non-synonymous variants). Now, for $i = 0, 1, \ldots, n$, let $M_{igs}$ denote the count of mutations in gene $g \in G$ of type $s \in S$ in the $i$th sample. Here the index $i=0$ is used to refer to an unseen test sample for which we would like to make a prediction, while the indices $i=1,\ldots,n$ enumerate the samples in our training data set.  In order to define the exome-wide biomarker of particular interest, we specify a subset of mutation types $\bar{S} \subseteq S$, and let
 \begin{equation}
 T_{i\bar{S}} := \sum_{g \in G} \sum_{s \in \bar{S}} M_{igs},
 \label{eq:biomarker}
@@ -177,11 +177,12 @@ for $i=0,\ldots, n$.
 % 
 For example, including all non-synonymous mutation types in $\bar{S}$ specifies $T_{i\bar{S}}$ as the \acrshort{tmb} of sample $i$, whereas letting $\bar{S}$ contain only indel mutations gives \acrshort{tib}. 
 
-Our main goal is to predict $T_{0\bar{S}}$ based on $\{M_{0gs}: g \in P, s \in S\}$, where the panel $P \subseteq G$ has length $\ell_P$ satisfying some upper bound. When it is clear from context that we are referring to the test sample and a specific choice of biomarker (i.e.~$\bar{S}$ is fixed), we will simply write $T$ in place of $T_{0\bar{S}}$. \jbnote{We are here}
-
+Our main goal is to predict $T_{0\bar{S}}$ based on $\{M_{0gs}: g \in P, s \in S\}$, where the panel $P \subseteq G$ has length $\ell_P$ satisfying some upper bound. When it is clear from context that we are referring to the test sample and a specific choice of biomarker (i.e.~$\bar{S}$ is fixed), we will simply write $T$ in place of $T_{0\bar{S}}$. 
 
 \subsection{Generative model \label{sec:genmodel}}
-We now describe the main statistical model that underpins our methodology. To account for selective pressures within the tumour and differences in transcription rate between different genes, we allow the rate at which mutations occur to depend on the gene and type of mutation. We also include a sample-dependent parameter, to account for differing levels of mutagenic exposure between tumours that may occur due to exogenous (e.g. UV light, cigarette smoke) or endogenous (e.g. inflammatory, free radical) factors.  More precisely, for $i \in \{0, 1, \ldots, n\}$, $g \in G$ and $s \in S$, let $\phi_{igs} > 0$ denote the mutation rate, and suppose that
+We now describe the main statistical model that underpins our methodology. In order to account for selective pressures and other factors within the tumour, we allow the rate at which mutations occur to depend on the gene and type of mutation. Our model also includes a sample-dependent parameter to account for the differing levels of mutagenic exposure of tumours, which may occur due to exogenous (e.g.~UV light, cigarette smoke) or endogenous (e.g.~inflammatory, free radical) factors.  
+
+More precisely, we model the mutation counts $M_{igs}$ as independent Poisson random variables with mutation rates $\phi_{igs} > 0$, i.e. for $i = 0, 1, \ldots, n$, $g \in G$ and $s \in S$, we have
 \begin{equation}
     \label{eq:Poisson}
 M_{igs} \sim \mathrm{Poisson}(\phi_{igs}),
@@ -191,10 +192,13 @@ where $M_{igs}$ and $M_{i'g's'}$ are independent for $(i,g,s) \neq (i',g',s')$. 
     \label{eq:loglink}
 \log(\phi_{igs}) =  \mu_i + \log(\ell_g) + \lambda_g + \nu_s + \eta_{gs},
 \end{equation} 
-for $\mu_i, \lambda_{g},\nu_{s},\eta_{gs} \in \mathbb{R}$, where for identifiability we set $\eta_{gs_1} = 0$, for  some $s_1 \in S$ and all $g \in G$. The terms in our model can be interpreted as follows. First, $\mu_i$ is a sample-dependent parameter which corresponds to the \acrshort{bmr} of the sample. The offset $\log(\ell_g)$ accounts for a baseline mutation rate that is proportional to the length of a gene, so that a non-zero value of $\lambda_g$ corresponds to increased or decreased mutation rate relative to the \acrshort{bmr}. Other work has taken into account gene length in panel selection by rejecting genes beneath a given length threshold (for example \citet{lyu_mutation_2018}). The parameters $\nu_s$ account for differences in frequency between mutation types. 
-% As is standard to ensure model identifiability for interaction terms, we restrict the first 'column' of $\eta$ to be zero, i.e. for some $s_1 \in S$ we set $(\forall g \in G) \ \eta_{gs_1} = 0$.   
+for $\mu_i, \lambda_{g},\nu_{s},\eta_{gs} \in \mathbb{R}$, where for identifiability we set $\eta_{gs_1} = 0$, for  some $s_1 \in S$ and all $g \in G$. 
 
-The model in \eqref{eq:Poisson} and \eqref{eq:loglink} (discounting the unseen test sample $i=0$) has $n + |S| + |G||S|$ free parameters and we have $n|G||S|$ independent observations. In principle we could attempt to fit our model directly using maximum likelihood estimation. However, we wish to exploit the fact that most genes do not play an active role in the development of a tumour, and so will experience mutations purely according to the \acrshort{bmr}. This corresponds to the parameters $\lambda_g$ and $\eta_{gs}$ being zero for many $g \in G$. We therefore include an $\ell_1$-penalisation term applied to the parameters $\lambda_g$ and $\eta_{gs}$ when fitting our model \citep{van_de_geer_high-dimensional_2008}. We do not penalise the parameters $\nu_s$ or $\mu_i$, since we expect differences in mutation rate between variant types and between samples. More precisely, writing $\mu = (\mu_1,\ldots, \mu_n)$, $\lambda = (\lambda_g :g \in G)$, $\nu = (\nu_s: s \in S)$ and $\eta = (\eta_{gs}: g\in G, s\in S)$, and given observations $M_{igs} = m_{igs}$, we let
+The terms in our model can be interpreted as follows. First, the parameter $\mu_i$ corresponds to the \acrshort{bmr} of the $i$th sample. The offset $\log(\ell_g)$ accounts for a mutation rate that is proportional to the length of a gene, so that a non-zero value of $\lambda_g$ corresponds to increased or decreased mutation rate relative to the \acrshort{bmr}.  The parameters $\nu_s$ and $\eta_{gs}$ account for differences in frequency between mutation types for each gene. 
+
+The model in \eqref{eq:Poisson} and \eqref{eq:loglink} (discounting the unseen test sample $i=0$) has $n + |S| + |G||S|$ free parameters and we have $n|G||S|$ independent observations in the training data set. In principle we could attempt to fit our model directly using maximum likelihood estimation. However, we wish to exploit the fact that most genes do not play an active role in the development of a tumour, and will be mutated approximately according to the \acrshort{bmr}. This corresponds to the parameters $\lambda_g$ and $\eta_{gs}$ being zero for many $g \in G$. We therefore include an $\ell_1$-penalisation term applied to the parameters $\lambda_g$ and $\eta_{gs}$ when fitting our model \citep[see, for example,][]{van_de_geer_high-dimensional_2008}. We do not penalise the parameters $\nu_s$ or $\mu_i$.%, since we expect differences in mutation rate between variant types and between samples.
+
+Writing $\mu = (\mu_1,\ldots, \mu_n)$, $\lambda = (\lambda_g :g \in G)$, $\nu = (\nu_s: s \in S)$ and $\eta = (\eta_{gs}: g\in G, s\in S)$, and given training observations $M_{igs} = m_{igs}$, we let
 \[
 \mathcal{L}(\mu, \lambda, \nu, \eta) = \sum_{i = 1}^n \sum_{g \in G} \sum_{s \in S} \Bigl( \phi_{igs} - m_{igs} \log \phi_{igs} \Bigr) 
 \]
@@ -203,33 +207,32 @@ be the negative log-likelihood of the model specified by \eqref{eq:Poisson} and 
 (\hat{\mu}, \hat{\lambda}, \hat{\nu}, \hat{\eta}) = \argmin_{\mu,\lambda, \nu, \eta} \Bigl\{ \mathcal{L}(\mu, \lambda, \nu, \eta) + \kappa_1 \Bigl(\sum_{g \in G} |\lambda_g|  +  \sum_{g \in G} \sum_{s \in S} |\eta_{gs}| \Bigr) \Bigr\},
 \label{eq:genparams}
 \end{equation}
-where $\kappa_1 \geq 0$ is a tuning parameter that controls the number of non-zero components in $\hat{\lambda}$ and $\hat{\eta}$, which we choose using cross-validation. 
+where $\kappa_1 \geq 0$ is a tuning parameter that controls the number of non-zero components in $\hat{\lambda}$ and $\hat{\eta}$, which we choose using cross-validation (cf.~Section~\ref{sec:practicalconsiderations}). 
 % KEEP We do not penalise main and interaction effects separately in order to have a unique solution, nor do we insist on hierarchical interaction effects (such as in \citet{lim_learning_2015}).
 % \tcnote{Different penalty weights on $\lambda$ and $\eta$?}\\
 % \jbnote{I think that now we've specified first column of $\eta$ is zero we no longer need to justify this - main effects and interaction terms are too closely intertwined to sensibly penalise separately. If reviewers ask, we can point to literature on interaction term penalisation which does not penalise separately, e.g. \citep{lim_learning_2015}}
 
 
 \subsection{Proposed estimator \label{sec:linearestimator}}
-We now attend to our main goal of estimating a given exome-wide biomarker for an unseen sample. Fix $\bar{S} \subseteq S$ and write $T = T_{0\bar{S}}$ to simplify notation. Recall that we wish to construct an estimator of $T$ that only depends on the mutation counts in a gene panel $P \subset G$, subject to a constraint on $\ell_P$. To that end, we consider estimators of the form\footnote{Note that our estimator may use the the full set $S$ of variant types, rather than just those in $\bar{S}$. In other words, our estimator may utilise information from every mutation, not just those that directly constitute the biomarker being predicted. This is important when estimating the mutation types in $\bar{S}$ are relatively scarce (e.g. \acrlong{tib}).}
+We now attend to our main goal of estimating a given exome-wide biomarker for the unseen test sample. Fix $\bar{S} \subseteq S$ and recall that we write $T = T_{0\bar{S}}$ for the biomarker's value for the test sample. We wish to construct an estimator of $T$ that only depends on the mutation counts in a gene panel $P \subset G$, subject to a constraint on $\ell_P$. To that end, consider estimators of the form\footnote{Note that our estimator may use the the full set $S$ of variant types, rather than just those in $\bar{S}$. In other words, our estimator may utilise information from every mutation type, not just those that directly constitute the biomarker of interest. This is important when estimating mutation types in $\bar{S}$ that are relatively scarce (e.g. for \acrshort{tib}).}
 \[
 T(w) := \sum_{g \in G} \sum_{s \in S} w_{gs}M_{0gs},
 \]
-for $w \in \mathbb{R}^{|G|\times |S|}$. We choose $w$ to minimise the expected squared error of $T(w)$ based on the generative model above. Note that setting $w_{gs}= 1$ for $g \in G$ and $s \in \bar{S}$ and $w_{gs} = 0$ otherwise will give $T(w) = T$. 
-However if, for a given $g$, we have $w_{gs} = 0$ for all $s \in S$, then our estimator does not depend on $g$ and therefore the gene does not need to be included in the panel. In order to produce a concise targeted gene panel (i.e. with many $w_{gs} = 0$), we penalise non-zero components of $w$. In order to improve predictive performance by eliminating shrinkage bias we define our final estimator via a refitting procedure. This will also be helpful when extending our procedure to accommodate panel design with predetermined genes.
+for $w \in \mathbb{R}^{|G|\times |S|}$.  The weights $w$ are chosen to minimise the expected squared error of $T(w)$ based on the generative model in Section~\ref{sec:genmodel}. 
 
-Now, by \eqref{eq:Poisson}, we have that $\mathbb{E}M_{0gs} = \var(M_{0gs}) = \phi_{0gs}$, and it follows that the marginal expected squared error of $T(w)$ is
+Of course, setting $w_{gs}= 1$ for $g \in G$ and $s \in \bar{S}$ and $w_{gs} = 0$ otherwise will give $T(w) = T$.  However, our aim is to make predictions based on a concise gene panel. If, for a given $g \in G$, we have $w_{gs} = 0$ for all $s \in S$, then $T(w)$ does not depend on the mutations in $g$ and therefore the gene does not need to be included in the panel. In order to produce a suitable gene panel (i.e.~with many $w_{gs} = 0$), we penalise non-zero components of $w$ when minimising the expected squared error. We define our final estimator via a refitting procedure. This improves the predictive performance by reducing the bias, and is also helpful when applying our procedure to panels with predetermined genes.
+
+Now, under our model in \eqref{eq:Poisson}, we have that $\mathbb{E}M_{0gs} = \var(M_{0gs}) = \phi_{0gs}$, and it follows that the expected squared error of $T(w)$ is
 \begin{align}
 \label{eq:MSE}
-\mathbb{E}[\{T(w) - T\}^2] & = \mathrm{Var}(T(w)) + \mathrm{Var}(T) - 2\mathrm{Cov}(T(w), T) + \bigl[\mathbb{E}\{T(w) - T\}\bigr]^2  \nonumber \\
+\mathbb{E}\bigl[\{T(w) - T\}^2\bigr] & = \mathrm{Var}(T(w)) + \mathrm{Var}(T) - 2\mathrm{Cov}(T(w), T) + \bigl[\mathbb{E}\{T(w) - T\}\bigr]^2  \nonumber \\
 %\\ & = \sum_{g \in G}\sum_{s \in S}w_{gs}^2\mathrm{Var}(M_{gs}) + \sum_{g \in G}\sum_{s \in \bar{S}}\mathrm{Var}(M_{gs}) - 2\sum_{g \in G} \sum_{s \in \bar{S}} w_{gs}\mathrm{Var}(M_{gs})  \\
 %& \hspace{60pt} + \Bigl(\sum_{g \in G}\sum_{s \in S}w_{gs}\mathbb{E}M_{gs} - \sum_{g \in G} \sum_{s \in \bar{S}}\mathbb{E}M_{gs} \Bigr)^2
 % \\ & = \sum_{g \in G}\sum_{s \in S}w_{gs}^2\phi_{0gs}  + \sum_{g \in G}\sum_{s \in \bar{S}}\phi_{0gs} - 2\sum_{g \in G} \sum_{s \in \bar{S}} w_{gs}\phi_{0gs}   + \Bigl(\sum_{g \in G}\sum_{s \in S}w_{gs}\phi_{0gs} - \sum_{g \in G} \sum_{s \in \bar{S}}\phi_{0gs} \Bigr)^2 \\
 & = \sum_{g \in G} \sum_{s \in \bar{S}}(1- w_{gs})^2\phi_{0gs} + \sum_{g \in G} \sum_{s \in S \setminus \bar{S}}w_{gs}^2\phi_{0gs}  \nonumber \\ & \hspace{150pt} + \Bigl(\sum_{g \in G}\sum_{s \in S}w_{gs}\phi_{0gs}
 - \sum_{g \in G} \sum_{s \in \bar{S}}\phi_{0gs} \Bigr)^2.
 \end{align} 
-This error depends on the unknown parameters $\mu_0, \lambda_g, \nu_s$ and $\eta_{gs}$, the latter three of which are estimated as described in \eqref{eq:genparams}. 
-% However, we have no estimate of $\mu_0$, and so attempt to formulate the problem in such a way as to have minimal dependence on $\mu_0$. 
-To highlight the dependence on $\mu_0$, write $\hat{\phi}_{0gs} = \ell_g\exp(\hat{\lambda}_g + \hat{\nu}_s + \hat{\eta}_{gs})$, and define
+This depends on the unknown parameters $\mu_0, \lambda_g, \nu_s$ and $\eta_{gs}$, the latter three of which are replaced by their estimates given in \eqref{eq:genparams}.  It is also helpful to then rescale  \eqref{eq:MSE} as follows: write $\hat{\phi}_{0gs} = \ell_g\exp(\hat{\lambda}_g + \hat{\nu}_s + \hat{\eta}_{gs})$, and define
 \[
 p_{gs}  := \frac{\hat{\phi}_{0gs}}{\sum_{g' \in G} \sum_{s' \in \bar{S}} \hat{\phi}_{0g's'}} = \frac{\ell_g \exp(\hat{\lambda}_g + \hat{\nu}_s + \hat{\eta}_{gs})}{\sum_{g'\in G} \sum_{s'\in \bar{S}} \ell_{g'} \exp(\hat{\lambda}_{g'} + \hat{\nu}_{s'} + \hat{\eta}_{g's'})}.
 \]
@@ -237,9 +240,11 @@ Then let
 \[
 f(w) := \sum_{g \in G}\sum_{s \in \bar{S}} p_{gs}(1-w_{gs})^2  + \sum_{g \in G}\sum_{ s\in S \setminus \bar{S}}p_{gs} w_{gs}^2 + K(\mu_0)\big( 1 - \sum_{g \in G}\sum_{s \in S}  p_{gs}w_{gs} \big)^2,
 \]
-where $K(\mu_0) = \exp(\mu_0)\sum_{g \in G}\sum_{s \in \bar{S}}l_{g}\exp(\hat{\lambda}_g + \hat{\nu}_s + \hat{\eta}_{gs})$. Notice that $f$ is a rescaled version of the error  $\mathbb{E}[\{T(w)-T\}^2]$, where the true parameters $(\lambda, \nu, \eta)$ have been replaced by the estimates $(\hat{\lambda}, \hat{\nu}, \hat{\eta})$. Moreover, $f$ only depends on $\mu_0$ via the $K(\mu_0)$ term. The quantity $K(\mu_0)$ can be interpreted as a penalty factor controlling the \emph{bias} of our estimator. For example, we may insist that the squared bias term $(1 - \sum_{g \in G}\sum_{s \in S}  p_{gs}w_{gs})^2$ is zero (by setting $K(\mu_0) = \infty$). In practice, we propose to choose the penalty $K$ based on the training data; see Section \ref{sec:practicalconsiderations}. 
+where $K(\mu_0) = \exp(\mu_0)\sum_{g \in G}\sum_{s \in \bar{S}} \ell_{g}\exp(\hat{\lambda}_g + \hat{\nu}_s + \hat{\eta}_{gs})$. Since $f$ is a rescaled version of the error in \eqref{eq:MSE} (with the true parameters $\lambda, \nu, \eta$ replaced by the estimates $\hat{\lambda}, \hat{\nu}, \hat{\eta}$), we will choose $w$ to minimise $f(w)$.  
 
-At this point $f(w)$ is minimised by choosing $w$ to be such that $w_{gs}= 1$ for all $g\in G, s\in\bar{S}$. As mentioned above, in order to form a concise panel while optimising predictive performance we solve this minimisation while constraining the cost of sequencing the genes used in the estimation. For a given $w$, an appropriate cost is given by
+Note that $f$ only depends on $\mu_0$ via the $K(\mu_0)$ term, which can be interpreted as a penalty factor controlling the bias of our estimator. For example, we may insist that the squared bias term $(1 - \sum_{g \in G}\sum_{s \in S}  p_{gs}w_{gs})^2$ is zero by setting $K(\mu_0) = \infty$. In practice, we propose to choose the penalty $K$ based on the training data; see Section \ref{sec:practicalconsiderations}. 
+
+\tcnote{we are here} At this point $f(w)$ is minimised by choosing $w$ to be such that $w_{gs}= 1$ for all $g\in G, s\in\bar{S}$. As mentioned above, in order to form a concise panel while optimising predictive performance we solve this minimisation while constraining the cost of sequencing the genes used in the estimation. For a given $w$, an appropriate cost is given by
 \[
 \|w\|_{G,0} := \sum_{g \in G} \ell_g\mathbbm{1}\{w_{gs} \neq 0 \ \mathrm{for \ some \ } s \in S \} .
 \]
