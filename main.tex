@@ -244,44 +244,48 @@ where $K(\mu_0) = \exp(\mu_0)\sum_{g \in G}\sum_{s \in \bar{S}} \ell_{g}\exp(\ha
 
 Note that $f$ only depends on $\mu_0$ via the $K(\mu_0)$ term, which can be interpreted as a penalty factor controlling the bias of our estimator. For example, we may insist that the squared bias term $(1 - \sum_{g \in G}\sum_{s \in S}  p_{gs}w_{gs})^2$ is zero by setting $K(\mu_0) = \infty$. In practice, we propose to choose the penalty $K$ based on the training data; see Section \ref{sec:practicalconsiderations}. 
 
-\tcnote{we are here} At this point $f(w)$ is minimised by choosing $w$ to be such that $w_{gs}= 1$ for all $g\in G, s\in\bar{S}$. As mentioned above, in order to form a concise panel while optimising predictive performance we solve this minimisation while constraining the cost of sequencing the genes used in the estimation. For a given $w$, an appropriate cost is given by
+At this point $f(w)$ is minimised by choosing $w$ to be such that $w_{gs}= 1$ for all $g\in G, s\in\bar{S}$, and $w_{gs} = 0$ otherwise. As mentioned above, in order to form a concise panel while optimising predictive performance, we impose a constraint on the cost of sequencing the genes used in the estimation. More precisely, for a given $w$, an appropriate cost is
 \[
 \|w\|_{G,0} := \sum_{g \in G} \ell_g\mathbbm{1}\{w_{gs} \neq 0 \ \mathrm{for \ some \ } s \in S \} .
 \]
-This choice acknowledges that the cost of a panel is roughly proportional to the length of the region of genomic space sequenced, and that once a gene has been sequenced for one mutation type there is no need to sequence again for other mutation types. Given a cost restriction $L$, our optimisation problem is to minimise $f(w)$ such that $\|w\|_{G,0} \leq L$. In practice this problem is non-convex and so computationally infeasible. As is common in high-dimensional optimisation problems, we consider a convex relaxation of this problem.  More precisely, let $\|w\|_{G,1} = \sum_{g \in G} \ell_g \|w_g\|_2$, where $w_g$ here refers to the vector $(w_{g1}, \ldots, w_{g|S|})^T$ and $\|.\|_2$ is the Euclidean norm.  Let\footnote{We will assume that $\hat{w}^{\text{first-fit}}$, and the later defined $\hat{w}^{\text{refit}}$, are unique; see Section \ref{sec:practicalconsiderations}.}
+This choice acknowledges that the cost of a panel is roughly proportional to the length of the region of genomic space sequenced, and that once a gene has been sequenced for one mutation type there is no need to sequence again for other mutation types. 
+
+Now, given a cost restriction $L$, our goal is to minimise $f(w)$ such that $\|w\|_{G,0} \leq L$. In practice this problem is non-convex and so computationally infeasible. As is common in high-dimensional optimisation, we consider a convex relaxation as follows: let $\|w\|_{G,1} := \sum_{g \in G} \ell_g \|w_g\|_2$, where $w_g = (w_{gs}: s\in S) \in \mathbb{R}^{|S|}$, for $g \in G$,  and $\|\cdot\|_2$ is the Euclidean norm.  Define\footnote{Note that $\hat{w}^{\text{first-fit}}$ and $\hat{w}^{\text{refit}}$ defined in \eqref{eq:wrefit} are unique; see Section \ref{sec:practicalconsiderations}.}
 \begin{equation}
     \label{eq:wfirstfit}
 \hat{w}^{\text{first-fit}} \in \argmin\limits_{w} \bigl\{ f(w) +\kappa_2\|w\|_{G,1} \bigr\},
 \end{equation}
-where $\kappa_2 \geq 0$ is chosen to specify the level of cost penalisation, and will determine the size of panel selected.
+where $\kappa_2 \geq 0$ is chosen to determine the size of the panel selected.
 
-Now, we could use $T(\hat{w}^{\text{first-fit}})$ as our estimator of $T$, and indeed we will include the performance of this approach in our numerical comparison in Section~\ref{sec:experimentalresults}. However our final proposed estimator is motivated by the refitted \acrshort{lasso} procedure \citep[see][]{chzhen_lasso_2019}, which in the case of standard linear regression can improve predictive performance by reducing bias. 
-%At this point we could define our estimator as $\hat{T} := T(\hat{w}^{\text{first-fit}})$, and indeed we will show results for such an estimator in subsequent sections (referred to as the 'first-fit $\hat{T}$ estimator'). However our final proposed estimator is motivated by the refitted lasso procedure \citep[see][]{chzhen_lasso_2019}, which in the case of standard linear regression can improve predictive performance by reducing shrinkage bias. Informally, we allow our first estimator to perform variable selection only and fit a new estimator on the selected covariates. 
-Indeed, let $\hat{P} := \{g \in G: \ \|\hat{w}^{\text{first-fit}}_g\|_2 > 0 \}$ be the panel selected by our procedure above, and for $P\subseteq G$ let
-% and, for $P\subseteq G$, let
-% \[
-% f_{P}(w) := \sum_{g \in P}\sum_{s \in \bar{S}} p_{gs}(1-w_{gs})^2  + \sum_{g \in P }\sum_{ s\in S \setminus \bar{S}}p_{gs} w_{gs}^2 + K(\mu_0)\big( 1 - \sum_{g \in P}\sum_{s \in S}  p_{gs}w_{gs} \big)^2
-% \]
-% be the portion of $f$ corresponding to the genes in $P$, and
+The final form of our estimator is obtained by a refitting procedure. First, for $P\subseteq G$, let
 \[
 W_{P} := \{ w \in \mathbb{R}^{|G| \times |S|} : w_g = (0, \ldots, 0) \ \ \text{for} \ \ g \in G\setminus P \}.
 \] 
-Finally, then, our proposed estimator of $T$ is given by $\hat{T} := T(\hat{w}^{\text{refit}}),$ where  
+Let $\hat{P} := \{g \in G: \ \|\hat{w}^{\text{first-fit}}_g\|_2 > 0 \}$ be the panel selected by the first-fit estimator in~\eqref{eq:wfirstfit}, and define  
 \begin{equation} 
 \label{eq:wrefit}
 \hat{w}^{\text{refit}} \in  \argmin\limits_{w \in W_{\hat{P}}} \bigl\{f(w)\bigr\}.
 \end{equation}
+We then estimate $T$ using $\hat{T} := T(\hat{w}^{\text{refit}})$, which only depends on mutations in genes contained in the selected panel $\hat{P}$.  The performance of our estimator is investigated in Section~\ref{sec:experimentalresults}, for comparison we also include the performance of the \emph{first-fit estimator} $T(\hat{w}^{\mathrm{first-fit}})$.
+
+%We could use $T(\hat{w}^{\text{first-fit}})$ as our estimator of $T$, and indeed we will include the performance of this approach in our numerical comparison in Section~\ref{sec:experimentalresults}. Our final proposed estimator is motivated by the refitted \acrshort{lasso} procedure \citep[see][]{chzhen_lasso_2019}, which in the case of standard linear regression can improve predictive performance by reducing bias. 
+%At this point we could define our estimator as $\hat{T} := T(\hat{w}^{\text{first-fit}})$, and indeed we will show results for such an estimator in subsequent sections (referred to as the 'first-fit $\hat{T}$ estimator'). However our final proposed estimator is motivated by the refitted lasso procedure \citep[see][]{chzhen_lasso_2019}, which in the case of standard linear regression can improve predictive performance by reducing shrinkage bias. Informally, we allow our first estimator to perform variable selection only and fit a new estimator on the selected covariates.  Indeed, let $\hat{P} := \{g \in G: \ \|\hat{w}^{\text{first-fit}}_g\|_2 > 0 \}$ be the panel selected by our procedure above, and for $P\subseteq G$ let
+% and, for $P\subseteq G$, let
+% \[
+% f_{P}(w) := \sum_{g \in P}\sum_{s \in \bar{S}} p_{gs}(1-w_{gs})^2  + \sum_{g \in P }\sum_{ s\in S \setminus \bar{S}}p_{gs} w_{gs}^2 + K(\mu_0)\big( 1 - \sum_{g \in P}\sum_{s \in S}  p_{gs}w_{gs} \big)^2
+% \]
+% be the portion of $f$ corresponding to the genes in $P$, and \[ W_{P} := \{ w \in \mathbb{R}^{|G| \times |S|} : w_g = (0, \ldots, 0) \ \ \text{for} \ \ g \in G\setminus P \}. \] Finally, then, our proposed estimator of $T$ is given by $\hat{T} := T(\hat{w}^{\text{refit}}),$ where   \begin{equation} \label{eq:wrefit}\hat{w}^{\text{refit}} \in  \argmin\limits_{w \in W_{\hat{P}}} \bigl\{f(w)\bigr\}.\end{equation}
 % Refitting as described here has two empirical effects on our coefficients. Firstly, the coefficients of $\hat{w}^{\text{refit}}$ are less clustered towards zero than for $\hat{w}^{\text{first-fit}}$. Secondly, they are more uniform. When refitting is used, our estimator $\hat{T}$ becomes much more similar to a density-based estimator an overall scaling factor to calibrate predictions based on it. This learned scaling will give an advantage over other density-based estimates when measuring absolute prediction accuracy (as opposed to correlation), which we do in Section~\ref{sec:experimentalresults}.
 
 
 \subsection{Panel augmentation \label{sec:panelaugmentation}}
 In practice, when designing gene panels a variety of factors contribute to the choice of genes included. For example, a gene may be included due to its relevance to immune response or its known association with a particular cancer type. If this is the case, measurements for these genes will be made regardless of their utility for predicting exome-wide biomarkers. When implementing our methodology, therefore, there is no additional cost to incorporate observations from these genes into our prediction if they will be helpful. Conversely researchers may wish to exclude genes from a panel, or at least from actively contributing to the estimation of a biomarker, for instance due to technical difficulties in sequencing a particular gene. 
 
-We can accommodate these restrictions by altering the structure of our regularisation penalty in~\eqref{eq:wfirstfit}.  More precisely, given (disjoint) $P_0, Q_0 \subseteq G$ that have been separately identified for inclusion and exclusion from a panel respectively, we can replace $\hat{w}^{\text{first-fit}}$ in~\eqref{eq:wfirstfit} with 
+We can accommodate these restrictions by altering the structure of our regularisation penalty in~\eqref{eq:wfirstfit}.  Suppose we are given (disjoint) $P_0, Q_0 \subseteq G$ to be included and excluded from our panel, respectively. In this case, we replace $\hat{w}^{\text{first-fit}}$ in~\eqref{eq:wfirstfit} with 
 \begin{equation} \label{eq:augment}
 \hat{w}_{P_0, Q_0}^{\text{first-fit}} \in \argmin\limits_{w \in W_{G \setminus Q_0}} \bigl\{ f(w) + \kappa_2 \sum_{g \in G\setminus P_0} l_g \|w_g\|_2 \bigr\}.  
 \end{equation}
-Excluding the elements of $P_0$ from the penalty term guarantees that $\hat{w}_{P_0, Q_0}^{\text{first-fit}} \neq 0$ for $g \in P_0$, while restricting our optimisation to $W_{G \setminus Q_0}$ excludes the genes in $Q_0$. This has the effect of augmenting the predetermined panel $P_0$ with further genes selected to improve the predictive performance. We may then perform refitting as described above. We demonstrate this procedure by augmenting a commercially available gene panel in Section~\ref{sec:augmentation}.
+Excluding the elements of $P_0$ from the penalty term means that $\hat{w}_{P_0, Q_0}^{\text{first-fit}} \neq 0$ for the genes in $P_0$, while restricting our optimisation to $W_{G \setminus Q_0}$ excludes the genes in $Q_0$ by definition. This has the effect of augmenting the predetermined panel $P_0$ with additional genes selected to improve predictive performance. We then perform refitting as described above. We demonstrate this procedure by augmenting a commercially available gene panel in Section~\ref{sec:augmentation}.
 
 \subsection{Practical considerations \label{sec:practicalconsiderations}}
 Our first consideration concerns the choice of the tuning parameter $\kappa_1$ in $\eqref{eq:genparams}$. We use 10-fold cross-validation to select $\kappa_1$, as is common for the \acrshort{lasso} estimator in generalised linear regression and for which there exists a rich theory and computational toolkit \citep{michoel_natural_2016, friedman_glmnet_2020}. To highlight one important aspect of our cross-validation procedure, recall that we consider the observations $M_{igs}$ as independent across the sample index $i \in \{1, \ldots, n\}$, the gene $g\in G$ and the mutation type $s\in S$. Our cross-validation method therefore involves splitting the entire set $\{(i,g,s): i = 1, \ldots, n, g \in G, s \in S\}$ of size $n|G||S|$ (as opposed to simply the sample set $\{1, \ldots, n\}$) into 10 folds uniformly at random.
