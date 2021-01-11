@@ -3,7 +3,6 @@
 #$ -N test              
 #$ -cwd                  
 #$ -l h_rt=00:01:00 
-#$ -l h_vmem=0.01G
 
 # Initialise the environment modules
 . /etc/profile.d/modules.sh
