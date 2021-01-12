@@ -3,7 +3,10 @@
 #$ -N analysis              
 #$ -cwd                  
 #$ -l h_rt=02:00:00 
-#$ -l h_vmem=100G
+#$ -l h_vmem=64G
+#$ -l M curlyjacob@gmail.com
+#$ -e analysis.error
+#$ -o analysis.output
 
 # Initialise the environment modules
 . /etc/profile.d/modules.sh

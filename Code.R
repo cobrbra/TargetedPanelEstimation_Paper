@@ -15,9 +15,8 @@ library(magrittr)
 library(ggplot2)
 #install.packages("dplyr")
 library(dplyr)
-
-
-
+#install.packages("readr")
+library(readr)
 
 ## Figures path
 fig_path <- "figures/"
@@ -66,7 +65,7 @@ fig1p2 <- nsclc_survival %>%
   ungroup() %>% 
   mutate(Stage = stage_groups[STAGE]) %>% 
   filter(!is.na(Stage)) %>% 
-  mutate(Stage = factor(Stage, levels = rev(c("I","II","III","IV")))) %>% 
+  mutate(Stage = factor(Stage, levels = c("IV","III","II","I"))) %>% 
   mutate(Smoking_History = smoking_groups[SMOKING_HISTORY])  %>%  
   filter(!is.na(Smoking_History)) %>% 
   select(Stage, Smoking_History, n) %>% 
@@ -74,12 +73,12 @@ fig1p2 <- nsclc_survival %>%
   mutate(n = sum(n)) %>% 
   distinct() %>% 
   ggplot(aes(x = Smoking_History, y = n, fill = Stage, order = Stage)) + 
-  geom_col(position = position_stack(reverse = TRUE), alpha = 0.8, colour = "black") + scale_fill_brewer(palette = "Greys") +
+  geom_col(position = position_stack(), alpha = 0.8, colour = "black") + scale_fill_brewer(palette = "Greys") +
   theme_minimal() + theme(axis.text.x = element_text(angle = 45, vjust = 0.7)) +
   labs(y = "Frequency") + theme(axis.title.x=element_blank())
 
 fig1 <- plot_grid(fig1p1, fig1p2, labels = "AUTO", align = "h")
-ggsave(paste0(fig_path, "fig1.png"), fig1, width = 12, height = 5)
+ggsave(paste0(fig_path, "fig1.png"), fig1, width = 10, height = 4)
 
 
 
@@ -121,7 +120,7 @@ fig2p2 <- nsclc_maf %>%
 
 
 fig2 <- plot_grid(fig2p1, fig2p2, labels = "AUTO", align = "h")
-ggsave(paste0(fig_path, "fig2.png"), fig2, width = 12, height = 5)
+ggsave(paste0(fig_path, "fig2.png"), fig2, width = 10, height = 4)
 
 
 
