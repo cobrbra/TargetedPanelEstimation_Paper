@@ -28,14 +28,16 @@ fig_path <- "figures/"
 ### Main workflow
 nsclc_tables <- get_mutation_tables(maf = nsclc_maf, include_synonymous = FALSE,
                                     acceptable_genes = ensembl_gene_lengths$Hugo_Symbol)
-nsclc_gen_model <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = nsclc_tables$train,
-                                 progress = TRUE)
-write_rds(x = nsclc_gen_model, file = "data/results/nsclc_gen_model")
+# nsclc_gen_model <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = nsclc_tables$train,
+#                                  progress = TRUE)
+# write_rds(x = nsclc_gen_model, file = "data/results/nsclc_gen_model")
 
-nsclc_pred_first_tmb <- pred_first_fit(gen_model = nsclc_gen_model, gene_lengths = ensembl_gene_lengths,
-                                       training_matrix = nsclc_tables$train$matrix)
-nsclc_pred_refit_tmb <- pred_refit_range(pred_first = nsclc_pred_first_tmb,
-                                         gene_lengths = ensembl_gene_lengths)
+nsclc_gen_model <- read_rds("data/results/nsclc_gen_model")
+
+# nsclc_pred_first_tmb <- pred_first_fit(gen_model = nsclc_gen_model, gene_lengths = ensembl_gene_lengths,
+#                                        training_matrix = nsclc_tables$train$matrix)
+# nsclc_pred_refit_tmb <- pred_refit_range(pred_first = nsclc_pred_first_tmb,
+                                         # gene_lengths = ensembl_gene_lengths)
 
 
 ### Figure 1
