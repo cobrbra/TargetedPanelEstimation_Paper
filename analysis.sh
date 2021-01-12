@@ -4,7 +4,7 @@
 #$ -cwd                  
 #$ -l h_rt=02:00:00 
 #$ -l h_vmem=64G
-#$ -l M=curlyjacob@gmail.com
+#$ -l M="curlyjacob@gmail.com"
 #$ -l e=analysis.error
 #$ -l o=analysis.output
 
