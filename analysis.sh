@@ -4,9 +4,9 @@
 #$ -cwd                  
 #$ -l h_rt=02:00:00 
 #$ -l h_vmem=64G
-#$ -l M curlyjacob@gmail.com
-#$ -e analysis.error
-#$ -o analysis.output
+#$ -l M=curlyjacob@gmail.com
+#$ -l e=analysis.error
+#$ -l o=analysis.output
 
 # Initialise the environment modules
 . /etc/profile.d/modules.sh
