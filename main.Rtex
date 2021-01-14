@@ -302,24 +302,25 @@ Finally we describe a heuristic procedure for producing prediction intervals aro
 s3.intro.stats = read.table(file = "data/results/s3.intro.stats.tsv", sep = '\t', head = TRUE)
 @
 
-In this section we demonstrate the practical performance of our proposal using the dataset from \citet{campbell_distinct_2016}, which we introduced in Section~\ref{sec:dataterminology}. Our main focus is the prediction of \acrshort{tmb} due to its stature as an established biomarker, and we show that our approach is competitive with existing state-of-the-art methods. We also analyse the suitability of our generative model, consider the task of predicting the recently proposed biomarker \acrshort{tib}, and include a panel augmentation case study with the Foundation~One gene panel.
+In this section we demonstrate the practical performance of our proposal using the dataset from \citet{campbell_distinct_2016}, which we introduced in Section~\ref{sec:dataterminology}. Our main focus is the prediction of \acrshort{tmb}, and we show that our approach is competitive with existing state-of-the-art methods. We also analyse the suitability of our generative model, consider the task of predicting the recently proposed biomarker \acrshort{tib}, and include a panel augmentation case study with the Foundation~One gene panel.
 
-Since we are only looking to produce estimators for \acrshort{tmb} and \acrshort{tib}, we group mutations in two categories so that $|S|=2$. These are \emph{indel mutations} and \emph{all other non-synonymous mutations}. This simplifies the presentation of our results and reduces the computational cost of fitting the generative model.  In order to assess the performance of each of the methods in this section, we randomly split the dataset into training, validation and test sets, which contain $n =  \Sexpr{s3.intro.stats[['n_train_samples']]}, \ n_{val} =  \Sexpr{s3.intro.stats[['n_val_samples']]}$ and $n_{test} = \Sexpr{s3.intro.stats[['n_test_samples']]}$ samples, respectively.  Mutations are observed in $|G| = \Sexpr{s3.intro.stats[['n_genes']]}$ genes. Our training set comprises samples with an average TMB of $\Sexpr{signif(s3.intro.stats[['tmb_mean']], 3)}$ and TIB of $\Sexpr{signif(s3.intro.stats[['tib_mean']], 3)}$. 
+Since we are only looking to produce estimators for \acrshort{tmb} and \acrshort{tib}, we group mutations in two categories -- \emph{indel mutations} and \emph{all other non-synonymous mutations} -- so that $|S|=2$.  This simplifies the presentation of our results and reduces the computational cost of fitting the generative model.  In order to assess the performance of each of the methods in this section, we randomly split the dataset into training, validation and test sets, which contain $n_{\text{train}} = n =  \Sexpr{s3.intro.stats[['n_train_samples']]}, \ n_{\text{val}} =  \Sexpr{s3.intro.stats[['n_val_samples']]}$ and $n_{\text{test}} = \Sexpr{s3.intro.stats[['n_test_samples']]}$ samples, respectively.  Mutations are observed in $|G| = \Sexpr{s3.intro.stats[['n_genes']]}$ genes. Our training set comprises samples with an average TMB of $\Sexpr{signif(s3.intro.stats[['tmb_mean']], 3)}$ and TIB of $\Sexpr{signif(s3.intro.stats[['tib_mean']], 3)}$. 
 
-
-\tcnote{we are here!} 
-%In the following sections, we describe the fitted generative model and investigate the extent to its structure is reasonable, then separately address the performance of derived estimators of \acrshort{tmb} and \acrshort{tib}. We conclude with a case study into augmenting the Foundation~1 panel to predict \acrshort{tmb}.
 
 \subsection{Generative model fit and validation \label{sec:genmodelfit}}
 
+<<echo = FALSE>>=
+s3.1.stats = read.table(file = "data/results/s3.1.stats.tsv", sep = '\t', head = TRUE)
+@
 
-The first step in our analysis is to fit the model proposed in Section \ref{sec:genmodel} using only the training dataset. In particular, we obtain estimates of the model parameters using equation~\eqref{eq:genparams}, where the tuning parameter $\kappa_1$ is determined using 10-fold cross-validation as described in Section~\ref{sec:practicalconsiderations}.  The results of the cross-validation procedure are presented in Figure~\ref{fig:genmodelstats}. The best choice of $\kappa_1$ produces estimates of $\lambda$ and $\eta$ with $40.2\%$ and $76.2\%$ sparsity respectively, i.e. that proportion of their components are estimated to be exactly zero. We plot $\hat{\lambda}$ and $\hat{\eta}$ for this value of $\kappa_1$ in Figures \ref{fig:manhat_plot} and \ref{fig:manhat_plot_indel}. Genes with $\hat{\lambda}_g = 0$ are interpreted as mutating according to the background mutation rate, and genes with $\hat{\eta}_{\text{g,indel}} = 0$ are interpreted as having no specific selection pressure for or against indel mutations. In Figures \ref{fig:manhat_plot} and \ref{fig:manhat_plot_indel} we highlight genes with large parameter estimates, some of which have known biological relevance in oncology; see Section~\ref{sec:conclusion} for further discussion.   
+The first step in our analysis is to fit the model proposed in Section \ref{sec:genmodel} using only the training dataset. In particular, we obtain estimates of the model parameters using equation~\eqref{eq:genparams}, where the tuning parameter $\kappa_1$ is determined using 10-fold cross-validation as described in Section~\ref{sec:practicalconsiderations}.  The results are presented in Figure~\ref{fig:genmodelstats}. The best choice of $\kappa_1$ produces estimates of $\lambda$ and $\eta$ with $\Sexpr{signif(100 * s3.1.stats[['ns_sparsity']], 3)} \%$ and $\Sexpr{signif(100 * s3.1.stats[['i_sparsity']], 3)} \%$ sparsity respectively, i.e. that proportion of their components are estimated to be exactly zero. We plot $\hat{\lambda}$ and $\hat{\eta}$ for this value of $\kappa_1$ in Figures \ref{fig:manhat_plot} and \ref{fig:manhat_plot_indel}. Genes with $\hat{\lambda}_g = 0$ are interpreted to be mutating according to the background mutation rate, and genes with $\hat{\eta}_{\text{g,indel}} = 0$ are interpreted as having no specific selection pressure for or against indel mutations. In Figures \ref{fig:manhat_plot} and \ref{fig:manhat_plot_indel} we highlight genes with large (in absolute value) parameter estimates, some of which have known biological relevance in oncology; see Section~\ref{sec:conclusion} for further discussion.   
+
 \begin{figure}[htbp]
 \centering
-\vspace*{-5mm}
+\vspace*{-2mm}
 \includegraphics[width=4in]{figures/fig3.png}
 \vspace*{0mm}
-\caption{The average deviance (with one standard deviation) across the 10 folds in our cross-validation procedure plotted against $\log(\kappa_1)$. The minimum deviance is highlighted red.\label{fig:genmodelstats}}
+\caption{The average deviance (with one standard deviation) across the 10 folds in our cross-validation procedure plotted against $\log(\kappa_1)$. The minimum average deviance is highlighted red.\label{fig:genmodelstats}}
 \vspace*{-2mm}
 \end{figure}
 
@@ -335,23 +336,17 @@ The first step in our analysis is to fit the model proposed in Section \ref{sec:
 \includegraphics[width=6in]{figures/fig5.png}
 \caption{Manhattan plot of fitted parameters $\hat{\eta}_{g,\text{indel}}$ and their associated genes' chromosomal locations. The five largest positive and negative genes are labelled.  \label{fig:manhat_plot_indel}}
 \end{figure}
-In order to provide some validation of the model formulation in \eqref{eq:loglink}, we compare our model with the following alternatives: 
-%performed \jbnote{'deviance comparisons'} on our model against a range of alternatives. 
+
+
+We now validate our model in \eqref{eq:loglink} by comparing with the following alternatives: 
 \begin{enumerate}[(i)]
-\item Saturated model: each observation has an associated free parameter (i.e. $\phi_{igs} > 0$ in \eqref{eq:Poisson} is unrestricted);
-\item No sample-specific effects:  $\mu_i = 0$ for all $i \in \{1,\ldots, n\}$;
-\item No gene-specific effects: $\lambda_g = \eta_{gs} = 0$ for all $g \in G$ and $s\in S$; 
-\item No gene/mutation type interactions: $\eta_{gs} =0$ for all $g \in G$ and $s\in S$.
+\item \emph{Saturated model}: the model in \eqref{eq:Poisson}, where each observation has an associated free parameter (i.e. $\phi_{igs} > 0$ is unrestricted);
+\item \emph{No sample-specific effects}: the model in \eqref{eq:loglink}, with $\mu_i = 0$ for all $i \in \{1,\ldots, n\}$;
+\item \emph{No gene-specific effects}: the model in \eqref{eq:loglink}, with $\lambda_g = \eta_{gs} = 0$ for all $g \in G$ and $s\in S$; 
+\item \emph{No gene/mutation type interactions}: the model in \eqref{eq:loglink}, with $\eta_{gs} =0$ for all $g \in G$ and $s\in S$.
 \end{enumerate}
 
-In Table~\ref{table:goodnessoffit} we present the residual deviance and the residual degrees of freedom between our model and each of the models above. First note that the decrease in deviance between our model and model (i) is very small relative to the additional degrees of freedom associated with the saturated model; this suggests that our model is more appropriate. On the other hand, when comparing our model with the alternatives in (ii)-(iv), the decrease in deviance large relative to the increase in degrees of freedom, and our model is therefore preferred.    
-
-%Other than these restrictions we fitted each submodel in exactly the same way as described in Section \ref{sec:genmodel}. 
-%The results of these comparisons are given in Table \ref{table:goodnessoffit}. We see that making any of the restrictions discussed severely inhibits the explanatory power of the generative model, even when allowing for the residual degrees of freedom in the larger model. Furthermore a saturated model does not offer nearly enough improved prediction to justify the large increase in degrees of freedom. 
-
-%We see strong evidence that it is necessary to incorporate both sample-specific and gene-specific parameters into a model of mutation, but that a saturated model does not nearly give enough improvement in prediction to justify its vastly increased degrees of freedom. We find $p$-values indistinguishable from 0 and 1 - these should not be interpreted too strongly, as various high-dimensional and model selection effects can come to bear when quantifying such comparisons. 
-
-%Modern methods for testing goodness-of-fit of high dimensional generalised linear models such as proposed by \citet{jankova_goodness--fit_2019} are discussed in Appendix \ref{app:goodnessoffit}, including a proposal for using such methodology to predict genes containing hotspot codons. 
+In Table~\ref{table:goodnessoffit} we present the residual deviance and the residual degrees of freedom between our model and each of the models above. We see that our model is preferred over the saturated model, and all three submodels of \eqref{eq:loglink}. 
 
 \begin{table}[ht]
 \begin{center}
@@ -374,13 +369,15 @@ Model            & Deviance (dev)             & of Freedom (df)  &        &     
 
 
 \subsection{Predicting tumour mutation burden \label{sec:tmb}}
-We now demonstrate the excellent practical performance of our procedure for estimating \acrshort{tmb}. Recall that \acrshort{tmb} is given by equation~\eqref{eq:biomarker} with $\bar{S}$ being the set of all non-synonymous mutation types. First it is shown that our method can indeed select gene panels of size specified by the practitioner and that good predictions can be made even with small panel sizes (i.e.~$\leq$ 1Mb). We then compare the performance of our proposal with state-of-the-art estimation procedures based on a number of widely used gene panels.
+We now demonstrate the excellent practical performance of our procedure for estimating \acrshort{tmb}.  First it is shown that our method can indeed select gene panels of size specified by the practitioner and that good predictions can be made even with small panel sizes (i.e.~$\leq$ 1Mb). We then compare the performance of our proposal with state-of-the-art estimation procedures based on a number of widely used gene panels.
 
-In order to evaluate the predictive performance of an estimator we calculate the $R^2$ score on the validation data. More precisely, given predictions of \acrshort{tmb}, $\hat{t}_1, \ldots, \hat{t}_{n_{val}}$, for the observations in the validation set with true \acrshort{tmb} scores $t_1, \ldots, t_{n_{val}}$. Let $\bar{t} := \frac{1}{n_{val}} \sum_{i=1}^{n_{val}} t_i$, and let 
+ 
+In order to evaluate the predictive performance of an estimator we calculate the $R^2$ score on the validation data as follows: given predictions of \acrshort{tmb}, $\hat{t}_1, \ldots, \hat{t}_{n_{val}}$, for the observations in the validation set with true \acrshort{tmb} values $t_1, \ldots, t_{n_{val}}$. Let $\bar{t} := \frac{1}{n_{val}} \sum_{i=1}^{n_{val}} t_i$, and define 
     \[
-    R^2 = 1- \frac{\sum_{i =1}^{n_{val}}(t_i - \hat{t}_i)^2}{\sum_{i = 1}^{n_{val}}(t_i - \bar{t})^2}. 
+    R^2 := 1- \frac{\sum_{i =1}^{n_{val}}(t_i - \hat{t}_i)^2}{\sum_{i = 1}^{n_{val}}(t_i - \bar{t})^2}. 
     \]
- While it's not the focus of our approach, other works have been interested in separating tumours into two classes (High \acrshort{tmb}, Low \acrshort{tmb}) \citep{buttner_implementing_2019, wu_designing_2019}. We therefore also report the estimated area under the precision-recall curve (\acrshort{auprc}) for a classifier based on our approach. The \acrshort{auprc} is calculated as follows: first, in line with major clinical studies \citep[see, for example,][]{hellmann_nivolumab_2018, ramalingam_abstract_2018}, the true class membership of a tumour is defined according to whether it has $t^* := 300$ or more exome mutations (approximately 10 Mut/Mb). This gives 53 (30.8\%) tumours with high \acrshort{tmb} and 119 (69.2\%) with low \acrshort{tmb} in the validation set. Now, for a cutoff $t \geq 0$, let 
+    
+ While it's not the focus of our approach, other works aim to classify tumours into two groups (High \acrshort{tmb}, Low \acrshort{tmb}) \citep{buttner_implementing_2019, wu_designing_2019}. We therefore also report the estimated area under the precision-recall curve (\acrshort{auprc}) for a classifier based on our estimator. The \acrshort{auprc} is calculated as follows: first, in line with major clinical studies \citep[see, for example,][]{hellmann_nivolumab_2018, ramalingam_abstract_2018}, the true class membership of a tumour is defined according to whether it has $t^* := 300$ or more exome mutations (approximately 10 Mut/Mb). In the validation set, this gives 53 (30.8\%) tumours with high \acrshort{tmb} and 119 (69.2\%) with low \acrshort{tmb}. \tcnote{we are here} Now, for a cutoff $t \geq 0$, let 
  \[
  p(t) := \frac{\sum_{i=1}^{n_{val}} \mathbbm{1}_{\{\hat{t}_i \geq t, \ t_i \geq t^*\}}}{\sum_{i=1}^{n_{val}} \mathbbm{1}_{\{\hat{t}_i \geq t\}}}; \quad  r(t) := \frac{\sum_{i=1}^{n_{val}} \mathbbm{1}_{\{\hat{t}_i \geq t, \ t_i \geq t^*\}}}{\sum_{i=1}^{n_{val}} \mathbbm{1}_{\{t_i \geq t^*\}}}
  \]
@@ -399,7 +396,7 @@ In order to evaluate the predictive performance of an estimator we calculate the
 \vspace*{-2mm}
 \end{figure}
 
-To estimate \acrshort{tmb} we apply our procedure in Section~\ref{sec:linearestimator} with $\bar{S} = S$, where the model parameters are estimated as described in Section~\ref{sec:genmodelfit}. In Figure~\ref{fig:EstimatorPerformance}, we present the $R^2$ and \acrshort{auprc} for the first-fit and refitted estimators (see~\eqref{eq:wfirstfit} and~\eqref{eq:wrefit}, respectively) as the selected panel size varies from 0Mb to 2Mb in length. We see that we obtain a more accurate prediction of \acrshort{tmb}, both in terms of regression and classification, as the panel size increases, and that good estimation is possible even with very small panels (as low as 0.25Mb). %For panels less than length 0.25Mb, estimation of \acrshort{tmb} is challenging. 
+Recall that \acrshort{tmb} is given by equation~\eqref{eq:biomarker} with $\bar{S}$ being the set of all non-synonymous mutation types. Thus to estimate \acrshort{tmb} we apply our procedure in Section~\ref{sec:linearestimator} with $\bar{S} = S$, where the model parameters are estimated as described in Section~\ref{sec:genmodelfit}. In Figure~\ref{fig:EstimatorPerformance}, we present the $R^2$ and \acrshort{auprc} for the first-fit and refitted estimators (see~\eqref{eq:wfirstfit} and~\eqref{eq:wrefit}, respectively) as the selected panel size varies from 0Mb to 2Mb in length. We see that we obtain a more accurate prediction of \acrshort{tmb}, both in terms of regression and classification, as the panel size increases, and that good estimation is possible even with very small panels (as low as 0.25Mb). %For panels less than length 0.25Mb, estimation of \acrshort{tmb} is challenging. 
 Finally, as expected, the refitted estimator slightly outperforms the first-fit estimator. 
 
 %We see elevated performance in our refitted estimator compared to the first-fit, and a sharp increase in predictive performance up to panel size around 0.25Mb, and then stably increasing performance for larger panel sizes. We see a similar trend with an even sharper corner when it comes to classification performance, as shown in Figure~\ref{fig:TvLvRF_class}.
