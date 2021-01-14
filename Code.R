@@ -148,13 +148,13 @@ tib_mean <- mean(tmb_tib_train$TIB)
 print(paste("TMB Mean:", tmb_mean))
 print(paste("TIB Mean:", tib_mean))
 
-s3_intro_stats <- data.frame(n_train_samples = n_train_samples, 
+s3.intro.stats <- data.frame(n_train_samples = n_train_samples, 
                               n_val_samples = n_val_samples, 
                               n_test_samples = n_test_samples,
                               n_genes = n_genes, 
                               tmb_mean = tmb_mean, 
                               tib_mean = tib_mean)
-write_tsv(x = s3_intro_stats, file = 'data/results/s3_intro_stats.tsv')
+write_tsv(x = s3.intro.stats, file = 'data/results/s3.intro.stats.tsv')
 
 
 ### Figure 3
