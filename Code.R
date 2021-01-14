@@ -45,9 +45,13 @@ nsclc_pred_refit_tmb <- pred_refit_range(pred_first = nsclc_pred_first_tmb, gene
 
 nsclc_tmb_values <- get_biomarker_tables(nsclc_maf, biomarker = "TMB")
 
+nsclc_pred_first_tib <- pred_first_fit(gen_model = nsclc_gen_model, lambda = exp(seq(-18, -30, length.out = 100)), 
+                                       gene_lengths = ensembl_gene_lengths, training_matrix = nsclc_tables$train$matrix,
+                                       biomarker = "TIB")
+write_rds(x = nsclc_pred_first_tib, file = "data/results/nsclc_pred_first_tib")
 
-# nsclc_pred_refit_tmb <- pred_refit_range(pred_first = nsclc_pred_first_tmb,
-                                         # gene_lengths = ensembl_gene_lengths)
+# nsclc_pred_refit_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gene_lengths = ensembl_gene_lengths,
+#                                          biomarker = "TIB")
 
 
 ### Figure 1
