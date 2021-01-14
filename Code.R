@@ -38,6 +38,9 @@ nsclc_gen_model <- read_rds("data/results/nsclc_gen_model")
 
 nsclc_pred_first_tmb <- pred_first_fit(gen_model = nsclc_gen_model, gene_lengths = ensembl_gene_lengths,
                                         training_matrix = nsclc_tables$train$matrix)
+write_rds(x = nsclc_pred_first_tmb, file = "data/results/nsclc_pred_first_tmb")
+plot(nsclc_pred_first_tmb$panel_lengths)
+
 # nsclc_pred_refit_tmb <- pred_refit_range(pred_first = nsclc_pred_first_tmb,
                                          # gene_lengths = ensembl_gene_lengths)
 
