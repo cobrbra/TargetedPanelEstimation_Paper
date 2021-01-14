@@ -145,8 +145,8 @@ print(paste("Genes Analysed:", n_genes))
 
 tmb_mean <- mean(tmb_tib_train$TMB)
 tib_mean <- mean(tmb_tib_train$TIB)
-print(paste("TMB Mean:", tmb_mean))
-print(paste("TIB Mean:", tib_mean))
+print(paste("TMB Mean:", signif(tmb_mean, 3)))
+print(paste("TIB Mean:", signif(tib_mean, 3)))
 
 s3.intro.stats <- data.frame(n_train_samples = n_train_samples, 
                               n_val_samples = n_val_samples, 
@@ -276,4 +276,13 @@ ggsave(filename = "figures/fig5.png", plot = fig5, width = 8, height = 4)
 
 
 
+### Section 3.1 Stats
+ns_sparsity = 1 - mean(manhat_data$ns_coefficient != 0)
+i_sparsity = 1 - mean(manhat_data$i_coefficient != 0)
+print(paste0("Non-synonymous sparsity:", signif(100*ns_sparsity, 3), "%"))
+print(paste0("Indel sparsity: ", signif(100*i_sparsity,3), "%"))
+
+s3.1.stats <- data.frame(ns_sparsity = ns_sparsity, 
+                         i_sparsity = i_sparsity)
+write_tsv(x = s3.1.stats, file = "data/results/s3.1.stats.tsv")
 
