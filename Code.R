@@ -93,7 +93,7 @@ message("Creating Figure 2")
 
 
 
-tmb_tib_train <- inner_join(get_biomarker_tables(maf = nsclc_maf, biomarker = "TMB")$train, get_biomarker_tables(maf = nsclc_maf, biomarker = "TIB")$train)
+tmb_tib_train <- inner_join(get_biomarker_tables(maf = nsclc_maf, biomarker = "TMB")$train, get_biomarker_tables(maf = nsclc_maf, biomarker = "TIB")$train, by = "Tumor_Sample_Barcode")
 
 ## Subfigure 1
 fig2p1 <- tmb_tib_train %>%
@@ -219,7 +219,7 @@ fig4 <- manhat_data %>%
   mutate(full_position = cum_chrom_length + Position) %>% 
   mutate(Chromosome = factor(chrom_alternate[Chromosome])) %>% 
   ggplot(aes(x = full_position, y = ns_coefficient,colour = Chromosome, size = ns_coefficient)) + geom_point(alpha = 0.75) + 
-  geom_text_repel(data = extreme_data_ns, aes(x = cum_chrom_length + Position + 2.1*nchar(Hugo_Symbol)*10^7, y = ns_coefficient, label = Hugo_Symbol, colour= factor(chrom_alternate[Chromosome])), size = 3, position=position_jitter()) +
+  geom_text(data = extreme_data_ns, aes(x = cum_chrom_length + Position + 2.1*nchar(Hugo_Symbol)*10^7, y = ns_coefficient, label = Hugo_Symbol, colour= factor(chrom_alternate[Chromosome])), size = 3, position=position_jitter()) +
   scale_x_continuous(label = names(chromosomes), breaks = chrom_info$cum_chrom_length + chrom_info$Chromosome_length/2 ) +
   scale_color_manual(values = rep(c("#276FBF", "#183059"), 12)) +
   scale_size_continuous(range = c(0.5,1)) +
@@ -251,12 +251,12 @@ fig5 <- manhat_data %>%
   mutate(full_position = cum_chrom_length + Position) %>% 
   mutate(Chromosome = factor(chrom_alternate[Chromosome])) %>% 
   ggplot(aes(x = full_position, y = i_coefficient,colour = Chromosome, size = i_coefficient)) + geom_point(alpha = 0.75) + 
-  geom_text_repel(data = extreme_data_i, aes(x = cum_chrom_length + Position + 2.1*nchar(Hugo_Symbol)*10^7, y = i_coefficient, label = Hugo_Symbol, colour= factor(chrom_alternate[Chromosome])), size = 3) +
+  geom_text(data = extreme_data_i, aes(x = cum_chrom_length + Position + 2.1*nchar(Hugo_Symbol)*10^7, y = i_coefficient, label = Hugo_Symbol, colour= factor(chrom_alternate[Chromosome])), size = 3) +
   scale_x_continuous(label = names(chromosomes), breaks = chrom_info$cum_chrom_length + chrom_info$Chromosome_length/2 ) +
   scale_color_manual(values = rep(c("#276FBF", "#183059"), 12)) +
   scale_size_continuous(range = c(0.5,1)) +
   labs(x = NULL, 
-       y = TeX("$\\hat{\\lambda}_g$")) + 
+       y = TeX("$\\hat{\\eta}_{g, indel$")) + 
   theme_minimal() +
   theme( 
     legend.position = "none",
