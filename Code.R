@@ -45,13 +45,16 @@ nsclc_pred_refit_tmb <- pred_refit_range(pred_first = nsclc_pred_first_tmb, gene
 
 nsclc_tmb_values <- get_biomarker_tables(nsclc_maf, biomarker = "TMB")
 
-nsclc_pred_first_tib <- pred_first_fit(gen_model = nsclc_gen_model, lambda = exp(seq(-18, -30, length.out = 100)), 
-                                       gene_lengths = ensembl_gene_lengths, training_matrix = nsclc_tables$train$matrix,
-                                       biomarker = "TIB")
-write_rds(x = nsclc_pred_first_tib, file = "data/results/nsclc_pred_first_tib")
+# nsclc_pred_first_tib <- pred_first_fit(gen_model = nsclc_gen_model, lambda = exp(seq(-18, -30, length.out = 100)), 
+#                                        gene_lengths = ensembl_gene_lengths, training_matrix = nsclc_tables$train$matrix,
+#                                        biomarker = "TIB")
+# write_rds(x = nsclc_pred_first_tib, file = "data/results/nsclc_pred_first_tib")
 
-# nsclc_pred_refit_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gene_lengths = ensembl_gene_lengths,
-#                                          biomarker = "TIB")
+nsclc_pred_first_tib <- read_rds("data/results/nsclc_pred_first_tib")
+nsclc_pred_refit_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gene_lengths = ensembl_gene_lengths,
+                                         biomarker = "TIB")
+nsclc_tib_values <- get_biomarker_tables(nsclc_maf, biomarker = "TIB")
+
 
 
 ### Figure 1
@@ -323,3 +326,28 @@ fig6 <- bind_rows(refit_stats_tmb, first_stats_tmb) %>%
   scale_linetype(name = "Procedure:", labels = list(TeX("Refitted $\\hat{T}$"), TeX("First-Fit $\\hat{T}$")))
 
 ggsave(filename = "figures/fig6.png", plot = fig6, height = 4, width = 8)
+
+
+
+### Figure 9 
+message("Creating Figure 9")
+
+
+
+first_stats_tib <- nsclc_pred_first_tib %>% 
+  get_predictions(new_data = nsclc_tables$val) %>% 
+  get_stats(biomarker_values = nsclc_tib_values$val, model = "First-fit T", threshold = 10)
+
+refit_stats_tib <- nsclc_pred_refit_tib %>% 
+  get_predictions(new_data = nsclc_tables$val) %>% 
+  get_stats(biomarker_values = nsclc_tib_values$val, model = "Refitted T", threshold = 10)
+
+fig9 <- bind_rows(refit_stats_tib, first_stats_tib) %>% 
+  mutate(type = if_else(metric == "R", "Regression ~ (R^2)", "Classification ~ (AUPRC)")) %>% 
+  mutate(type = factor(type, levels = c("Regression ~ (R^2)", "Classification ~ (AUPRC)"))) %>% 
+  mutate(panel_length = panel_length / 1000000) %>% 
+  ggplot(aes(x = panel_length, y = stat, linetype = model)) + geom_line() + ylim(0, 1) + 
+  theme_minimal() + facet_wrap(~type, labeller = label_parsed, strip.position = "top") + theme(legend.position = "bottom") + labs(x = "Panel Size (Mb)", y = "") +
+  scale_linetype(name = "Procedure:", labels = list(TeX("Refitted $\\hat{T}$"), TeX("First-Fit $\\hat{T}$")))
+
+ggsave(filename = "figures/fig9.png", plot = fig9, height = 4, width = 8)
