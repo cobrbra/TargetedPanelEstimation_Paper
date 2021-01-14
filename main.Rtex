@@ -296,6 +296,16 @@ The convex optimisation problem in \eqref{eq:wfirstfit} can be solved by any met
 Finally we describe a heuristic procedure for producing prediction intervals around our point estimates.  In particular, for a given confidence level $\alpha \in (0,1)$, we aim to find an interval $[\hat{T}_{\mathrm{L}}, \hat{T}_{\mathrm{U}}]$ such that $\mathbb{P}\bigl(\hat{T}_{\mathrm{L}} \leq T \leq \hat{T}_{\mathrm{U}}\bigr) \geq 1- \alpha.$  To that end, let $t_\alpha := \mathbb{E}\{(\hat{T} - T)^2\}/\alpha$, then by Markov's inequality, we have that $\mathbb{P}(|\hat{T} - T|^2 \geq t_\alpha) \leq \alpha$. It follows that $[\hat{T} - t_\alpha^{1/2} , \hat{T}+ t_\alpha^{1/2}]$ is a $(1-\alpha)$-prediction interval for $T$. Of course, the mean squared error $\mathbb{E}\{(\hat{T}-T)^2\}$ in \eqref{eq:MSE} depends on the parameters $\lambda, \eta, \nu$ and $\mu_0$, which are unknown.  Our heuristic approach is to plug-in the estimates $\hat{\lambda}, \hat{\eta}, \hat{\nu}$ (see \eqref{eq:genparams}) and replace $\mu_0$ with $\log(\hat{T}/\sum_{g,s}\ell_g\exp(\hat{\lambda}_g + \hat{\nu}_s + \hat{\eta}_{gs}))$. While this is not an exact $(1-\alpha)$-prediction interval for $T$,  we will see in our experimental results in Sections~\ref{sec:tmb}~and~\ref{sec:indel} that in practice this approach does provide intervals with valid empirical coverage.  
 
 \section{Experimental results \label{sec:experimentalresults}}
+
+<<>>=
+s3.intro.stats = 
+X = 2:10
+
+# Display basic statistical measures
+summary(X)
+
+@
+
 In this section we demonstrate the practical performance of our proposal using the dataset from \citet{campbell_distinct_2016}, which we introduced in Section~\ref{sec:dataterminology}. Our main focus is the prediction of \acrshort{tmb} due to its stature as an established biomarker, and we show that our approach is competitive with existing state-of-the-art methods. We also analyse the suitability of our generative model, consider the task of predicting the recently proposed biomarker \acrshort{tib}, and include a panel augmentation case study with the Foundation~One gene panel.
 
 Since we are only looking to produce estimators for \acrshort{tmb} and \acrshort{tib}, we group mutations in two categories so that $|S|=2$. These are \emph{indel mutations} and \emph{all other non-synonymous mutations}. This simplifies the presentation of our results and reduces the computational cost of fitting the generative model.  In order to assess the performance of each of the methods in this section, we randomly split the dataset into training, validation and test sets, which contain $n = 800, \ n_{val} = 171$ and $n_{test} = 173$ samples, respectively.  Mutations are observed in $|G| = 17358$ genes. Our training set comprises samples with an average TMB of 252 and TIB of 9.25. 
@@ -305,6 +315,8 @@ Since we are only looking to produce estimators for \acrshort{tmb} and \acrshort
 %In the following sections, we describe the fitted generative model and investigate the extent to its structure is reasonable, then separately address the performance of derived estimators of \acrshort{tmb} and \acrshort{tib}. We conclude with a case study into augmenting the Foundation~1 panel to predict \acrshort{tmb}.
 
 \subsection{Generative model fit and validation \label{sec:genmodelfit}}
+
+
 The first step in our analysis is to fit the model proposed in Section \ref{sec:genmodel} using only the training dataset. In particular, we obtain estimates of the model parameters using equation~\eqref{eq:genparams}, where the tuning parameter $\kappa_1$ is determined using 10-fold cross-validation as described in Section~\ref{sec:practicalconsiderations}.  The results of the cross-validation procedure are presented in Figure~\ref{fig:genmodelstats}. The best choice of $\kappa_1$ produces estimates of $\lambda$ and $\eta$ with $40.2\%$ and $76.2\%$ sparsity respectively, i.e. that proportion of their components are estimated to be exactly zero. We plot $\hat{\lambda}$ and $\hat{\eta}$ for this value of $\kappa_1$ in Figures \ref{fig:manhat_plot} and \ref{fig:manhat_plot_indel}. Genes with $\hat{\lambda}_g = 0$ are interpreted as mutating according to the background mutation rate, and genes with $\hat{\eta}_{\text{g,indel}} = 0$ are interpreted as having no specific selection pressure for or against indel mutations. In Figures \ref{fig:manhat_plot} and \ref{fig:manhat_plot_indel} we highlight genes with large parameter estimates, some of which have known biological relevance in oncology; see Section~\ref{sec:conclusion} for further discussion.   
 \begin{figure}[htbp]
 \centering
