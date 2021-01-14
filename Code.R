@@ -19,6 +19,8 @@ library(dplyr)
 library(readr)
 #install.packages("tidyr")
 library(tidyr)
+#install.package("latex2exp")
+library(latex2exp)
 
 ## Figures path
 fig_path <- "figures/"
@@ -41,7 +43,7 @@ nsclc_gen_model <- read_rds("data/results/nsclc_gen_model")
 
 
 ### Figure 1
-
+message("Creating Figure 1")
 
 
 ## Subfigure 1
@@ -87,6 +89,7 @@ ggsave(paste0(fig_path, "fig1.png"), fig1, width = 10, height = 4)
 
 
 ### Figure 2
+message("Creating Figure 2")
 
 
 
@@ -148,6 +151,7 @@ print(paste("TIB Mean:", tib_mean))
 
 
 ### Figure 3
+message("Creating Figure 3")
 
 
 
@@ -157,7 +161,112 @@ ggsave(paste0(fig_path, "fig3.png"), fig3, width = 10, height = 5)
 
 
 ### Figure 4
+message("Creating Figure 4")
+
+
+
+gene_locations <- nsclc_maf %>% 
+  mutate(Chromosome = if_else(Chromosome == "23", "X", Chromosome)) %>% 
+  mutate(Chromosome = if_else(Chromosome == "24", "Y", Chromosome)) %>% 
+  mutate(Start_Position = as.numeric(Start_Position)) %>% 
+  filter(Hugo_Symbol %in% nsclc_gen_model$names$gene_list) %>% 
+  select(Hugo_Symbol, Chromosome, Start_Position) %>% 
+  distinct() %>% 
+  group_by(Hugo_Symbol) %>% 
+  mutate(Position = mean(Start_Position)) %>% 
+  ungroup() %>% 
+  select(Hugo_Symbol, Chromosome, Position) %>% 
+  distinct() %>% 
+  arrange(Hugo_Symbol) %>% 
+  filter(Hugo_Symbol != lead(Hugo_Symbol))
+
+gene_locations_and_coefficients <- data.frame(Hugo_Symbol = nsclc_gen_model$names$gene_list, 
+                                              ns_coefficient = as.vector(nsclc_gen_model$fit$beta[seq(1,length(nsclc_gen_model$names$col_names), 2), nsclc_gen_model$s_min]), 
+                                              i_coefficient = as.vector(nsclc_gen_model$fit$beta[seq(2,length(nsclc_gen_model$names$col_names), 2), nsclc_gen_model$s_min])) %>% 
+  inner_join(gene_locations, by = "Hugo_Symbol")
+
+chromosomes <- c(1:22, "Y","X")
+chromosomes <- factor(chromosomes, chromosomes)
+names(chromosomes) <- chromosomes
+chrom_info <- gene_locations_and_coefficients %>% 
+  group_by(Chromosome) %>% 
+  mutate(Chromosome_length = max(Position)) %>% 
+  select(Chromosome, Chromosome_length) %>% 
+  distinct() %>% 
+  mutate(Chromosome = chromosomes[Chromosome]) %>% 
+  arrange(Chromosome) %>% 
+  filter(!is.na(Chromosome)) %>%
+  ungroup() 
+
+chrom_info[23,'Chromosome_length'] <- chrom_info[24, 'Chromosome_length']
+
+chrom_info  <- chrom_info %>% 
+  mutate(cum_chrom_length = cumsum(Chromosome_length))
+
+manhat_data <- gene_locations_and_coefficients %>% 
+  full_join(chrom_info, by = "Chromosome")
+
+extreme_data_ns <- manhat_data %>% 
+  arrange(ns_coefficient) %>% 
+  filter(!is.na(Chromosome)) %>% 
+  {.[(nrow(.) - 4):nrow(.),]}
+
+chrom_alternate <- rep(c(0,1), 12)
+names(chrom_alternate) <- names(chromosomes)
+
+fig4 <- manhat_data %>% 
+  filter(!is.na(Chromosome)) %>% 
+  mutate(full_position = cum_chrom_length + Position) %>% 
+  mutate(Chromosome = factor(chrom_alternate[Chromosome])) %>% 
+  ggplot(aes(x = full_position, y = ns_coefficient,colour = Chromosome, size = ns_coefficient)) + geom_point(alpha = 0.75) + 
+  geom_text_repel(data = extreme_data_ns, aes(x = cum_chrom_length + Position + 2.1*nchar(Hugo_Symbol)*10^7, y = ns_coefficient, label = Hugo_Symbol, colour= factor(chrom_alternate[Chromosome])), size = 3, position=position_jitter()) +
+  scale_x_continuous(label = names(chromosomes), breaks = chrom_info$cum_chrom_length + chrom_info$Chromosome_length/2 ) +
+  scale_color_manual(values = rep(c("#276FBF", "#183059"), 12)) +
+  scale_size_continuous(range = c(0.5,1)) +
+  labs(x = NULL, 
+       y = TeX("$\\hat{\\lambda}_g$")) + 
+  theme_minimal() +
+  theme( 
+    legend.position = "none",
+    panel.border = element_blank(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    axis.text.x = element_text(angle = 90, size = 8, vjust = 0.5)
+  )
+ggsave(filename = "figures/fig4.png", plot = fig4, width = 8, height = 4)
 
 
 
 ### Figure 5
+message("Creating Figure 5")
+
+
+extreme_data_i <- manhat_data %>% 
+  arrange(i_coefficient) %>% 
+  filter(!is.na(Chromosome)) %>% 
+  {.[c(1:5, (nrow(.) - 4):nrow(.)),]}
+
+fig5 <- manhat_data %>% 
+  filter(!is.na(Chromosome)) %>% 
+  mutate(full_position = cum_chrom_length + Position) %>% 
+  mutate(Chromosome = factor(chrom_alternate[Chromosome])) %>% 
+  ggplot(aes(x = full_position, y = i_coefficient,colour = Chromosome, size = i_coefficient)) + geom_point(alpha = 0.75) + 
+  geom_text_repel(data = extreme_data_i, aes(x = cum_chrom_length + Position + 2.1*nchar(Hugo_Symbol)*10^7, y = i_coefficient, label = Hugo_Symbol, colour= factor(chrom_alternate[Chromosome])), size = 3) +
+  scale_x_continuous(label = names(chromosomes), breaks = chrom_info$cum_chrom_length + chrom_info$Chromosome_length/2 ) +
+  scale_color_manual(values = rep(c("#276FBF", "#183059"), 12)) +
+  scale_size_continuous(range = c(0.5,1)) +
+  labs(x = NULL, 
+       y = TeX("$\\hat{\\lambda}_g$")) + 
+  theme_minimal() +
+  theme( 
+    legend.position = "none",
+    panel.border = element_blank(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    axis.text.x = element_text(angle = 90, size = 8, vjust = 0.5)
+  )
+ggsave(filename = "figures/fig5.png", plot = fig5, width = 8, height = 4)
+
+
+
+
