@@ -390,7 +390,7 @@ In order to evaluate the predictive performance of an estimator we calculate the
 \begin{figure}[ht]
 \centering
 \vspace{-5mm}
-\includegraphics[width=6in]{fig6.png}
+\includegraphics[width=6in]{figures/fig6.png}
 \vspace*{-5mm}
 \caption{Performance of our first-fit and refitted estimators of \acrshort{tmb} as the selected panel size varies. \textbf{Left}: $R^2$, \textbf{Right}: \acrshort{auprc}. \label{fig:EstimatorPerformance}}
 \vspace*{-2mm}
