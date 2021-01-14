@@ -36,10 +36,15 @@ nsclc_tables <- get_mutation_tables(maf = nsclc_maf, include_synonymous = FALSE,
 
 nsclc_gen_model <- read_rds("data/results/nsclc_gen_model")
 
-nsclc_pred_first_tmb <- pred_first_fit(gen_model = nsclc_gen_model, lambda = exp(seq(-18, -26, length.out = 100)), gene_lengths = ensembl_gene_lengths,
-                                        training_matrix = nsclc_tables$train$matrix)
-write_rds(x = nsclc_pred_first_tmb, file = "data/results/nsclc_pred_first_tmb")
-plot(nsclc_pred_first_tmb$panel_lengths)
+# nsclc_pred_first_tmb <- pred_first_fit(gen_model = nsclc_gen_model, lambda = exp(seq(-18, -26, length.out = 100)), 
+#                                         gene_lengths = ensembl_gene_lengths, training_matrix = nsclc_tables$train$matrix)
+# write_rds(x = nsclc_pred_first_tmb, file = "data/results/nsclc_pred_first_tmb")
+
+nsclc_pred_first_tmb <- read_rds("data/results/nsclc_pred_first_tmb")
+nsclc_pred_refit_tmb <- pred_refit_range(pred_first = nsclc_pred_first_tmb, gene_lengths = ensembl_gene_lengths)
+
+nsclc_tmb_values <- get_biomarker_tables(nsclc_maf, biomarker = "TMB")
+
 
 # nsclc_pred_refit_tmb <- pred_refit_range(pred_first = nsclc_pred_first_tmb,
                                          # gene_lengths = ensembl_gene_lengths)
@@ -289,3 +294,28 @@ s3.1.stats <- data.frame(ns_sparsity = ns_sparsity,
                          i_sparsity = i_sparsity)
 write_tsv(x = s3.1.stats, file = "data/results/s3.1.stats.tsv")
 
+
+
+### Figure 6
+message("Creating Figure 6")
+
+
+
+first_stats_tmb <- nsclc_pred_first_tmb %>% 
+  get_predictions(new_data = nsclc_tables$val) %>% 
+  get_stats(biomarker_values = nsclc_tmb_values$val, model = "First-fit T", threshold = 300)
+
+refit_stats_tmb <- nsclc_pred_refit_tmb %>% 
+  get_predictions(new_data = nsclc_tables$val) %>% 
+  get_stats(biomarker_values = nsclc_tmb_values$val, model = "Refitted T", threshold = 300)
+
+fig6 <- bind_rows(refit_stats_tmb, first_stats_tmb) %>% 
+  mutate(type = if_else(metric == "R", "Regression ~ (R^2)", "Classification ~ (AUPRC)")) %>% 
+  mutate(type = factor(type, levels = c("Regression ~ (R^2)", "Classification ~ (AUPRC)"))) %>% 
+  filter(panel_length <= 2000000) %>% 
+  mutate(panel_length = panel_length / 1000000) %>% 
+  ggplot(aes(x = panel_length, y = stat, linetype = model)) + geom_line() + ylim(0, 1) + 
+  theme_minimal() + facet_wrap(~type, labeller = label_parsed, strip.position = "top") + theme(legend.position = "bottom") + labs(x = "Panel Size (Mb)", y = "") +
+  scale_linetype(name = "Procedure:", labels = list(TeX("Refitted $\\hat{T}$"), TeX("First-Fit $\\hat{T}$")))
+
+ggsave(filename = "figures/fig6.png", plot = fig6, height = 4, width = 8)
