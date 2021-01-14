@@ -297,18 +297,14 @@ Finally we describe a heuristic procedure for producing prediction intervals aro
 
 \section{Experimental results \label{sec:experimentalresults}}
 
-<<>>=
-s3.intro.stats = 
-X = 2:10
-
-# Display basic statistical measures
-summary(X)
-
+<<echo = FALSE>>=
+# read in statistics
+s3.intro.stats = read.table(file = "data/results/s3.intro.stats.tsv", sep = '\t', head = TRUE)
 @
 
 In this section we demonstrate the practical performance of our proposal using the dataset from \citet{campbell_distinct_2016}, which we introduced in Section~\ref{sec:dataterminology}. Our main focus is the prediction of \acrshort{tmb} due to its stature as an established biomarker, and we show that our approach is competitive with existing state-of-the-art methods. We also analyse the suitability of our generative model, consider the task of predicting the recently proposed biomarker \acrshort{tib}, and include a panel augmentation case study with the Foundation~One gene panel.
 
-Since we are only looking to produce estimators for \acrshort{tmb} and \acrshort{tib}, we group mutations in two categories so that $|S|=2$. These are \emph{indel mutations} and \emph{all other non-synonymous mutations}. This simplifies the presentation of our results and reduces the computational cost of fitting the generative model.  In order to assess the performance of each of the methods in this section, we randomly split the dataset into training, validation and test sets, which contain $n = 800, \ n_{val} = 171$ and $n_{test} = 173$ samples, respectively.  Mutations are observed in $|G| = 17358$ genes. Our training set comprises samples with an average TMB of 252 and TIB of 9.25. 
+Since we are only looking to produce estimators for \acrshort{tmb} and \acrshort{tib}, we group mutations in two categories so that $|S|=2$. These are \emph{indel mutations} and \emph{all other non-synonymous mutations}. This simplifies the presentation of our results and reduces the computational cost of fitting the generative model.  In order to assess the performance of each of the methods in this section, we randomly split the dataset into training, validation and test sets, which contain $n =  \Sexpr{s3.intro.stats[['n_train_samples']]}, \ n_{val} =  \Sexpr{s3.intro.stats[['n_val_samples']]}$ and $n_{test} = \Sexpr{s3.intro.stats[['n_test_samples']]}$ samples, respectively.  Mutations are observed in $|G| = \Sexpr{s3.intro.stats[['n_genes']]}$ genes. Our training set comprises samples with an average TMB of $\Sexpr{signif(s3.intro.stats[['tmb_mean']], 3)}$ and TIB of $\Sexpr{signif(s3.intro.stats[['tib_mean']], 3)}$. 
 
 
 \tcnote{we are here!} 
