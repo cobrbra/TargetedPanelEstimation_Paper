@@ -12,4 +12,11 @@ export R_LIBS_USER=/exports/eddie/scratch/s1505825/R/library; . /etc/profile.d/m
 
 Rscript Code.R
 
-# Note to push from Eddie requires 'git push origin HEAD:master'
+
+# Notes to self on pushing from Eddie:
+#--------------------------------------
+
+# 1. Eddie sometimes seems to lose track of ssh keys. This can normally be fixed from the repository folder
+# with 'eval "$(ssh-agent -s)"; ssh-add ~/.ssh/id_rsa'. 
+
+# 2. To push from Eddie requires 'git push origin HEAD:master'.
