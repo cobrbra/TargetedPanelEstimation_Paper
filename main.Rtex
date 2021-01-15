@@ -256,9 +256,10 @@ Now, given a cost restriction $L$, our goal is to minimise $f(w)$ such that $\|w
 where $\kappa_2 \geq 0$ is chosen to determine the size of the panel selected.
 
 The final form of our estimator is obtained by a refitting procedure. First, for $P\subseteq G$, let
-\[
+\begin{equation}
+    \label{eq:Wp}
 W_{P} := \{ w \in \mathbb{R}^{|G| \times |S|} : w_g = (0, \ldots, 0) \ \ \text{for} \ \ g \in G\setminus P \}.
-\] 
+\end{equation}
 Let $\hat{P} := \{g \in G: \ \|\hat{w}^{\text{first-fit}}_g\|_2 > 0 \}$ be the panel selected by the first-fit estimator in~\eqref{eq:wfirstfit}, and define  
 \begin{equation} 
 \label{eq:wrefit}
@@ -293,7 +294,7 @@ The estimated coefficients in \eqref{eq:wfirstfit} depend on the choice of $K(\m
 
 The convex optimisation problem in \eqref{eq:wfirstfit} can be solved by any method designed for the group \acrshort{lasso}; see, for example, \citet{yang_fast_2015}. In our experiments in Section~\ref{sec:experimentalresults}, we use the \texttt{gglasso} R package \citep{yang_gglasso_2020}. Note also that the solutions to \eqref{eq:wfirstfit} and \eqref{eq:wrefit} are unique; see \citet[Theorem~1]{roth_group-lasso_2008}.
 
-Finally we describe a heuristic procedure for producing prediction intervals around our point estimates.  In particular, for a given confidence level $\alpha \in (0,1)$, we aim to find an interval $[\hat{T}_{\mathrm{L}}, \hat{T}_{\mathrm{U}}]$ such that $\mathbb{P}\bigl(\hat{T}_{\mathrm{L}} \leq T \leq \hat{T}_{\mathrm{U}}\bigr) \geq 1- \alpha.$  To that end, let $t_\alpha := \mathbb{E}\{(\hat{T} - T)^2\}/\alpha$, then by Markov's inequality, we have that $\mathbb{P}(|\hat{T} - T|^2 \geq t_\alpha) \leq \alpha$. It follows that $[\hat{T} - t_\alpha^{1/2} , \hat{T}+ t_\alpha^{1/2}]$ is a $(1-\alpha)$-prediction interval for $T$. Of course, the mean squared error $\mathbb{E}\{(\hat{T}-T)^2\}$ in \eqref{eq:MSE} depends on the parameters $\lambda, \eta, \nu$ and $\mu_0$, which are unknown.  Our heuristic approach is to plug-in the estimates $\hat{\lambda}, \hat{\eta}, \hat{\nu}$ (see \eqref{eq:genparams}) and replace $\mu_0$ with $\log(\hat{T}/\sum_{g,s}\ell_g\exp(\hat{\lambda}_g + \hat{\nu}_s + \hat{\eta}_{gs}))$. While this is not an exact $(1-\alpha)$-prediction interval for $T$,  we will see in our experimental results in Sections~\ref{sec:tmb}~and~\ref{sec:indel} that in practice this approach does provide intervals with valid empirical coverage.  
+Finally we describe a heuristic procedure for producing prediction intervals around our point estimates.  In particular, for a given confidence level $\alpha \in (0,1)$, we aim to find an interval $[\hat{T}_{\mathrm{L}}, \hat{T}_{\mathrm{U}}]$ such that $\mathbb{P}\bigl(\hat{T}_{\mathrm{L}} \leq T \leq \hat{T}_{\mathrm{U}}\bigr) \geq 1- \alpha.$  To that end, let $t_\alpha := \mathbb{E}\{(\hat{T} - T)^2\}/\alpha$, then by Markov's inequality, we have that $\mathbb{P}(|\hat{T} - T|^2 \geq t_\alpha) \leq \alpha$. It follows that $[\hat{T} - t_\alpha^{1/2} , \hat{T}+ t_\alpha^{1/2}]$ is a $(1-\alpha)$-prediction interval for $T$. Of course, the mean squared error $\mathbb{E}\{(\hat{T}-T)^2\}$ in \eqref{eq:MSE} depends on the parameters $\lambda, \eta, \nu$ and $\mu_0$, which are unknown.  Our approach is to utilise the estimates $\hat{\lambda}, \hat{\eta}, \hat{\nu}$ (see \eqref{eq:genparams}) and replace $\mu_0$ with $\log(\hat{T}/\sum_{g,s}\ell_g\exp(\hat{\lambda}_g + \hat{\nu}_s + \hat{\eta}_{gs}))$. While this is not an exact $(1-\alpha)$-prediction interval for $T$,  we will see in our experimental results in Sections~\ref{sec:tmb}~and~\ref{sec:indel} that in practice this approach does provide intervals with valid empirical coverage.  
 
 \section{Experimental results \label{sec:experimentalresults}}
 
@@ -377,27 +378,24 @@ In order to evaluate the predictive performance of an estimator we calculate the
     R^2 := 1- \frac{\sum_{i =1}^{n_{val}}(t_i - \hat{t}_i)^2}{\sum_{i = 1}^{n_{val}}(t_i - \bar{t})^2}. 
     \]
     
- While it's not the focus of our approach, other works aim to classify tumours into two groups (High \acrshort{tmb}, Low \acrshort{tmb}) \citep{buttner_implementing_2019, wu_designing_2019}. We therefore also report the estimated area under the precision-recall curve (\acrshort{auprc}) for a classifier based on our estimator. The \acrshort{auprc} is calculated as follows: first, in line with major clinical studies \citep[see, for example,][]{hellmann_nivolumab_2018, ramalingam_abstract_2018}, the true class membership of a tumour is defined according to whether it has $t^* := 300$ or more exome mutations (approximately 10 Mut/Mb). In the validation set, this gives 53 (30.8\%) tumours with high \acrshort{tmb} and 119 (69.2\%) with low \acrshort{tmb}. \tcnote{we are here} Now, for a cutoff $t \geq 0$, let 
+ While it's not the focus of our approach, other works aim to classify tumours into two groups (high \acrshort{tmb}, low \acrshort{tmb}) \citep{buttner_implementing_2019, wu_designing_2019}. We therefore also report the estimated area under the precision-recall curve (\acrshort{auprc}) for a classifier based on our estimator as follows: first, in line with major clinical studies \citep[see, for example,][]{hellmann_nivolumab_2018, ramalingam_abstract_2018}, the true class membership of a tumour is defined according to whether it has $t^* := 300$ or more exome mutations (approximately 10 Mut/Mb). In the validation set, this gives 53 (30.8\%) tumours with high \acrshort{tmb} and 119 (69.2\%) with low \acrshort{tmb}. Now, for a cutoff $t \geq 0$, we can define a classifier by assigning a tumour to the high \acrshort{tmb} class if its estimated \acrshort{tmb} value is greater than or equal to $t$.  For such a classifier, we have precision and recall (estimated over the validation set) given by
  \[
- p(t) := \frac{\sum_{i=1}^{n_{val}} \mathbbm{1}_{\{\hat{t}_i \geq t, \ t_i \geq t^*\}}}{\sum_{i=1}^{n_{val}} \mathbbm{1}_{\{\hat{t}_i \geq t\}}}; \quad  r(t) := \frac{\sum_{i=1}^{n_{val}} \mathbbm{1}_{\{\hat{t}_i \geq t, \ t_i \geq t^*\}}}{\sum_{i=1}^{n_{val}} \mathbbm{1}_{\{t_i \geq t^*\}}}
+ p(t) := \frac{\sum_{i=1}^{n_{val}} \mathbbm{1}_{\{\hat{t}_i \geq t, \ t_i \geq t^*\}}}{\sum_{i=1}^{n_{val}} \mathbbm{1}_{\{\hat{t}_i \geq t\}}} \quad \text{and} \quad   r(t) := \frac{\sum_{i=1}^{n_{val}} \mathbbm{1}_{\{\hat{t}_i \geq t, \ t_i \geq t^*\}}}{\sum_{i=1}^{n_{val}} \mathbbm{1}_{\{t_i \geq t^*\}}},
  \]
- be the estimated (over the validation set) precision and recall, respectively, of a classifier that assigns a tumour to the High \acrshort{tmb} class if its estimated \acrshort{tmb} is greater than or equal to $t$.  The precision-recall curve is $\{(r(t),p(t)): t \in [0, \infty)\}$. Note that a perfect classifier achieves a \acrshort{auprc} of 1, whereas a random guess in this case would have an average \acrshort{auprc} of 0.308 (the prevalence of the High \acrshort{tmb} class).
-% although standardisation of TMB thresholds is an open endeavour \citep{chang_p086_2018, stenzinger_tumor_2019}. 
-%$R^2$ score and Area Under Precision/Recall Curve (\acrshort{auprc}). 
+respectively.  The precision-recall curve then is $\{(r(t),p(t)): t \in [0, \infty)\}$. Note that a perfect classifier achieves a \acrshort{auprc} of 1, whereas a random guess in this case would have an average \acrshort{auprc} of 0.308 (the prevalence of the high \acrshort{tmb} class).
 
-%For predictions $\hat{t}_i \ (i \in \{1,\ldots, n_{val}\})$, where $n_{val}$ is the number of validation samples, of true TMB scores $t_i$ with mean $\bar{t}_i$, we take  
+Now recall that \acrshort{tmb} is given by equation~\eqref{eq:biomarker} with $\bar{S}$ being the set of all non-synonymous mutation types. Thus to estimate \acrshort{tmb} we apply our procedure in Section~\ref{sec:linearestimator} with $\bar{S} = S$, where the model parameters are estimated as described in Section~\ref{sec:genmodelfit}. In Figure~\ref{fig:EstimatorPerformance}, we present the $R^2$ and \acrshort{auprc} for the first-fit and refitted estimators (see~\eqref{eq:wfirstfit} and~\eqref{eq:wrefit}) as the selected panel size varies from 0Mb to 2Mb in length. We see that we obtain a more accurate prediction of \acrshort{tmb}, both in terms of regression and classification, as the panel size increases, and that good estimation is possible even with very small panels (as low as 0.25Mb). %For panels less than length 0.25Mb, estimation of \acrshort{tmb} is challenging. 
+Finally, as expected, the refitted estimator slightly outperforms the first-fit estimator. 
 
 \begin{figure}[ht]
 \centering
-\vspace{-5mm}
+\vspace{-3mm}
 \includegraphics[width=6in]{figures/fig6.png}
 \vspace*{-5mm}
 \caption{Performance of our first-fit and refitted estimators of \acrshort{tmb} as the selected panel size varies. \textbf{Left}: $R^2$, \textbf{Right}: \acrshort{auprc}. \label{fig:EstimatorPerformance}}
 \vspace*{-2mm}
 \end{figure}
 
-Recall that \acrshort{tmb} is given by equation~\eqref{eq:biomarker} with $\bar{S}$ being the set of all non-synonymous mutation types. Thus to estimate \acrshort{tmb} we apply our procedure in Section~\ref{sec:linearestimator} with $\bar{S} = S$, where the model parameters are estimated as described in Section~\ref{sec:genmodelfit}. In Figure~\ref{fig:EstimatorPerformance}, we present the $R^2$ and \acrshort{auprc} for the first-fit and refitted estimators (see~\eqref{eq:wfirstfit} and~\eqref{eq:wrefit}, respectively) as the selected panel size varies from 0Mb to 2Mb in length. We see that we obtain a more accurate prediction of \acrshort{tmb}, both in terms of regression and classification, as the panel size increases, and that good estimation is possible even with very small panels (as low as 0.25Mb). %For panels less than length 0.25Mb, estimation of \acrshort{tmb} is challenging. 
-Finally, as expected, the refitted estimator slightly outperforms the first-fit estimator. 
 
 %We see elevated performance in our refitted estimator compared to the first-fit, and a sharp increase in predictive performance up to panel size around 0.25Mb, and then stably increasing performance for larger panel sizes. We see a similar trend with an even sharper corner when it comes to classification performance, as shown in Figure~\ref{fig:TvLvRF_class}.
 
@@ -408,15 +406,15 @@ Finally, as expected, the refitted estimator slightly outperforms the first-fit 
 % \caption{\jbnote{Get rid of correlation. Separate into three plots (second two may well disappear}\textbf{A}: Performance of regression to predict \acrshort{tmb} at different panel sizes, utilising a range of panel selection/prediction techniques (linear/generalised lasso and random forests). Regression metrics $R^2$ and correlation are shown on our validation dataset. \textbf{B}: The same comparisons, this time for classification, using area under receiver-operator characteristic and precision-recall curves as predictive metrics. \label{fig:TvLvPwithCRP}}
 % \end{figure}
 
-We now compare our method with state-of-the-art estimators applied to commonly used gene panels. The four next generation sequencing panels, Foundation~One \citep{frampton_development_2013}, MSK-IMPACT \citep{cheng_memorial_2015}, TST-170 \citep{heydt_evaluation_2018} and TSO-500 \citep{pestinger_use_2020}, are chosen for their relevance to \acrshort{tmb}. For each panel $P \subseteq G$, we use four different methods to predict \acrshort{tmb}:
+We now compare our method with state-of-the-art estimators applied to commonly used gene panels. The four next-generation sequencing panels that we consider are chosen for their relevance to \acrshort{tmb}. These are Foundation~One \citep{frampton_development_2013}, MSK-IMPACT \citep{cheng_memorial_2015}, TST-170 \citep{heydt_evaluation_2018} and TSO-500 \citep{pestinger_use_2020}. For each panel $P \subseteq G$, we use four different methods to predict \acrshort{tmb}:
 \begin{enumerate}[(i)]
- \item Our refitted estimator applied to the panel $P$: we estimate \acrshort{tmb} using $T(\hat{w}_P)$, where $\hat{w}_P \in \argmin_{w \in W_P} \{f(w)\}$. 
+ \item Our refitted estimator applied to the panel $P$: we estimate \acrshort{tmb} using $T(\hat{w}_P)$, where $\hat{w}_P \in \argmin_{w \in W_P} \{f(w)\}$, and $W_P$ is defined in \eqref{eq:Wp}. 
  \item \acrshort{ectmb}: the procedure proposed by \citet{yao_ectmb_2020}.
 %  \item A ridge regression model, learned on the training dataset and on the genes in the panel, and optimised by cross-validation.
- \item A count estimator: we estimate \acrshort{tmb} with $\frac{\ell_G}{\ell_P} \sum_{g \in P} \sum_{s \in S}M_{0gs}$, i.e. simply rescaling the mutation burden in the genes of $P$. 
- \item A linear model: we estimate \acrshort{tmb} with ordinary linear regression of \acrshort{tmb} against $\{M_{0gs}: g \in P, s \in S\}$.
+ \item A count estimator: \acrshort{tmb} is estimated by $\frac{\ell_G}{\ell_P} \sum_{g \in P} \sum_{s \in \bar{S}}M_{0gs}$, i.e.  rescaling the mutation burden in the genes of $P$. 
+ \item A linear model: we estimate \acrshort{tmb} via ordinary least-squares linear regression of \acrshort{tmb} against $\{M_{0gs}: g \in P, s \in S\}$.
 \end{enumerate}
-We include our refitted estimator applied to the panel $P$ in order to demonstrate the utility of our approach, even with a prespecified panel. The second approach is a recent method, based on a negative binomial model. The third and fourth are simple and standard practical procedures for inferring \acrshort{tmb} from targeted gene panels. 
+The latter three comprise the existing methods available to practitioners. The second (\acrshort{ectmb}), which is based on a negative binomial model, is the state-of-the-art. The third and fourth are standard practical procedures for the estimation of \acrshort{tmb} from targeted gene panels. The refitted estimator applied to the panel $P$ is also included here, in order to demonstrate the utility of our approach even with a prespecified panel.
 
 
 \begin{figure}[htbp]
@@ -481,7 +479,7 @@ We let $S_{\text{indel}}$ be the set of all frameshift insertion and deletion mu
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=6in]{fig9.png}
+\includegraphics[width=6in]{figures/fig9.png}
 \vspace*{-5mm}
 \caption{Performance of our first-fit and refitted estimators of \acrshort{tib} as the selected panel size varies. \textbf{Left}: $R^2$, \textbf{Right}: \acrshort{auprc}. \label{fig:indelstatsplot}}
 \vspace*{-2mm}
