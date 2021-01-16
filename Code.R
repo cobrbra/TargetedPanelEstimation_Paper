@@ -28,19 +28,25 @@ fig_path <- "figures/"
 
 
 ### Main workflow
+message("Getting tables")
 nsclc_tables <- get_mutation_tables(maf = nsclc_maf, include_synonymous = FALSE,
                                     acceptable_genes = ensembl_gene_lengths$Hugo_Symbol)
+
+message("Getting generative model")
 # nsclc_gen_model <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = nsclc_tables$train,
 #                                  progress = TRUE)
 # write_rds(x = nsclc_gen_model, file = "data/results/nsclc_gen_model")
 
 nsclc_gen_model <- read_rds("data/results/nsclc_gen_model")
 
+message("Getting first-fit")
 # nsclc_pred_first_tmb <- pred_first_fit(gen_model = nsclc_gen_model, lambda = exp(seq(-18, -26, length.out = 100)), 
 #                                         gene_lengths = ensembl_gene_lengths, training_matrix = nsclc_tables$train$matrix)
 # write_rds(x = nsclc_pred_first_tmb, file = "data/results/nsclc_pred_first_tmb")
 
 nsclc_pred_first_tmb <- read_rds("data/results/nsclc_pred_first_tmb")
+
+message("Getting refit")
 nsclc_pred_refit_tmb <- pred_refit_range(pred_first = nsclc_pred_first_tmb, gene_lengths = ensembl_gene_lengths)
 
 nsclc_tmb_values <- get_biomarker_tables(nsclc_maf, biomarker = "TMB")
@@ -55,7 +61,11 @@ nsclc_pred_refit_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gene
                                          biomarker = "TIB")
 nsclc_tib_values <- get_biomarker_tables(nsclc_maf, biomarker = "TIB")
 
+message("Getting count estimators")
+nsclc_pred_count_tmb <- pred_refit_range(pred_first = nsclc_pred_first_tmb, gene_lengths = ensembl_gene_lengths, model = "Count", biomarker = "TMB", training_matrix = nsclc_tables$train$matrix, training_values = nsclc_tmb_values$train)
+nsclc_pred_count_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gene_lengths = ensembl_gene_lengths, model = "Count", biomarker = "TIB", training_matrix = nsclc_tables$train$matrix, training_values = nsclc_tib_values$train)
 
+message("Getting OLM estimators")
 
 ### Figure 1
 message("Creating Figure 1")
@@ -351,3 +361,32 @@ fig9 <- bind_rows(refit_stats_tib, first_stats_tib) %>%
   scale_linetype(name = "Procedure:", labels = list(TeX("Refitted $\\hat{T}$"), TeX("First-Fit $\\hat{T}$")))
 
 ggsave(filename = "figures/fig9.png", plot = fig9, height = 4, width = 8)
+
+
+
+### Figure 10
+message("Creating Figure 10")
+
+refit_predictions_tib <- nsclc_pred_refit_tib %>% 
+  get_predictions(new_data = nsclc_tables$test) %>% 
+  pred_intervals(pred_model = nsclc_pred_refit_tib, biomarker_values = nsclc_tib_values$test,
+                 gen_model = nsclc_gen_model, training_matrix = nsclc_tables$train$matrix, 
+                 gene_lengths = ensembl_gene_lengths, max_panel_length = 1000000, biomarker = "TIB") 
+
+count_predictions_tib <- nsclc_pred_count_tib %>% 
+  get_predictions(new_data = nsclc_tables$test, max_panel_length = 1000000) %>% 
+  {data.frame(estimated_value = .$predictions[nsclc_tib_values$test[["Tumor_Sample_Barcode"]],], 
+              true_value = nsclc_tib_values$test[["TIB"]], 
+              model = "Count", lower = NA, upper = NA)}
+
+fig10 <- bind_rows(refit_predictions_tib$prediction_intervals, count_predictions_tib) %>% 
+  {ggplot() + geom_point(data = ., aes(x = true_value, y = estimated_value), size = 0.5) + facet_wrap(~model) + 
+  geom_ribbon(data = refit_predictions_tib$confidence_region, aes(x = x, ymin = y_lower, ymax = y_upper), 
+              alpha = 0.2, fill = "red") +
+  geom_abline(colour = "blue", linetype = 2) +
+  geom_hline(yintercept = 10, alpha = 0.5, linetype = 2) + 
+  geom_vline(xintercept = 10, alpha = 0.5, linetype = 2) +
+  scale_x_log10() + scale_y_log10() + theme_minimal() + labs(x = "True TIB", y = "Predicted TIB")}
+
+ggsave(filename = "figures/fig10.png", plot = fig10, height = 3, width = 8)
+
