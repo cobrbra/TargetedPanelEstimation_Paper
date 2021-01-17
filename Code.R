@@ -66,6 +66,10 @@ nsclc_pred_count_tmb <- pred_refit_range(pred_first = nsclc_pred_first_tmb, gene
 nsclc_pred_count_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gene_lengths = ensembl_gene_lengths, model = "Count", biomarker = "TIB", training_matrix = nsclc_tables$train$matrix, training_values = nsclc_tib_values$train)
 
 message("Getting OLM estimators")
+nsclc_pred_linear_tmb <- pred_refit_range(pred_first = nsclc_pred_first_tmb, gene_lengths = ensembl_gene_lengths, 
+                                          model = "OLM", biomarker = "TMB", training_matrix = nsclc_tables$train$matrix, training_values = nsclc_tmb_values$train, max_panel_length = 1000000)
+nsclc_pred_linear_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gene_lengths = ensembl_gene_lengths, 
+                                          model = "OLM", biomarker = "TIB", training_matrix = nsclc_tables$train$matrix, training_values = nsclc_tib_values$train, max_panel_length = 1000000)
 
 ### Figure 1
 message("Creating Figure 1")
@@ -379,8 +383,16 @@ count_predictions_tib <- nsclc_pred_count_tib %>%
               true_value = nsclc_tib_values$test[["TIB"]], 
               model = "Count", lower = NA, upper = NA)}
 
-fig10 <- bind_rows(refit_predictions_tib$prediction_intervals, count_predictions_tib) %>% 
-  {ggplot() + geom_point(data = ., aes(x = true_value, y = estimated_value), size = 0.5) + facet_wrap(~model) + 
+linear_predictions_tib <- nsclc_pred_count_tib %>% 
+  get_predictions(new_data = nsclc_tables$test, max_panel_length = 1000000) %>% 
+  {data.frame(estimated_value = .$predictions[nsclc_tib_values$test[["Tumor_Sample_Barcode"]],], 
+              true_value = nsclc_tib_values$test[["TIB"]], 
+              model = "Linear", lower = NA, upper = NA)}
+
+
+
+fig10 <- bind_rows(refit_predictions_tib$prediction_intervals, count_predictions_tib, linear_predictions_tib) %>% 
+  {ggplot() + geom_point(data = ., aes(x = true_value, y = estimated_value), size = 0.5) + facet_wrap(~model, nrow = 2) + 
   geom_ribbon(data = refit_predictions_tib$confidence_region, aes(x = x, ymin = y_lower, ymax = y_upper), 
               alpha = 0.2, fill = "red") +
   geom_abline(colour = "blue", linetype = 2) +
