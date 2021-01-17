@@ -489,7 +489,7 @@ The results are presented in Figure \ref{fig:indelstatsplot}. We comment first o
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=6in]{fig10.png}
+\includegraphics[width=6in]{figures/fig10.png}
 \vspace*{-5mm}
 \caption{Prediction of TIB on the test dataset. Dashed blue (diagonal) line represents perfect prediction, and the grey dashed lines indicate true and predicted TIB values of 11. %Red shaded area delineates region for which 90\% prediction intervals contain truth.
 \label{fig:indel_predictions_figure}}
