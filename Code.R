@@ -62,8 +62,8 @@ nsclc_pred_refit_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gene
 nsclc_tib_values <- get_biomarker_tables(nsclc_maf, biomarker = "TIB")
 
 message("Getting count estimators")
-nsclc_pred_count_tmb <- pred_refit_range(pred_first = nsclc_pred_first_tmb, gene_lengths = ensembl_gene_lengths, model = "Count", biomarker = "TMB", training_matrix = nsclc_tables$train$matrix, training_values = nsclc_tmb_values$train)
-nsclc_pred_count_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gene_lengths = ensembl_gene_lengths, model = "Count", biomarker = "TIB", training_matrix = nsclc_tables$train$matrix, training_values = nsclc_tib_values$train)
+nsclc_pred_count_tmb <- pred_refit_range(pred_first = nsclc_pred_first_tmb, gene_lengths = ensembl_gene_lengths, model = "Count", biomarker = "TMB", training_data = nsclc_tables$train, training_values = nsclc_tmb_values$train)
+nsclc_pred_count_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gene_lengths = ensembl_gene_lengths, model = "Count", biomarker = "TIB", training_data = nsclc_tables$train, training_values = nsclc_tib_values$train)
 
 message("Getting OLM estimators")
 # To give linear estimators a fighting chance, we train them on data than isn't 
