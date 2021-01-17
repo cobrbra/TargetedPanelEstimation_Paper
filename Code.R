@@ -66,10 +66,15 @@ nsclc_pred_count_tmb <- pred_refit_range(pred_first = nsclc_pred_first_tmb, gene
 nsclc_pred_count_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gene_lengths = ensembl_gene_lengths, model = "Count", biomarker = "TIB", training_matrix = nsclc_tables$train$matrix, training_values = nsclc_tib_values$train)
 
 message("Getting OLM estimators")
+# To give linear estimators a fighting chance, we train them on data than isn't 
+# separated into indel/non-indel (this helps with overfitting).
+
+nsclc_linear_tables <- get_mutation_tables(maf = nsclc_maf, acceptable_genes = ensembl_gene_lengths$Hugo_Symbol, for_biomarker = "TMB", include_synonymous = FALSE)
+
 nsclc_pred_linear_tmb <- pred_refit_range(pred_first = nsclc_pred_first_tmb, gene_lengths = ensembl_gene_lengths, 
-                                          model = "OLM", biomarker = "TMB", training_matrix = nsclc_tables$train$matrix, training_values = nsclc_tmb_values$train, max_panel_length = 1000000)
+                                          model = "OLM", biomarker = "TMB", training_data = nsclc_linear_tables$train, training_values = nsclc_tmb_values$train, max_panel_length = 1000000)
 nsclc_pred_linear_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gene_lengths = ensembl_gene_lengths, 
-                                          model = "OLM", biomarker = "TIB", training_matrix = nsclc_tables$train$matrix, training_values = nsclc_tib_values$train, max_panel_length = 1000000)
+                                          model = "OLM", biomarker = "TIB", training_data = nsclc_linear_tables$train, training_values = nsclc_tib_values$train, max_panel_length = 1000000)
 
 ### Figure 1
 message("Creating Figure 1")
@@ -383,8 +388,8 @@ count_predictions_tib <- nsclc_pred_count_tib %>%
               true_value = nsclc_tib_values$test[["TIB"]], 
               model = "Count", lower = NA, upper = NA)}
 
-linear_predictions_tib <- nsclc_pred_count_tib %>% 
-  get_predictions(new_data = nsclc_tables$test, max_panel_length = 1000000) %>% 
+linear_predictions_tib <- nsclc_pred_linear_tib %>% 
+  get_predictions(new_data = nsclc_linear_tables$test, max_panel_length = 1000000) %>% 
   {data.frame(estimated_value = .$predictions[nsclc_tib_values$test[["Tumor_Sample_Barcode"]],], 
               true_value = nsclc_tib_values$test[["TIB"]], 
               model = "Linear", lower = NA, upper = NA)}
@@ -400,5 +405,5 @@ fig10 <- bind_rows(refit_predictions_tib$prediction_intervals, count_predictions
   geom_vline(xintercept = 10, alpha = 0.5, linetype = 2) +
   scale_x_log10() + scale_y_log10() + theme_minimal() + labs(x = "True TIB", y = "Predicted TIB")}
 
-ggsave(filename = "figures/fig10.png", plot = fig10, height = 3, width = 8)
+ggsave(filename = "figures/fig10.png", plot = fig10, height = 6, width = 8)
 
