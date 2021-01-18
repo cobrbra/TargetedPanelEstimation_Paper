@@ -6,6 +6,10 @@ library(devtools)
 #devtools::install_github("cobrbra/ICBioMark", upgrade = "ask")
 library(ICBioMark)
 
+## ecTMB Package
+#
+library(ecTMB)
+
 ## Other R packages needed
 #install.packages("cowplot")
 library(cowplot)
@@ -75,6 +79,28 @@ nsclc_pred_linear_tmb <- pred_refit_range(pred_first = nsclc_pred_first_tmb, gen
                                           model = "OLM", biomarker = "TMB", training_data = nsclc_linear_tables$train, training_values = nsclc_tmb_values$train, max_panel_length = 1000000)
 nsclc_pred_linear_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gene_lengths = ensembl_gene_lengths, 
                                           model = "OLM", biomarker = "TIB", training_data = nsclc_linear_tables$train, training_values = nsclc_tib_values$train, max_panel_length = 1000000)
+
+
+
+### ecTMB Workflow
+extdataDir = "./data/ecTMB_data/references"
+exomef                 = file.path(extdataDir, "exome_hg38_vep.Rdata" )  #### hg38 exome file
+covarf                 = file.path(extdataDir,"gene.covar.txt")   ### gene properties
+mutContextf            = file.path(extdataDir,"mutation_context_96.txt" )  ### 96 mutation contexts
+TST170_panel           = file.path(extdataDir,"TST170_DNA_targets_hg38.bed" )  ### 96 mutation contexts
+ref                    = file.path(extdataDir,"GRCh38.d1.vd1.fa" )
+
+nsclc_maf_grch38 <- read_tsv("data/nsclc_maf_GRCh38.tsv") %>%
+  select(-X1)
+
+# URL = "https://github.com/bioinform/ecTMB/releases/download/v0.1.0/ecTMB_data.tar.gz"
+# download.file(URL,destfile = "data/ecTMB.example.tar.gz")
+# untar("./data/ecTMB.example.tar.gz")
+# 
+# URL_ref = "https://api.gdc.cancer.gov/data/254f697d-310d-4d7d-a27b-27fbf767a834"
+# download.file(URL_ref,destfile = "./data/ecTMB_data/GRCh38.d1.vd1.fa.tar.gz")
+# untar("./data/ecTMB_data/GRCh38.d1.vd1.fa.tar.gz")
+
 
 ### Figure 1
 message("Creating Figure 1")
