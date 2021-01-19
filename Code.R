@@ -90,20 +90,121 @@ mutContextf            = file.path(extdataDir,"mutation_context_96.txt" )  ### 9
 TST170_panel           = file.path(extdataDir,"TST170_DNA_targets_hg38.bed" )  ### 96 mutation contexts
 ref                    = file.path(extdataDir,"GRCh38.d1.vd1.fa" )
 
-nsclc_maf_grch38 <- read_tsv("data/nsclc_maf_GRCh38.tsv") %>%
-  select(-X1)
-
-# URL = "https://github.com/bioinform/ecTMB/releases/download/v0.1.0/ecTMB_data.tar.gz"
-# download.file(URL,destfile = "data/ecTMB.example.tar.gz")
-# untar("./data/ecTMB.example.tar.gz")
+# nsclc_maf_grch38 <- read_tsv("data/nsclc_maf_grch38.tsv", comment = "#") 
 # 
-# URL_ref = "https://api.gdc.cancer.gov/data/254f697d-310d-4d7d-a27b-27fbf767a834"
-# download.file(URL_ref,destfile = "./data/ecTMB_data/GRCh38.d1.vd1.fa.tar.gz")
-# untar("./data/ecTMB_data/GRCh38.d1.vd1.fa.tar.gz")
+# # URL = "https://github.com/bioinform/ecTMB/releases/download/v0.1.0/ecTMB_data.tar.gz"
+# # download.file(URL,destfile = "data/ecTMB.example.tar.gz")
+# # untar("./data/ecTMB.example.tar.gz")
+# # 
+# # URL_ref = "https://api.gdc.cancer.gov/data/254f697d-310d-4d7d-a27b-27fbf767a834"
+# # download.file(URL_ref,destfile = "./data/ecTMB_data/GRCh38.d1.vd1.fa.tar.gz")
+# # untar("./data/ecTMB_data/GRCh38.d1.vd1.fa.tar.gz")
+# 
+# # trainset = nsclc_maf_grch38 %>% 
+# #   filter(Tumor_Sample_Barcode %in% nsclc_tables$train$sample_list) %>% 
+# #   filter(!(Tumor_Sample_Barcode %in% "TCGA-86-A4P8-01")) %>% #hacky solution: There were no non-silent mutations in this observation, which was breaking ecTMB
+# #   readData(exomef = exomef, covarf = covarf, mutContextf = mutContextf, ref = ref)
+# # write_rds(x = trainset, file = "data/temporary_storage/trainset")
+# 
+# trainset <- read_rds("data/temporary_storage/trainset")
+# 
+# # MRtriProb = getBgMRtri(trainset)
+# # 
+# # trainedModel = fit_model(trainset, MRtriProb, cores = 1)
+# # write_rds(trainedModel, "data/temporary_storage/trainedModel")
+# 
+# trainedModel = read_rds("data/temporary_storage/trainedModel")
+# 
+# TSO_500_panel <- "data/tso_500_bed.bed"
+# F1_panel <- "data/foundation_bed.bed"
+# MSK_panel <- "data/msk_impact_bed.bed"
+# TST_170_panel <- "data/tst_170_bed.bed"
+
+# # valset_WES <- nsclc_maf_grch38 %>% 
+# #   filter(Tumor_Sample_Barcode %in% nsclc_tables$val$sample_list) %>% 
+# #   readData(exomef, covarf, mutContextf, ref)
+# # write_rds(valset_WES, "data/temporary_storage/valset_WES")
+# valset_WES <- read_rds("data/temporary_storage/valset_WES")
+# 
+# ## TST-170 Panel
+# sample_tst_170_val = data.frame(SampleID = nsclc_tables$val$sample_list, BED = TST_170_panel, stringsAsFactors = FALSE)
+# 
+# # valset_tst_170 <- nsclc_maf_grch38 %>% 
+# #   filter(Tumor_Sample_Barcode %in% nsclc_tables$val$sample_list) %>% 
+# #   readData(exomef, covarf, mutContextf, ref, samplef = sample_tst_170_val)
+# # write_rds(valset_tst_170, "data/temporary_storage/valset_tst_170")
+# valset_tst_170 <- read_rds("data/temporary_storage/valset_tst_170")
+# 
+# val_pred_tst_170 <- pred_TMB(valset_tst_170, WES = valset_WES, cores = 1, params = trainedModel, mut.nonsil = T, 
+#                              gid_nonsil_p = trainset$get_nonsil_passengers(0.95)) %>% 
+#   mutate(estimated_values = mean(nsclc_tmb_values$val$TMB) *ecTMB_panel_TMB/ mean(WES_TMB), 
+#          true_values = mean(nsclc_tmb_values$val$TMB)*WES_TMB / mean(WES_TMB),
+#          Tumor_Sample_Barcode = sample) %>% 
+#   select(Tumor_Sample_Barcode, estimated_values, true_values) %>% 
+#   mutate(panel = "TST-170")
+# 
+# write_tsv(val_pred_tst_170, "data/results/val_pred_tst_170.tsv")
+# 
+# ## Foundation One Panel
+# sample_f1_val = data.frame(SampleID = nsclc_tables$val$sample_list, BED = F1_panel, stringsAsFactors = FALSE)
+# 
+# # valset_f1 <- nsclc_maf_grch38 %>%
+# #   filter(Tumor_Sample_Barcode %in% nsclc_tables$val$sample_list) %>%
+# #   readData(exomef, covarf, mutContextf, ref, samplef = sample_f1_val)
+# # write_rds(valset_f1, "data/temporary_storage/valset_f1")
+# valset_f1 <- read_rds("data/temporary_storage/valset_f1")
+# 
+# val_pred_f1 <- pred_TMB(valset_f1, WES = valset_WES, cores = 1, params = trainedModel, mut.nonsil = T, 
+#                              gid_nonsil_p = trainset$get_nonsil_passengers(0.95)) %>% 
+#   mutate(estimated_values = mean(nsclc_tmb_values$val$TMB) *ecTMB_panel_TMB/ mean(WES_TMB), 
+#          true_values = mean(nsclc_tmb_values$val$TMB)*WES_TMB / mean(WES_TMB),
+#          Tumor_Sample_Barcode = sample) %>% 
+#   select(Tumor_Sample_Barcode, estimated_values, true_values) %>% 
+#   mutate(panel = "F1")
+# 
+# write_tsv(val_pred_f1, "data/results/val_pred_f1.tsv")
+# 
+# ## TSO-500 Panel
+# sample_tso_500_val = data.frame(SampleID = nsclc_tables$val$sample_list, BED = TSO_500_panel, stringsAsFactors = FALSE)
+# 
+# # valset_tso_500 <- nsclc_maf_grch38 %>%
+# #   filter(Tumor_Sample_Barcode %in% nsclc_tables$val$sample_list) %>%
+# #   readData(exomef, covarf, mutContextf, ref, samplef = sample_tso_500_val)
+# # write_rds(valset_tso_500, "data/temporary_storage/valset_tso_500")
+# 
+# val_pred_tso_500 <- pred_TMB(valset_tso_500, WES = valset_WES, cores = 1, params = trainedModel, mut.nonsil = T, 
+#                         gid_nonsil_p = trainset$get_nonsil_passengers(0.95)) %>% 
+#   mutate(estimated_values = mean(nsclc_tmb_values$val$TMB) *ecTMB_panel_TMB/ mean(WES_TMB), 
+#          true_values = mean(nsclc_tmb_values$val$TMB)*WES_TMB / mean(WES_TMB),
+#          Tumor_Sample_Barcode = sample) %>% 
+#   select(Tumor_Sample_Barcode, estimated_values, true_values) %>% 
+#   mutate(panel = "TSO-500")
+# 
+# write_tsv(val_pred_tso_500, "data/results/val_pred_tso_500.tsv")
+# 
+# ## MSK-IMPACT Panel
+# sample_msk_val = data.frame(SampleID = nsclc_tables$val$sample_list, BED = MSK_panel, stringsAsFactors = FALSE)
+# 
+# # valset_msk <- nsclc_maf_grch38 %>%
+# #   filter(Tumor_Sample_Barcode %in% nsclc_tables$val$sample_list) %>%
+# #   readData(exomef, covarf, mutContextf, ref, samplef = sample_msk_val)
+# # write_rds(valset_msk, "data/temporary_storage/valset_msk")
+# 
+# val_pred_msk <- pred_TMB(valset_msk, WES = valset_WES, cores = 1, params = trainedModel, mut.nonsil = T, 
+#                              gid_nonsil_p = trainset$get_nonsil_passengers(0.95)) %>% 
+#   mutate(estimated_values = mean(nsclc_tmb_values$val$TMB) *ecTMB_panel_TMB/ mean(WES_TMB), 
+#          true_values = mean(nsclc_tmb_values$val$TMB)*WES_TMB / mean(WES_TMB),
+#          Tumor_Sample_Barcode = sample) %>% 
+#   select(Tumor_Sample_Barcode, estimated_values, true_values) %>% 
+#   mutate(panel = "MSK-I")
+# 
+# write_tsv(val_pred_msk, "data/results/val_pred_msk.tsv")
+
 
 
 ### Figure 1
 message("Creating Figure 1")
+
 
 
 ## Subfigure 1
@@ -371,6 +472,18 @@ fig6 <- bind_rows(refit_stats_tmb, first_stats_tmb) %>%
   scale_linetype(name = "Procedure:", labels = list(TeX("Refitted $\\hat{T}$"), TeX("First-Fit $\\hat{T}$")))
 
 ggsave(filename = "figures/fig6.png", plot = fig6, height = 4, width = 8)
+
+
+
+### Figure 7
+message("Creating Figure 7")
+
+
+
+foundation_genes <- read_tsv("data/tst_170_genes.tsv")$Hugo_Symbol
+msk_genes <- read_tsv("data/msk_impact_genes.tsv")$Hugo_Symbol
+tst_170_genes <- read_tsv("data/tst_170_genes.tsv")$Hugo_Symbol
+tso_500_genes <- read_tsv("data/tso_500_genes.tsv")$Hugo_Symbol
 
 
 
