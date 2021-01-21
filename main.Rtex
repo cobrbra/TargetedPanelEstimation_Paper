@@ -416,13 +416,13 @@ s3.3.stats = read.table(file = "data/results/s3.3.stats.tsv", sep = '\t', head =
 @
 
 In this section we demonstrate how our method can be used to estimate \gls{tib}. 
-This is more challenging than estimating \gls{tmb} due to the low abundance of indel mutations relative to other variant types (see Figure~\ref{fig:2}), as well as issues involved in sequencing genomic loci of repetitive nucleotide constitution \citep{narzisi_challenge_2015}. Indeed, in contrast to the previous section, we are not aware of any existing methods designed to estimate \gls{tib} from targeted gene panels.  We therefore investigate the performance of our method across a much wider range of panel sizes, and find that we are able to accurately predict \gls{tib} with larger panels.
+This is more challenging than estimating \gls{tmb} due to the low abundance of indel mutations relative to other variant types (see Figure~\ref{fig:2}), as well as issues involved in sequencing genomic loci of repetitive nucleotide constitution \citep{narzisi_challenge_2015}. Indeed, in contrast to the previous section, we are not aware of any existing methods designed to estimate \gls{tib} from targeted gene panels.  We therefore investigate the performance of our method across a much wider range (0-30Mb) of panel sizes, and find that we are able to accurately predict \gls{tib} with larger panels.
 Our results also demonstrate that accurate classification of \gls{tib} status is possible even with small gene panels. 
 
 % in order to \tcnote{come back to this} ascertain the feasibility of targeted \gls{tib} estimation. 
 %, even though estimating the precise value of \gls{tib} is difficult.  
 
-We let $S_{\text{indel}}$ be the set of all frameshift insertion and deletion mutations, and apply our method introduced in Section~\ref{sec:linearestimator} with $\bar{S} = S_{\text{indel}}$. As in the previous section, we assess regression and classification performance via $R^2$ and \gls{auprc}, respectively, where in this case tumours are separated into two classes: High \gls{tib} (more than 11 indel mutations) and Low \gls{tib} (otherwise). This gives 43 (25.0\%) tumours in the High \gls{tib} class in the validation dataset. 
+We let $S_{\text{indel}}$ be the set of all frameshift insertion and deletion mutations, and apply our method introduced in Section~\ref{sec:linearestimator} with $\bar{S} = S_{\text{indel}}$. As in the previous section, we assess regression and classification performance via $R^2$ and \gls{auprc}, respectively, where in this case tumours are separated into two classes: high \gls{tib} (more than 10 indel mutations) and low \gls{tib} (otherwise). This gives $\Sexpr{s3.3.stats[['n_tib_h']]} \ (\Sexpr{signif(100*s3.3.stats[['prop_tib_h']],3)}\% )$ tumours in the high \gls{tib} class in the validation dataset. 
 
 \begin{figure}[htbp]
 \centering
@@ -432,7 +432,7 @@ We let $S_{\text{indel}}$ be the set of all frameshift insertion and deletion mu
 \vspace*{-2mm}
 \end{figure}
 
-The results are presented in Figure \ref{fig:indelstatsplot}. We comment first on the regression performance: as expected, we see that the $R^2$ values for our first-fit and refitted estimators in this case are much lower than what we achieved in estimating \gls{tmb}. Perhaps surprisingly, the predictive performance of both estimators very slightly decreases as the panel size increases in the range 0.5-3.0 Mb; the refitted approach then improves for larger panel sizes. On the other hand, we see that the classification performance is impressive; our refitted method achieves an \gls{auprc} of 0.87 even with panel of size of~1Mb. 
+The results are presented in Figure \ref{fig:indelstatsplot}. We comment first on the regression performance: as expected, we see that the $R^2$ values for our first-fit and refitted estimators in this case are much lower than what we achieved in estimating \gls{tmb}. The refitted approach then gradually improves for larger panel sizes, while the first-fit estimator continues to perform relatively poorly. On the other hand, we see that the classification performance is impressive; our refitted method achieves an \gls{auprc} of 0.87 even with panel of size of~1Mb. 
 
 As in the previous section, we now asses the performance on the test set of our refitted estimator of \gls{tib} applied to a selected panel of size~1Mb.   
 In this case, we compare with a count estimator, which scales the total non-synonymous mutation count across the panel by the ratio of the length of the panel to that of the entire exome, and also by the relative frequency of indel mutations versus all non-synonymous mutations in the training dataset;~i.e. 
