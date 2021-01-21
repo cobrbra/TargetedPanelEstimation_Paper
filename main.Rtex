@@ -384,7 +384,7 @@ The latter three comprise existing methods for estimating \gls{tmb} available to
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=6in]{fig7.png}
+\includegraphics[width=6in]{figures/fig7.png}
 \vspace*{-5mm}
 \caption{The performance of our \gls{tmb} estimator in comparison to existing approaches. \textbf{Left}: $R^2$, \textbf{Right}: \gls{auprc}. \label{fig:commercial_comparison}}
 \vspace*{-2mm}
