@@ -469,9 +469,10 @@ fig6 <- bind_rows(refit_stats_tmb, first_stats_tmb) %>%
   mutate(type = factor(type, levels = c("Regression ~ (R^2)", "Classification ~ (AUPRC)"))) %>% 
   filter(panel_length <= 2000000) %>% 
   mutate(panel_length = panel_length / 1000000) %>% 
-  ggplot(aes(x = panel_length, y = stat, linetype = model)) + geom_line() + ylim(0, 1) + 
-  theme_minimal() + facet_wrap(~type, labeller = label_parsed, strip.position = "top") + theme(legend.position = "bottom") + labs(x = "Panel Size (Mb)", y = "") +
-  scale_linetype(name = "Procedure:", labels = list(TeX("Refitted $\\hat{T}$"), TeX("First-Fit $\\hat{T}$")))
+  ggplot(aes(x = panel_length, y = stat, linetype = model)) + geom_line(size = 1) + ylim(0, 1) + 
+  theme_minimal() + facet_wrap(~type, labeller = label_parsed, strip.position = "top") + 
+  theme(legend.position = "bottom") + labs(x = "Panel Size (Mb)", y = "") +
+  scale_linetype(name = "Procedure:", labels = list(TeX("Refitted $\\hat{T}$"), TeX("First-Fit $\\hat{T}$"))) 
 
 ggsave(filename = "figures/fig6.png", plot = fig6, height = 4, width = 8)
 
@@ -484,8 +485,8 @@ message("Creating Figure 7")
 
 panels <- list("TST-170" = read_tsv("data/tst_170_genes.tsv")$Hugo_Symbol,
                "F1" = read_tsv("data/foundation_genes.tsv")$Hugo_Symbol,
-               "MSK-I" = read_tsv("data/msk_impact_genes.tsv")$Hugo_Symbol,
-               "TSO-500" = read_tsv("data/tso_500_genes.tsv")$Hugo_Symbol)
+               "MSK-I" = read_tsv("data/msk_impact_genes.tsv")$Hugo_Symbol)#,
+               #"TSO-500" = read_tsv("data/tso_500_genes.tsv")$Hugo_Symbol)
 models <- c("T", "Count", "OLM")
 
 datasets <- list(nsclc_tables, nsclc_tables, nsclc_linear_tables)
@@ -507,8 +508,8 @@ rm(datasets)
 
 ectmb_preds <- list("TST-170" = read_tsv("data/results/val_pred_tst_170.tsv"),
                     "F1" = read_tsv("data/results/val_pred_f1.tsv"),
-                    "MSK-I" = read_tsv("data/results/val_pred_msk.tsv"), 
-                    "TSO-500" = read_tsv("data/results/val_pred_tso_500.tsv"))
+                    "MSK-I" = read_tsv("data/results/val_pred_msk.tsv"))#, 
+                    #"TSO-500" = read_tsv("data/results/val_pred_tso_500.tsv"))
 ectmb_model_stats <- purrr::map(ectmb_preds, ~ list(predictions = select(column_to_rownames(., "Tumor_Sample_Barcode"), estimated_values), 
                                                     panel_lengths = c(0))) %>% 
   purrr::map(~ get_stats(., biomarker_values = nsclc_tmb_values$val, model = "ecTMB")) %>% 
@@ -528,20 +529,97 @@ model_stats <- bind_rows(non_ectmb_model_stats, ectmb_model_stats) %>%
 fig7 <- bind_rows(refit_stats_tmb, first_stats_tmb) %>% 
   mutate(metric = if_else(metric == "R", "Regression ~ (R^2)", "Classification ~ (AUPRC)")) %>% 
   mutate(metric = factor(metric, levels = c("Regression ~ (R^2)", "Classification ~ (AUPRC)"))) %>% 
-  mutate(panel = factor("Our Procedure", levels = c("Our Procedure", "TST-170", "F1", "MSK-I", "TSO-500"))) %>% 
+  mutate(panel = factor("Our Procedure", levels = c("Our Procedure", "TST-170", "F1", "MSK-I"))) %>% #, "TSO-500"))) %>% 
   mutate(panel_length = panel_length / 1000000) %>% 
   ggplot(aes(x = panel_length, y = stat, colour = panel)) + 
-  geom_point(data = model_stats, aes(pch = model), size = 3, alpha = 2) +
-  geom_line(aes(linetype = model), colour = "black") + 
+  geom_point(data = model_stats, aes(pch = model), size = 3, stroke = 1) +
+  geom_line(aes(linetype = model), colour = "black", size = 1) + 
   facet_wrap(~metric, labeller = label_parsed) + 
   labs(x = "Panel Size (Mb)", y = "") + 
-  theme_minimal() + xlim(0.25, 1.5) + ylim(0.6,1) + 
+  theme_minimal() + ylim(0.6,1) + 
   scale_shape_discrete(solid = FALSE, name = "Models:", labels = list(TeX("$\\hat{T}$"), "ecTMB", "Count", "Linear")) + 
   scale_linetype_discrete(name = TeX("Procedure:"), labels = list(TeX("Refitted $\\hat{T}$"), TeX("First-fit $\\hat{T}$"))) + 
   scale_colour_discrete(name = "Panels (left to right):") +
-  theme(legend.position="bottom", legend.box = "horizontal") + guides(shape = guide_legend(label.position = "top"), colour = guide_legend(label.position = "top"), linetype = guide_legend(label.position = "top"))
+  theme(legend.position="bottom", legend.box = "horizontal") + 
+  guides(shape = guide_legend(label.position = "top"), colour = guide_legend(label.position = "top"), linetype = guide_legend(label.position = "top")) +
+  scale_x_continuous(limits = c(0.2,1.5), breaks = c(0.4,0.8,1.2))
 
 ggsave(filename = "figures/fig7.png", fig7, height = 5, width = 9)
+
+
+
+### Section 3.2 stats
+tst_170_length <- model_stats %>% 
+  filter(panel == "TST-170") %>% 
+  pull(panel_length) %>% 
+  unique()
+
+tst_170_alt_length <- refit_stats_tmb %>% 
+  filter(panel_length <= 1000000 * tst_170_panel_length) %>% 
+  pull(panel_length) %>% 
+  max()/1000000
+  
+tst_170_alt_r <- refit_stats_tmb %>% 
+  filter(panel_length == 1000000*tst_170_equivalent_panel_length) %>% 
+  filter(metric == "R") %>% 
+  pull(stat)
+
+tst_170_r <- model_stats %>% 
+  filter(panel == "TST-170") %>% 
+  filter(metric == "Regression ~ (R^2)") %>% 
+  filter(model == "OLM") %>% 
+  pull(stat)
+
+n_tmb_h <- sum(nsclc_tmb_values$val$TMB >= 300)
+n_tmb_l <- sum(nsclc_tmb_values$val$TMB < 300)
+
+prop_tmb_h <- mean(nsclc_tmb_values$val$TMB >= 300)
+prop_tmb_l <- mean(nsclc_tmb_values$val$TMB < 300)
+
+s3.2.stats <- data.frame(tst_170_length = tst_170_length,
+                         tst_170_alt_length = tst_170_alt_length,
+                         tst_170_r = tst_170_r,
+                         tst_170_alt_r = tst_170_alt_r,
+                         n_tmb_h = n_tmb_h,
+                         n_tmb_l = n_tmb_l,
+                         prop_tmb_h = prop_tmb_h,
+                         prop_tmb_l = prop_tmb_l)
+
+write_tsv(s3.2.stats, "data/results/s3.2.stats.tsv")
+
+
+
+### Figure 8
+message("Creating Figure 8")
+
+
+
+refit_predictions_tmb <- nsclc_pred_refit_tmb %>% 
+  get_predictions(new_data = nsclc_tables$test) %>% 
+  pred_intervals(pred_model = nsclc_pred_refit_tmb, biomarker_values = nsclc_tmb_values$test,
+                 gen_model = nsclc_gen_model, training_matrix = nsclc_tables$train$matrix, 
+                 gene_lengths = ensembl_gene_lengths, max_panel_length = 600000, biomarker = "TMB") 
+
+count_predictions_tmb <- nsclc_pred_count_tmb %>% 
+  get_predictions(new_data = nsclc_tables$test, max_panel_length = 600000) %>% 
+  {data.frame(estimated_value = .$predictions[nsclc_tmb_values$test[["Tumor_Sample_Barcode"]],], 
+              true_value = nsclc_tmb_values$test[["TMB"]], 
+              model = "Count", lower = NA, upper = NA)}
+
+linear_predictions_tmb <- nsclc_pred_linear_tmb %>% 
+  get_predictions(new_data = nsclc_linear_tables$test, max_panel_length = 600000) %>% 
+  {data.frame(estimated_value = .$predictions[nsclc_tmb_values$test[["Tumor_Sample_Barcode"]],], 
+              true_value = nsclc_tmb_values$test[["TMB"]], 
+              model = "Linear", lower = NA, upper = NA)}
+
+fig8 <- bind_rows(refit_predictions_tmb$prediction_intervals, count_predictions_tmb, linear_predictions_tmb) %>% 
+  {ggplot() + geom_point(data = ., aes(x = true_value, y = estimated_value), size = 0.5) + facet_wrap(~model, nrow = 2) + 
+    geom_ribbon(data = refit_predictions_tmb$confidence_region, aes(x = x, ymin = y_lower, ymax = y_upper), 
+                alpha = 0.2, fill = "red") +
+    geom_abline(colour = "blue", linetype = 2) +
+    geom_hline(yintercept = 300, alpha = 0.5, linetype = 2) + 
+    geom_vline(xintercept = 300, alpha = 0.5, linetype = 2) +
+    scale_x_log10() + scale_y_log10() + theme_minimal() + labs(x = "True TMB", y = "Predicted TMB")}
 
 
 
@@ -562,7 +640,7 @@ fig9 <- bind_rows(refit_stats_tib, first_stats_tib) %>%
   mutate(type = if_else(metric == "R", "Regression ~ (R^2)", "Classification ~ (AUPRC)")) %>% 
   mutate(type = factor(type, levels = c("Regression ~ (R^2)", "Classification ~ (AUPRC)"))) %>% 
   mutate(panel_length = panel_length / 1000000) %>% 
-  ggplot(aes(x = panel_length, y = stat, linetype = model)) + geom_line() + ylim(0, 1) + 
+  ggplot(aes(x = panel_length, y = stat, linetype = model)) + geom_line(size = 1) + ylim(0, 1) + 
   theme_minimal() + facet_wrap(~type, labeller = label_parsed, strip.position = "top") + theme(legend.position = "bottom") + labs(x = "Panel Size (Mb)", y = "") +
   scale_linetype(name = "Procedure:", labels = list(TeX("Refitted $\\hat{T}$"), TeX("First-Fit $\\hat{T}$")))
 
@@ -577,21 +655,19 @@ refit_predictions_tib <- nsclc_pred_refit_tib %>%
   get_predictions(new_data = nsclc_tables$test) %>% 
   pred_intervals(pred_model = nsclc_pred_refit_tib, biomarker_values = nsclc_tib_values$test,
                  gen_model = nsclc_gen_model, training_matrix = nsclc_tables$train$matrix, 
-                 gene_lengths = ensembl_gene_lengths, max_panel_length = 1000000, biomarker = "TIB") 
+                 gene_lengths = ensembl_gene_lengths, max_panel_length = 600000, biomarker = "TIB") 
 
 count_predictions_tib <- nsclc_pred_count_tib %>% 
-  get_predictions(new_data = nsclc_tables$test, max_panel_length = 1000000) %>% 
+  get_predictions(new_data = nsclc_tables$test, max_panel_length = 600000) %>% 
   {data.frame(estimated_value = .$predictions[nsclc_tib_values$test[["Tumor_Sample_Barcode"]],], 
               true_value = nsclc_tib_values$test[["TIB"]], 
               model = "Count", lower = NA, upper = NA)}
 
 linear_predictions_tib <- nsclc_pred_linear_tib %>% 
-  get_predictions(new_data = nsclc_linear_tables$test, max_panel_length = 1000000) %>% 
+  get_predictions(new_data = nsclc_linear_tables$test, max_panel_length = 600000) %>% 
   {data.frame(estimated_value = .$predictions[nsclc_tib_values$test[["Tumor_Sample_Barcode"]],], 
               true_value = nsclc_tib_values$test[["TIB"]], 
               model = "Linear", lower = NA, upper = NA)}
-
-
 
 fig10 <- bind_rows(refit_predictions_tib$prediction_intervals, count_predictions_tib, linear_predictions_tib) %>% 
   {ggplot() + geom_point(data = ., aes(x = true_value, y = estimated_value), size = 0.5) + facet_wrap(~model, nrow = 2) + 
@@ -603,4 +679,40 @@ fig10 <- bind_rows(refit_predictions_tib$prediction_intervals, count_predictions
   scale_x_log10() + scale_y_log10() + theme_minimal() + labs(x = "True TIB", y = "Predicted TIB")}
 
 ggsave(filename = "figures/fig10.png", plot = fig10, height = 6, width = 8)
+
+
+
+### Section 3.3 stats
+n_tib_h <- sum(nsclc_tib_values$val$TIB >= 10)
+n_tib_l <- sum(nsclc_tib_values$val$TIB < 10)
+
+prop_tib_h <- mean(nsclc_tib_values$val$TIB >= 10)
+prop_tib_l <- mean(nsclc_tib_values$val$TIB < 10)
+
+t_0.6_r <- refit_predictions_tib %>% 
+  {1 - sum((.$prediction_intervals$estimated_value - .$prediction_intervals$true_value)^2)/
+      sum((.$prediction_intervals$true_value - mean(.$prediction_intervals$true_value))^2)}
+
+count_0.6_r <- count_predictions_tib %>% 
+  {1 - sum((.$estimated_value - .$true_value)^2)/
+    sum((.$true_value - mean(.$true_value))^2)}
+
+linear_0.6_r <- linear_predictions_tib %>% 
+  {1 - sum((.$estimated_value - .$true_value)^2)/
+    sum((.$true_value - mean(.$true_value))^2)}
+
+prop_confidence_tib <- refit_predictions_tib %>% 
+  {mean((.$prediction_intervals$upper >= .$prediction_intervals$estimated_value) & 
+          (.$prediction_intervals$lower <= .$prediction_intervals$estimated_value))}
+
+s3.3.stats <- data.frame(n_tib_h = n_tib_h,
+                         n_tib_l = n_tib_l,
+                         prop_tib_h = prop_tib_h,
+                         prop_tib_l = prop_tib_l,
+                         t_0.6_r = t_0.6_r,
+                         count_0.6_r = count_0.6_r,
+                         linear_0.6_r = linear_0.6_r,
+                         prop_confidence_tib = prop_confidence_tib)
+
+write_tsv(s3.3.stats, "data/results/s3.3.stats.tsv")
 
