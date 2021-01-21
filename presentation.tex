@@ -4,13 +4,20 @@
 
 \usepackage[utf8]{inputenc}
 \usepackage{caption, subcaption}
+\usepackage{amssymb, amsmath}
 \usepackage{graphicx}
 
 
 \title[Data-driven targeted gene panels]{Data-driven design of targeted gene panels for estimating immunotherapy biomarkers}
 \author[Bradley and Cannings]{Jacob R. Bradley, Timothy I. Cannings}
-\institute[]{University of Edinburgh}
 \date{January 2021}
+% \institute[]{University of Edinburgh}
+
+
+\titlegraphic{\includegraphics[height=.7cm]{figures/mims_logo.png}\hspace*{.5cm}~%
+\includegraphics[height=.7cm]{figures/uoe_logo.png}\hspace*{.5cm}~
+   \includegraphics[height=1cm]{figures/igmm_logo.png}
+}
 
 \begin{document}
 
@@ -36,46 +43,94 @@
 \section{Biological/Clinical Background}
 
 
-\subsection{Cancer and Immunotherapy}
-\begin{frame}{Cancer as a Disease of the Genome}
-Cancer is a disease that arises when DNA in cells changes (mutates).
+\subsection{Cancer and immunotherapy}
+\begin{frame}{Cancer is a disease of the genome}
+Cancer arises when DNA in cells changes (mutates).
 \begin{figure}[t!]
     \centering
     \begin{subfigure}[t]{0.45\textwidth}
         \centering
         \includegraphics[height=1.5in]{figures/IC1.png}
-        \caption{Non-cancer cell: Normal DNA}
+        \caption{Non-cancer cell: Normal DNA.}
     \end{subfigure}
     ~ 
     \begin{subfigure}[t]{0.45\textwidth}
         \centering
         \includegraphics[height=1.5in]{figures/IC2.png}
-        \caption{Cancer cell: Mutated DNA}
+        \caption{Cancer cell: Mutated DNA.}
     \end{subfigure}
 \end{figure}
 \end{frame}
-\begin{frame}{Immunotherapy Enables the Immune System}
-The immune system is extremely good at fighting cancer. Immunotherapy 'releases the brakes' on the immune system in order that it can attack tumours.
+\begin{frame}{Immunotherapy enables the immune system}
+Immunotherapy 'releases the brakes' on the immune system in order for it to attack tumours.
 \begin{figure}[t!]
     \centering
     \begin{subfigure}[t]{0.45\textwidth}
         \centering
         \includegraphics[height=1.5in]{figures/IC1.png}
-        \caption{Low-damage cell: Unrecognisable to immune system}
+        \caption{Low-damage cell: \textbf{unrecognisable} to immune system.}
     \end{subfigure}
     ~ 
     \begin{subfigure}[t]{0.45\textwidth}
         \centering
         \includegraphics[height=1.5in]{figures/IC2.png}
-        \caption{High-damage cell: Recognisable to immune system}
+        \caption{High-damage cell: \textbf{recognisable} to the immune system.}
     \end{subfigure}
 \end{figure}
 However, the immune system can only attack tumours that it recognises!
 \end{frame}
 
-\subsection{Exome-Wide Biomarkers}
+\subsection{Exome-wide biomarkers}
 
-\begin{frame}{Estimating Tumour Mutation Burden}
+
+\begin{frame}{Tumour mutation burden stratifies patients for immunotherapy response}
+As a simple proxy for likelihood of immune response, we can use \textbf{tumour mutation burden}: the total count of non-synonymous mutations throughout the tumour exome. \\
+~\\
+Advantages:
+\begin{enumerate}[I]
+    \item Calculated from DNA sequencing only (compatible with liquid biopsy).
+    \item Relevant across cancer types.
+\end{enumerate}
+Disadvantages:
+\begin{enumerate}[I]
+    \item Requires Whole-Exome Sequencing (WES) to measure directly. 
+    \item Fails to incorporate other features of the immune environment.
+\end{enumerate}
+
+
+
+\end{frame}
+
+\subsection{Targeted gene panels}
+
+\begin{frame}{Targeted panels make genomic biomarkers viable}
+Rather than the entire exome/genome, targeted gene panels sequence a \textbf{subset} of genes.
+
+\begin{figure}[t!]
+    \centering
+    \begin{subfigure}[t]{0.45\textwidth}
+        \centering
+        \includegraphics[height=1.5in]{figures/IC5.png}
+        \caption{Whole-exome sequencing: \textbf{all genes} sequenced.}
+    \end{subfigure}
+    ~ 
+    \begin{subfigure}[t]{0.45\textwidth}
+        \centering
+        \includegraphics[height=1.5in]{figures/IC6.png}
+        \caption{Targeted panel sequencing: \textbf{subset} of genes sequenced.}
+    \end{subfigure}
+\end{figure}
+
+\end{frame}
+
+
+\begin{frame}{Mutations and biomarkers: some notation}
+We'll use $i,g,$ and $s$ to refer to:
+\begin{enumerate}
+    \item A sample $i$ (ranging from $i=1$ to $i=N$),
+    \item A gene $g$ (belonging to some index set $G$),
+    \item A 
+\end{enumerate}
 As a simplest proxy for likelihood of immune response, we can use tumour mutation burden:
 \[
 T = \sum_{g \in G} M_g
@@ -87,38 +142,48 @@ We want an estimator $\hat{T}$ that relies on observation of only some of the $M
 with the coefficients $w_g$ sufficiently sparse.
 \end{frame}
 
-\subsection{Pratical Restrictions}
-
-\begin{frame}{Liquid Biopsy and Cheap Sequencing}
-We have two main restrictions in the data available:
-\begin{enumerate}[I]
-    \item Liquid biopsy: we only have access to DNA sequencing data!
-    \item Cheap sequencing: we only have access to some of that! (but we can choose)
-\end{enumerate}
+\section{Generative/predictive modelling framework}
+\subsection{Generative models: what and why?}
+\begin{frame}{What is a generative model of mutation?}
+A generative model of mutation attempts to capture the underlying distribution of variants across the entire exome/genome. \\
+~\\
+A simple example (Poisson):
+\begin{equation}
+    M_{ig} \sim \mathrm{Poisson}(\lambda_g)
+\end{equation}
 \end{frame}
 
+\begin{frame}{Why use generative models of mutation?}
 
-\section{Generative/Predictive Model Framework}
-\begin{frame}{Generative Models of Mutation}
-In order to realise the procedure above we need two things:
 \begin{enumerate}[I]
-    \item A generative model: a suitable joint distribution for the $M_g$s. 
+    \item Utilise known biology to inform the structure of the model.
+    \item (Sometimes) make interpretable inferences.
     \item A predictive procedure: a means of getting from the learned generative model to predictions on unseen samples.  
 \end{enumerate}
 
 \end{frame}
 
-\begin{frame}{Generative Models of Mutation}
+\subsection{From generative models to predictive models}
+\begin{frame}{Generative models to predictive models}
 In order to realise the procedure above we need two things:
 \begin{enumerate}[I]
     \item A generative model: a suitable joint distribution for the $M_g$s. 
-    \[\mathrm{E.g.} \quad M_g \sim \mathrm{Poisson}(\lambda_g)\]
+    
     \item A predictive procedure: a means of getting from the learned generative model to predictions on unseen samples.
     \[\mathrm{E.g.} \quad \min_{\hat{T}}\{\mathbb{E}[(T-\hat{T})^2] + \lambda|\hat{T}|\}\]
 \end{enumerate}
 
 \end{frame}
 
-\section{Application to Non-Small Cell Lung Cancer}
+\section{Application to non-small cell lung cancer}
+\begin{frame}{Poisson-based generative model}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=4in]{figures/fig4.png}
+\caption{ . \label{fig:3}}
+\end{figure}
+    
+\end{frame}
 
 \end{document}
