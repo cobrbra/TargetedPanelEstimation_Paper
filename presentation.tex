@@ -1,12 +1,15 @@
 \documentclass{beamer}
 \usetheme{Boadilla}
 
+\beamertemplatenavigationsymbolsempty
 
 \usepackage[utf8]{inputenc}
 \usepackage{caption, subcaption}
 \usepackage{amssymb, amsmath, amsfonts}
 \usepackage{graphicx}
 \usepackage{xcolor}
+\usepackage{appendixnumberbeamer}
+
 \usepackage[square, numbers]{natbib}
 \bibliographystyle{unsrt}
 
@@ -161,13 +164,13 @@ T_i = \sum_{\substack{g \in G \\ s: \ \text{non-}\\ \text{synonymous}}} M_{igs}.
 \begin{frame}{Our generative model}
 A generative model of mutation attempts to capture the \textbf{underlying distribution} of variants across the entire exome/genome. \\
 ~\\
-Our model incorporates \textbf{sample-specific} effects, \textbf{gene-specific} effects \textbf{variant-specific} effects and \textbf{variant-gene interactions}:
+Our model incorporates \color{blue}\textbf{sample-specific} \color{black} effects, \color{red} \textbf{gene-specific} \color{black} effects, \color{green} \textbf{variant-specific} \color{black} effects, \color{purple} \textbf{variant-gene interactions} \color{black} and \color{cyan}\textbf{gene length}\color{black}:
 \begin{equation}
     M_{igs} \sim \text{Poisson}(\phi_{igs})
 \end{equation}
 where 
 \begin{equation}
-\log(\phi_{igs}) = \mu_i + \lambda_g + \eta_{gs} + \nu_s + \ell_g
+\log(\phi_{igs}) = \color{blue}\mu_i \color{black}+ \color{red}\lambda_g \color{black} + \color{green} \nu_s \color{black} +  \color{purple} \eta_{gs} \color{black} + \color{cyan}\ell_g \color{black}
 \end{equation} 
 \end{frame}
 
@@ -180,20 +183,11 @@ We fit our generative model with a WES non-small cell lung cancer dataset from C
 \end{figure}
 \end{frame}
 
-\begin{frame}{NSCLC: Poisson-based generative model fit}
-We fit our generative model with a WES non-small cell lung cancer dataset from Campbell et al. (2016) \citep{campbell_distinct_2016}.
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=4in]{figures/fig5.png}
-\caption{Generative model parameters (indel-specific) \citep{bradley_data-driven_2021}. \label{fig:3}}
-\end{figure}
-    
-\end{frame}
 
 
 \subsection{Predictive model}
 \begin{frame}{Proposed estimator}
-Aims: 
+Aims (reminder): 
 
 \begin{enumerate}[1]
 \item Select a discrete set of genes to form a panel (of pre-specified cost). 
@@ -208,9 +202,9 @@ Our estimator:
 
 How we fit our estimator:
 \begin{equation}
-    \hat{w} := \argmin_w \bigg\{ \mathbb{E}\big[(\hat{T}_i(w) - T_i)^2\big] + \lambda |w| \bigg\} ,
+    \hat{w} := \argmin_w \bigg\{ \mathbb{E}\big[(\hat{T}_i(w) - T_i)^2\big] + \kappa |w| \bigg\} ,
 \end{equation}
-where $\lambda$ is a penalty specifying panel cost, and the expectation $\mathbb{E}$ is over the distribution learned by our generative model.
+where $\kappa$ is a penalty specifying panel cost, and the expectation $\mathbb{E}$ is over the distribution learned by our generative model.
 \end{frame}
 
 
@@ -241,7 +235,7 @@ and these methods are:
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=4in]{fig7.png}
+\includegraphics[width=3in]{fig7_alt.png}
 \caption{Predictive model performance: comparison with commercial panels and other predictive methods \citep{bradley_data-driven_2021, yao_ectmb_2020}. \label{fig:7}}
 \end{figure}
 \end{frame}
@@ -255,7 +249,7 @@ Our method is flexible enough that we can:
 For more information check out our (draft) paper \cite{bradley_data-driven_2021}!
 \end{frame}
 
-
+\appendix
 \begin{frame}[allowframebreaks]
         \frametitle{References}
         \bibliography{zotero-refs.bib}
