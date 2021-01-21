@@ -4,7 +4,7 @@
 
 \usepackage[utf8]{inputenc}
 \usepackage{caption, subcaption}
-\usepackage{amssymb, amsmath}
+\usepackage{amssymb, amsmath, amsfonts}
 \usepackage{graphicx}
 \usepackage{xcolor}
 \usepackage[square, numbers]{natbib}
@@ -32,10 +32,9 @@
 
 \begin{frame}{Abstract}
 \begin{enumerate}[I]
-    \item Exome-wide biomarkers such as tumour mutation burden (TMB) are useful predictors of response to immunotherapy.
-    \item While whole-exome sequencing directly measures TMB, its cost prevents it from being standard-of-care.
-    \item We develop a data-driven framework both for selecting targeted gene panels and for using them to intelligently estimate immunotherapy biomarkers.
-    \item To do this, we utilise an exome-wide generative model of mutation, whose structure can be chosen to reflect biological assumptions.
+    \item Problem: \textbf{Predict response to immunotherapy} with targeted gene panels.
+    \item Our approach: First fit a \textbf{generative model} of exome-wide mutation, then use this to construct efficient \textbf{predictive models} of biomarkers such as \textbf{Tumour Mutation Burden (TMB)}.
+    
 \end{enumerate}
 \end{frame}
 
@@ -157,97 +156,23 @@ T_i = \sum_{\substack{g \in G \\ s: \ \text{non-}\\ \text{synonymous}}} M_{igs}.
 \end{frame}
 
 \section{Generative/predictive modelling framework}
-\subsection{Generative models: what and why?}
-\begin{frame}{What is a generative model of mutation?}
+\subsection{Generative model}
+
+\begin{frame}{Our generative model}
 A generative model of mutation attempts to capture the \textbf{underlying distribution} of variants across the entire exome/genome. \\
 ~\\
-A simple example (Poisson):
+Our model incorporates \textbf{sample-specific} effects, \textbf{gene-specific} effects \textbf{variant-specific} effects and \textbf{variant-gene interactions}:
 \begin{equation}
-    M_{igs} \sim \mathrm{Poisson}(\lambda_{gs})
+    M_{igs} \sim \text{Poisson}(\phi_{igs})
 \end{equation}
-\end{frame}
-
-\begin{frame}{Why use generative models of mutation?}
-
-\begin{enumerate}[I]
-    \item Utilise known biology to inform the structure of the model.
-\end{enumerate}
-~\\
-\begin{enumerate}[II]
-    \item (Sometimes) make interpretable inferences.
-\end{enumerate}
-~\\
-\begin{enumerate}[III]    
-    \item Generate trust that we've thought about it!  
-\end{enumerate}
-\end{frame}
-
-\begin{frame}{Why use generative models of mutation?}
-
-\begin{enumerate}[I]
-    \item Utilise known biology to inform the structure of the model.
-\end{enumerate}
-\indent \color{red} Choice of distribution, exome organisation, parameter space.\color{black}
-\begin{enumerate}[II]
-    \item (Sometimes) make interpretable inferences.
-\end{enumerate}
-~\\
-\begin{enumerate}[III]    
-    \item Generate trust that we've thought about it!  
-\end{enumerate}
-\end{frame}
-
-\begin{frame}{Why use generative models of mutation?}
-\begin{enumerate}[I]
-    \item Utilise known biology to inform the structure of the model.
-\end{enumerate}
-~\\
-\begin{enumerate}[II]
-    \item (Sometimes) make interpretable inferences.
-\end{enumerate}
-\indent \color{red} Parameter estimates, post-model inference.\color{black}
-\begin{enumerate}[III]    
-    \item Generate trust that we've thought about it!  
-\end{enumerate}
-\end{frame}
-
-
-\subsection{From generative models to predictive models}
-\begin{frame}{Generative models to predictive models}
-Aims: 
-
-\begin{enumerate}[1]
-\item Select a discrete set of genes to form a panel (of pre-specified cost). 
-\item A mechanism for estimating TMB from panel sequencing data.
-\end{enumerate} 
-~\\
-Proposed mechanism: Linear estimator.
-
+where 
 \begin{equation}
-    \hat{T} = \sum_{g,s} w_{gs} M_{igs}
-\end{equation}
-
-Optimisation procedure:
-\begin{equation}
-    \hat{w} := \argmin_w \{ \mathbb{E}[(\hat{T}_i - T_i)^2] + \lambda |w|\},
-\end{equation}
-where $\lambda$ is a penalty specifying panel cost, and the expectation $\mathbb{E}$ is over the distribution learned by our generative model.
-\end{frame}
-
-
-
-\section{Application to non-small cell lung cancer}
-
-\begin{frame}{NSCLC: Generative Model Structure}
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=4in]{figures/gen_model_overview.png}
-\caption{Generative model overview, as applied to NSCLC dataset \citep{bradley_immune_2021}. \label{fig:3}}
-\end{figure}
+\log(\phi_{igs}) = \mu_i + \lambda_g + \eta_{gs} + \nu_s + \ell_g
+\end{equation} 
 \end{frame}
 
 \begin{frame}{NSCLC: Poisson-based generative model fit}
-
+We fit our generative model with a WES non-small cell lung cancer dataset from Campbell et al. (2016) \citep{campbell_distinct_2016}.
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=4in]{figures/fig4.png}
@@ -256,7 +181,7 @@ where $\lambda$ is a penalty specifying panel cost, and the expectation $\mathbb
 \end{frame}
 
 \begin{frame}{NSCLC: Poisson-based generative model fit}
-
+We fit our generative model with a WES non-small cell lung cancer dataset from Campbell et al. (2016) \citep{campbell_distinct_2016}.
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=4in]{figures/fig5.png}
@@ -264,6 +189,53 @@ where $\lambda$ is a penalty specifying panel cost, and the expectation $\mathbb
 \end{figure}
     
 \end{frame}
+
+
+\subsection{Predictive model}
+\begin{frame}{Proposed estimator}
+Aims: 
+
+\begin{enumerate}[1]
+\item Select a discrete set of genes to form a panel (of pre-specified cost). 
+\item Estimate TMB from panel sequencing data.
+\end{enumerate} 
+~\\
+Our estimator:
+
+\begin{equation}
+    \hat{T}_i(w) = \sum_{g,s} w_{gs} M_{igs}
+\end{equation}
+
+How we fit our estimator:
+\begin{equation}
+    \hat{w} := \argmin_w \bigg\{ \mathbb{E}\big[(\hat{T}_i(w) - T_i)^2\big] + \lambda |w| \bigg\} ,
+\end{equation}
+where $\lambda$ is a penalty specifying panel cost, and the expectation $\mathbb{E}$ is over the distribution learned by our generative model.
+\end{frame}
+
+
+
+\section{Application to non-small cell lung cancer}
+
+\begin{frame}{NSCLC: Comparison panels and estimation methods}
+We compare our methodology with four commercial gene panels, and with three other means of predicting TMB. These panels are:
+\begin{enumerate}
+\item The \color{red} TST-170 \color{black} gene panel.
+\item The \color{green} Foundation~One \color{black} gene panel.
+\item The \color{blue} MSK-IMPACT \color{black} gene panel.
+\item The \color{purple} TSO-500 \color{black} gene panel.
+\end{enumerate}
+and these methods are:
+\begin{enumerate}
+    \item ecTMB  ($\times$) \citep{yao_ectmb_2020}.
+    \item Simple counting ($\circ$).
+    \item Linear regression ($+$).
+\end{enumerate}
+
+\end{frame}
+
+
+
 
 \begin{frame}{NSCLC: Estimation performance}
 
@@ -273,6 +245,16 @@ where $\lambda$ is a penalty specifying panel cost, and the expectation $\mathbb
 \caption{Predictive model performance: comparison with commercial panels and other predictive methods \citep{bradley_data-driven_2021, yao_ectmb_2020}. \label{fig:7}}
 \end{figure}
 \end{frame}
+
+\begin{frame}{Bonus material}
+Our method is flexible enough that we can:
+\begin{enumerate}
+    \item Predict other exome-wide biomarkers, such as Tumour Indel Burden (TIB).
+    \item Augment existing gene panels to improve their predictive performance.
+\end{enumerate}
+For more information check out our (draft) paper \cite{bradley_data-driven_2021}!
+\end{frame}
+
 
 \begin{frame}[allowframebreaks]
         \frametitle{References}
