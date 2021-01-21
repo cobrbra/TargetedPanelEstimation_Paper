@@ -410,6 +410,11 @@ Finally in this section we demonstrate the practical performance of our method u
 
 
 \subsection{Predicting tumour indel burden \label{sec:indel}}
+
+<<echo = FALSE>>=
+s3.3.stats = read.table(file = "data/results/s3.3.stats.tsv", sep = '\t', head = TRUE)
+@
+
 In this section we demonstrate how our method can be used to estimate \gls{tib}. 
 This is more challenging than estimating \gls{tmb} due to the low abundance of indel mutations relative to other variant types (see Figure~\ref{fig:2}), as well as issues involved in sequencing genomic loci of repetitive nucleotide constitution \citep{narzisi_challenge_2015}. Indeed, in contrast to the previous section, we are not aware of any existing methods designed to estimate \gls{tib} from targeted gene panels.  We therefore investigate the performance of our method across a much wider range of panel sizes, and find that we are able to accurately predict \gls{tib} with larger panels.
 Our results also demonstrate that accurate classification of \gls{tib} status is possible even with small gene panels. 
