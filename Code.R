@@ -25,6 +25,8 @@ library(readr)
 library(tidyr)
 #install.package("latex2exp")
 library(latex2exp)
+#install.packages("purrr")
+library(purrr)
 
 ## Figures path
 fig_path <- "figures/"
@@ -480,10 +482,66 @@ message("Creating Figure 7")
 
 
 
-foundation_genes <- read_tsv("data/tst_170_genes.tsv")$Hugo_Symbol
-msk_genes <- read_tsv("data/msk_impact_genes.tsv")$Hugo_Symbol
-tst_170_genes <- read_tsv("data/tst_170_genes.tsv")$Hugo_Symbol
-tso_500_genes <- read_tsv("data/tso_500_genes.tsv")$Hugo_Symbol
+panels <- list("TST-170" = read_tsv("data/tst_170_genes.tsv")$Hugo_Symbol,
+               "F1" = read_tsv("data/foundation_genes.tsv")$Hugo_Symbol,
+               "MSK-I" = read_tsv("data/msk_impact_genes.tsv")$Hugo_Symbol,
+               "TSO-500" = read_tsv("data/tso_500_genes.tsv")$Hugo_Symbol)
+models <- c("T", "Count", "OLM")
+
+datasets <- list(nsclc_tables, nsclc_tables, nsclc_linear_tables)
+names(datasets) <- models
+
+
+non_ectmb_model_stats <- panels %>% 
+  purrr::map(function(panel) purrr::map(models, function(model) pred_refit_panel(model = model, pred_first = nsclc_pred_first_tmb, gene_lengths = ensembl_gene_lengths, 
+                                                                  genes = panel, training_data = datasets[[model]]$train, 
+                                                                  training_values = nsclc_tmb_values$train) %>% 
+                                          get_predictions(new_data = datasets[[model]]$val) %>% 
+                                          get_stats(biomarker_values = nsclc_tmb_values$val)) %>% 
+    bind_rows() %>% 
+    mutate(model = rep(models, each = 2))) %>% 
+    bind_rows() %>% 
+    mutate(panel = rep(names(panels), each = 6))
+
+rm(datasets)
+
+ectmb_preds <- list("TST-170" = read_tsv("data/results/val_pred_tst_170.tsv"),
+                    "F1" = read_tsv("data/results/val_pred_f1.tsv"),
+                    "MSK-I" = read_tsv("data/results/val_pred_msk.tsv"), 
+                    "TSO-500" = read_tsv("data/results/val_pred_tso_500.tsv"))
+ectmb_model_stats <- purrr::map(ectmb_preds, ~ list(predictions = select(column_to_rownames(., "Tumor_Sample_Barcode"), estimated_values), 
+                                                    panel_lengths = c(0))) %>% 
+  purrr::map(~ get_stats(., biomarker_values = nsclc_tmb_values$val, model = "ecTMB")) %>% 
+  bind_rows() %>% 
+  mutate(panel = rep(names(ectmb_preds), each = 2))
+
+model_stats <- bind_rows(non_ectmb_model_stats, ectmb_model_stats) %>% 
+  group_by(panel) %>% 
+  mutate(panel_length = median(panel_length)) %>% 
+  ungroup() %>% 
+  mutate(metric = if_else(metric == "R", "Regression ~ (R^2)", "Classification ~ (AUPRC)")) %>% 
+  mutate(metric = factor(metric, levels = c("Regression ~ (R^2)", "Classification ~ (AUPRC)"))) %>% 
+  mutate(panel = factor(panel, levels = c("Our Procedure", "TST-170", "F1", "MSK-I", "TSO-500"))) %>% 
+  mutate(model = factor(model, c("T", "ecTMB", "Count", "OLM"))) %>% 
+  mutate(panel_length = panel_length / 1000000)
+  
+fig7 <- bind_rows(refit_stats_tmb, first_stats_tmb) %>% 
+  mutate(metric = if_else(metric == "R", "Regression ~ (R^2)", "Classification ~ (AUPRC)")) %>% 
+  mutate(metric = factor(metric, levels = c("Regression ~ (R^2)", "Classification ~ (AUPRC)"))) %>% 
+  mutate(panel = factor("Our Procedure", levels = c("Our Procedure", "TST-170", "F1", "MSK-I", "TSO-500"))) %>% 
+  mutate(panel_length = panel_length / 1000000) %>% 
+  ggplot(aes(x = panel_length, y = stat, colour = panel)) + 
+  geom_point(data = model_stats, aes(pch = model), size = 3, alpha = 2) +
+  geom_line(aes(linetype = model), colour = "black") + 
+  facet_wrap(~metric, labeller = label_parsed) + 
+  labs(x = "Panel Size (Mb)", y = "") + 
+  theme_minimal() + xlim(0.25, 1.5) + ylim(0.6,1) + 
+  scale_shape_discrete(solid = FALSE, name = "Models:", labels = list(TeX("$\\hat{T}$"), "ecTMB", "Count", "Linear")) + 
+  scale_linetype_discrete(name = TeX("Procedure:"), labels = list(TeX("Refitted $\\hat{T}$"), TeX("First-fit $\\hat{T}$"))) + 
+  scale_colour_discrete(name = "Panels (left to right):") +
+  theme(legend.position="bottom", legend.box = "horizontal") + guides(shape = guide_legend(label.position = "top"), colour = guide_legend(label.position = "top"), linetype = guide_legend(label.position = "top"))
+
+ggsave(filename = "figures/fig7.png", fig7, height = 5, width = 9)
 
 
 
