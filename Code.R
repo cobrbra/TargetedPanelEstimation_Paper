@@ -4,7 +4,8 @@ library(devtools)
 
 ## ICBioMark Package
 #devtools::install_github("cobrbra/ICBioMark", upgrade = "ask")
-library(ICBioMark)
+#library(ICBioMark)
+load_all("../../ICBioMark/")
 
 ## ecTMB Package
 #
@@ -27,6 +28,8 @@ library(tidyr)
 library(latex2exp)
 #install.packages("purrr")
 library(purrr)
+#install.packages("tibble")
+library(tidyverse)
 
 ## Figures path
 fig_path <- "figures/"
@@ -85,14 +88,13 @@ nsclc_pred_linear_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gen
 
 
 ### ecTMB Workflow
-extdataDir = "./data/ecTMB_data/references"
-exomef                 = file.path(extdataDir, "exome_hg38_vep.Rdata" )  #### hg38 exome file
-covarf                 = file.path(extdataDir,"gene.covar.txt")   ### gene properties
-mutContextf            = file.path(extdataDir,"mutation_context_96.txt" )  ### 96 mutation contexts
-TST170_panel           = file.path(extdataDir,"TST170_DNA_targets_hg38.bed" )  ### 96 mutation contexts
-ref                    = file.path(extdataDir,"GRCh38.d1.vd1.fa" )
-
-# nsclc_maf_grch38 <- read_tsv("data/nsclc_maf_grch38.tsv", comment = "#") 
+# extdataDir = "./data/ecTMB_data/references"
+# exomef                 = file.path(extdataDir, "exome_hg38_vep.Rdata" )  #### hg38 exome file
+# covarf                 = file.path(extdataDir,"gene.covar.txt")   ### gene properties
+# mutContextf            = file.path(extdataDir,"mutation_context_96.txt" )  ### 96 mutation contexts
+# ref                    = file.path(extdataDir,"GRCh38.d1.vd1.fa" )
+# 
+# nsclc_maf_grch38 <- read_tsv("data/nsclc_maf_grch38.tsv", comment = "#")
 # 
 # # URL = "https://github.com/bioinform/ecTMB/releases/download/v0.1.0/ecTMB_data.tar.gz"
 # # download.file(URL,destfile = "data/ecTMB.example.tar.gz")
@@ -127,6 +129,13 @@ ref                    = file.path(extdataDir,"GRCh38.d1.vd1.fa" )
 # #   readData(exomef, covarf, mutContextf, ref)
 # # write_rds(valset_WES, "data/temporary_storage/valset_WES")
 # valset_WES <- read_rds("data/temporary_storage/valset_WES")
+# 
+
+# testset_WES <- nsclc_maf_grch38 %>%
+#   filter(Tumor_Sample_Barcode %in% nsclc_tables$test$sample_list) %>%
+#   readData(exomef, covarf, mutContextf, ref)
+# write_rds(testset_WES, "data/temporary_storage/testset_WES")
+# testset_WES <- read_rds("data/temporary_storage/testset_WES")
 # 
 # ## TST-170 Panel
 # sample_tst_170_val = data.frame(SampleID = nsclc_tables$val$sample_list, BED = TST_170_panel, stringsAsFactors = FALSE)
@@ -555,12 +564,12 @@ tst_170_length <- model_stats %>%
   unique()
 
 tst_170_alt_length <- refit_stats_tmb %>% 
-  filter(panel_length <= 1000000 * tst_170_panel_length) %>% 
+  filter(panel_length <= 1000000 * tst_170_length) %>% 
   pull(panel_length) %>% 
   max()/1000000
   
 tst_170_alt_r <- refit_stats_tmb %>% 
-  filter(panel_length == 1000000*tst_170_equivalent_panel_length) %>% 
+  filter(panel_length == 1000000*tst_170_alt_length) %>% 
   filter(metric == "R") %>% 
   pull(stat)
 
@@ -612,7 +621,33 @@ linear_predictions_tmb <- nsclc_pred_linear_tmb %>%
               true_value = nsclc_tmb_values$test[["TMB"]], 
               model = "Linear", lower = NA, upper = NA)}
 
-fig8 <- bind_rows(refit_predictions_tmb$prediction_intervals, count_predictions_tmb, linear_predictions_tmb) %>% 
+# write_tsv(data.frame(Hugo_Symbol = names(which(nsclc_pred_first_tmb$panel_genes[, max(which(nsclc_pred_first_tmb$panel_lengths <= 600000))]))),
+#           file = "data/panel_0.6_genes.tsv")
+
+# panel_0.6 <- "data/panel_0.6_bed.bed"
+# sample_0.6_test = data.frame(SampleID = nsclc_tables$test$sample_list, BED = panel_0.6, stringsAsFactors = FALSE)
+# 
+# testset_0.6 <- nsclc_maf_grch38 %>%
+#   filter(Tumor_Sample_Barcode %in% nsclc_tables$test$sample_list) %>%
+#   readData(exomef, covarf, mutContextf, ref, samplef = sample_0.6_test)
+# write_rds(testset_0.6, "data/temporary_storage/testset_0.6")
+# testset_0.6 <- read_rds("data/temporary_storage/testset_0.6")
+# 
+# test_pred_0.6 <- pred_TMB(testset_0.6, WES = testset_WES, cores = 1, params = trainedModel, mut.nonsil = T,
+#                              gid_nonsil_p = trainset$get_nonsil_passengers(0.95)) %>%
+#   mutate(estimated_value = mean(nsclc_tmb_values$test$TMB) *ecTMB_panel_TMB/ mean(WES_TMB),
+#          true_value = mean(nsclc_tmb_values$test$TMB)*WES_TMB / mean(WES_TMB),
+#          Tumor_Sample_Barcode = sample) %>%
+#   select(Tumor_Sample_Barcode, estimated_value, true_value)
+# write_tsv(test_pred_0.6, "data/results/test_pred_0.6.tsv")
+
+ectmb_predictions_tmb <- read_tsv("data/results/test_pred_0.6.tsv") %>% 
+  mutate(lower = NA, upper = NA, model = "ecTMB") %>% 
+  column_to_rownames("Tumor_Sample_Barcode")
+
+
+fig8 <- bind_rows(refit_predictions_tmb$prediction_intervals, ectmb_predictions_tmb, count_predictions_tmb, linear_predictions_tmb) %>% 
+  mutate(model = factor(model, levels = c("Refitted T", "ecTMB", "Count", "Linear"))) %>% 
   {ggplot() + geom_point(data = ., aes(x = true_value, y = estimated_value), size = 0.5) + facet_wrap(~model, nrow = 2) + 
     geom_ribbon(data = refit_predictions_tmb$confidence_region, aes(x = x, ymin = y_lower, ymax = y_upper), 
                 alpha = 0.2, fill = "red") +
@@ -621,7 +656,7 @@ fig8 <- bind_rows(refit_predictions_tmb$prediction_intervals, count_predictions_
     geom_vline(xintercept = 300, alpha = 0.5, linetype = 2) +
     scale_x_log10() + scale_y_log10() + theme_minimal() + labs(x = "True TMB", y = "Predicted TMB")}
 
-
+ggsave(fig8, filename = "figures/fig8.png", width = 8, height = 6)
 
 ### Figure 9 
 message("Creating Figure 9")
