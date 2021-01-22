@@ -432,25 +432,23 @@ We let $S_{\text{indel}}$ be the set of all frameshift insertion and deletion mu
 \vspace*{-2mm}
 \end{figure}
 
-The results are presented in Figure \ref{fig:indelstatsplot}. We comment first on the regression performance: as expected, we see that the $R^2$ values for our first-fit and refitted estimators in this case are much lower than what we achieved in estimating \gls{tmb}. The refitted approach then gradually improves for larger panel sizes, while the first-fit estimator continues to perform relatively poorly. On the other hand, we see that the classification performance is impressive; our refitted method achieves an \gls{auprc} of 0.87 even with panel of size of~1Mb. 
+The results are presented in Figure \ref{fig:indelstatsplot}. We comment first on the regression performance: as expected, we see that the $R^2$ values for our first-fit and refitted estimators in this case are much lower than what we achieved in estimating \gls{tmb}. The refitted approach then gradually improves for larger panel sizes, while the first-fit estimator continues to perform relatively poorly. On the other hand, we see that the classification performance is impressive, with AUPRC values of above 0.8 for panels of less than 1Mb in size.
 
-As in the previous section, we now asses the performance on the test set of our refitted estimator of \gls{tib} applied to a selected panel of size~1Mb.   
+As in the previous section, we now asses the performance on the test set of our refitted estimator of \gls{tib} applied to a selected panel of size~0.6Mb.   
 In this case, we compare with a count estimator, which scales the total non-synonymous mutation count across the panel by the ratio of the length of the panel to that of the entire exome, and also by the relative frequency of indel mutations versus all non-synonymous mutations in the training dataset;~i.e. 
 \[
 \frac{\ell_G}{\ell_{P}} \frac{\sum_{i =1}^{n} \sum_{g \in G} \sum_{s \in S_{\text{indel}}} M_{igs}}{\sum_{i=1}^{n}\sum_{g \in G} \sum_{s \in S} M_{igs}}\sum_{g \in P} \sum_{s \in S} M_{0gs}.
 \]
-The results are presented in Figure~\ref{fig:indel_predictions_figure}. Our refitted $\hat{T}$ estimates give an $R^2$ value of 0.47 on the test set, while the count estimator again suffers from positive bias and has an $R^2$ value of -9.9. Again we include (shaded in red) the set of points for which 90\% prediction intervals contain the true value. In this case we find that 96.5\% of test set points fall within this region.
+We also compare with a linear regression estimator (note that comparisons with ecTMB are not possible for \gls{tib}). The results are presented in Figure~\ref{fig:indel_predictions_figure}. Our refitted $\hat{T}$ estimates give an $R^2$ value of $\Sexpr{signif(s3.3.stats[['t_0.6_r']],2)}$ on the test set, while the count estimator again suffers from positive bias and has an $R^2$ value of $\Sexpr{signif(s3.3.stats[['count_0.6_r']],3)}$. The linear regression estimator gives an $R^2$ value of $\Sexpr{signif(s3.3.stats[['linear_0.6_r']],2)}$. Again we include (shaded in red) the set of points for which 90\% prediction intervals contain the true value. In this case we find that $\Sexpr{signif(100*s3.3.stats[['prop_confidence_tib']],3)} \%$ of test set points fall within this region.
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=6in]{figures/fig10.png}
 \vspace*{-5mm}
-\caption{Estimation of TIB on the test dataset. Dashed blue (diagonal) line represents perfect prediction, and the grey dashed lines indicate true and predicted TIB values of 11. 
+\caption{Estimation of TIB on the test dataset. Dashed blue (diagonal) line represents perfect prediction, and the grey dashed lines indicate true and predicted TIB values of 10. 
 \label{fig:indel_predictions_figure}}
 \vspace*{-2mm}
 \end{figure} 
-
-
 
 \subsection{A panel-augmentation case study \label{sec:augmentation}}
 As discussed in Section \ref{sec:panelaugmentation}, we may wish to include genes from a given panel, but use our methodology to augment the panel to include a small set of additional genes in order to obtain more accurate predictions of \gls{tmb}. In this section we demonstrate how this can be done starting with the Foundation~One panel, which contains 324 genes (approximately 0.8Mb). We will see that, by increasing the panel to 1Mb in size using our proposal, we can significantly improve the predictive performance. 
