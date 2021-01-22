@@ -556,48 +556,6 @@ fig7 <- bind_rows(refit_stats_tmb, first_stats_tmb) %>%
 ggsave(filename = "figures/fig7.png", fig7, height = 5, width = 9)
 
 
-
-### Section 3.2 stats
-tst_170_length <- model_stats %>% 
-  filter(panel == "TST-170") %>% 
-  pull(panel_length) %>% 
-  unique()
-
-tst_170_alt_length <- refit_stats_tmb %>% 
-  filter(panel_length <= 1000000 * tst_170_length) %>% 
-  pull(panel_length) %>% 
-  max()/1000000
-  
-tst_170_alt_r <- refit_stats_tmb %>% 
-  filter(panel_length == 1000000*tst_170_alt_length) %>% 
-  filter(metric == "R") %>% 
-  pull(stat)
-
-tst_170_r <- model_stats %>% 
-  filter(panel == "TST-170") %>% 
-  filter(metric == "Regression ~ (R^2)") %>% 
-  filter(model == "OLM") %>% 
-  pull(stat)
-
-n_tmb_h <- sum(nsclc_tmb_values$val$TMB >= 300)
-n_tmb_l <- sum(nsclc_tmb_values$val$TMB < 300)
-
-prop_tmb_h <- mean(nsclc_tmb_values$val$TMB >= 300)
-prop_tmb_l <- mean(nsclc_tmb_values$val$TMB < 300)
-
-s3.2.stats <- data.frame(tst_170_length = tst_170_length,
-                         tst_170_alt_length = tst_170_alt_length,
-                         tst_170_r = tst_170_r,
-                         tst_170_alt_r = tst_170_alt_r,
-                         n_tmb_h = n_tmb_h,
-                         n_tmb_l = n_tmb_l,
-                         prop_tmb_h = prop_tmb_h,
-                         prop_tmb_l = prop_tmb_l)
-
-write_tsv(s3.2.stats, "data/results/s3.2.stats.tsv")
-
-
-
 ### Figure 8
 message("Creating Figure 8")
 
@@ -657,6 +615,74 @@ fig8 <- bind_rows(refit_predictions_tmb$prediction_intervals, ectmb_predictions_
     scale_x_log10() + scale_y_log10() + theme_minimal() + labs(x = "True TMB", y = "Predicted TMB")}
 
 ggsave(fig8, filename = "figures/fig8.png", width = 8, height = 6)
+
+
+
+### Section 3.2 stats
+tst_170_length <- model_stats %>% 
+  filter(panel == "TST-170") %>% 
+  pull(panel_length) %>% 
+  unique()
+
+tst_170_alt_length <- refit_stats_tmb %>% 
+  filter(panel_length <= 1000000 * tst_170_length) %>% 
+  pull(panel_length) %>% 
+  max()/1000000
+
+tst_170_alt_r <- refit_stats_tmb %>% 
+  filter(panel_length == 1000000*tst_170_alt_length) %>% 
+  filter(metric == "R") %>% 
+  pull(stat)
+
+tst_170_r <- model_stats %>% 
+  filter(panel == "TST-170") %>% 
+  filter(metric == "Regression ~ (R^2)") %>% 
+  filter(model == "OLM") %>% 
+  pull(stat)
+
+n_tmb_h <- sum(nsclc_tmb_values$val$TMB >= 300)
+n_tmb_l <- sum(nsclc_tmb_values$val$TMB < 300)
+
+prop_tmb_h <- mean(nsclc_tmb_values$val$TMB >= 300)
+prop_tmb_l <- mean(nsclc_tmb_values$val$TMB < 300)
+
+t_0.6_r_tmb <- refit_predictions_tmb %>% 
+  {1 - sum((.$prediction_intervals$estimated_value - .$prediction_intervals$true_value)^2)/
+    sum((.$prediction_intervals$true_value - mean(.$prediction_intervals$true_value))^2)}
+
+count_0.6_r_tmb <- count_predictions_tmb %>% 
+  {1 - sum((.$estimated_value - .$true_value)^2)/
+    sum((.$true_value - mean(.$true_value))^2)}
+
+linear_0.6_r_tmb <- linear_predictions_tmb %>% 
+  {1 - sum((.$estimated_value - .$true_value)^2)/
+    sum((.$true_value - mean(.$true_value))^2)}
+
+ectmb_0.6_r_tmb <- ectmb_predictions_tmb %>% 
+  {1 - sum((.$estimated_value - .$true_value)^2)/
+    sum((.$true_value - mean(.$true_value))^2)}
+
+prop_confidence_tmb <- refit_predictions_tmb %>% 
+  {mean((.$prediction_intervals$upper >= .$prediction_intervals$estimated_value) & 
+        (.$prediction_intervals$lower <= .$prediction_intervals$estimated_value))}
+
+s3.2.stats <- data.frame(tst_170_length = tst_170_length,
+                         tst_170_alt_length = tst_170_alt_length,
+                         tst_170_r = tst_170_r,
+                         tst_170_alt_r = tst_170_alt_r,
+                         n_tmb_h = n_tmb_h,
+                         n_tmb_l = n_tmb_l,
+                         prop_tmb_h = prop_tmb_h,
+                         prop_tmb_l = prop_tmb_l,
+                         t_0.6_r_tmb = t_0.6_r_tmb, 
+                         count_0.6_r_tmb = count_0.6_r_tmb,
+                         linear_0.6_r_tmb = linear_0.6_r_tmb,
+                         ectmb_0.6_r_tmb = ectmb_0.6_r_tmb,
+                         prop_confidence_tmb = prop_confidence_tmb)
+
+write_tsv(s3.2.stats, "data/results/s3.2.stats.tsv")
+
+
 
 ### Figure 9 
 message("Creating Figure 9")
@@ -724,15 +750,15 @@ n_tib_l <- sum(nsclc_tib_values$val$TIB < 10)
 prop_tib_h <- mean(nsclc_tib_values$val$TIB >= 10)
 prop_tib_l <- mean(nsclc_tib_values$val$TIB < 10)
 
-t_0.6_r <- refit_predictions_tib %>% 
+t_0.6_r_tib <- refit_predictions_tib %>% 
   {1 - sum((.$prediction_intervals$estimated_value - .$prediction_intervals$true_value)^2)/
       sum((.$prediction_intervals$true_value - mean(.$prediction_intervals$true_value))^2)}
 
-count_0.6_r <- count_predictions_tib %>% 
+count_0.6_r_tib <- count_predictions_tib %>% 
   {1 - sum((.$estimated_value - .$true_value)^2)/
     sum((.$true_value - mean(.$true_value))^2)}
 
-linear_0.6_r <- linear_predictions_tib %>% 
+linear_0.6_r_tib <- linear_predictions_tib %>% 
   {1 - sum((.$estimated_value - .$true_value)^2)/
     sum((.$true_value - mean(.$true_value))^2)}
 
@@ -744,9 +770,9 @@ s3.3.stats <- data.frame(n_tib_h = n_tib_h,
                          n_tib_l = n_tib_l,
                          prop_tib_h = prop_tib_h,
                          prop_tib_l = prop_tib_l,
-                         t_0.6_r = t_0.6_r,
-                         count_0.6_r = count_0.6_r,
-                         linear_0.6_r = linear_0.6_r,
+                         t_0.6_r_tib = t_0.6_r_tib,
+                         count_0.6_r_tib = count_0.6_r_tib,
+                         linear_0.6_r_tib = linear_0.6_r_tib,
                          prop_confidence_tib = prop_confidence_tib)
 
 write_tsv(s3.3.stats, "data/results/s3.3.stats.tsv")
