@@ -4,7 +4,7 @@ library(devtools)
 
 ## ICBioMark Package
 # devtools::install_github("cobrbra/ICBioMark", force = TRUE)
-library(ICBioMark)
+# library(ICBioMark)
 load_all("../../ICBioMark/")
 
 ## ecTMB Package
@@ -612,7 +612,11 @@ fig8 <- bind_rows(refit_predictions_tmb$prediction_intervals, ectmb_predictions_
     geom_abline(colour = "blue", linetype = 2) +
     geom_hline(yintercept = 300, alpha = 0.5, linetype = 2) +
     geom_vline(xintercept = 300, alpha = 0.5, linetype = 2) +
-    scale_x_log10() + scale_y_log10() + theme_minimal() + labs(x = "True TMB", y = "Predicted TMB")}
+    scale_x_continuous(trans = scales::pseudo_log_trans(), breaks = c(0,10**(1:3))) + 
+    scale_y_continuous(trans = scales::pseudo_log_trans(), breaks = c(0,10**(1:3)), limit = c(0,NA)) + 
+    theme_minimal() + labs(x = "True TMB", y = "Predicted TMB")} 
+
+
 
 ggsave(fig8, filename = "figures/fig8.png", width = 8, height = 6)
 
@@ -737,7 +741,9 @@ fig10 <- bind_rows(refit_predictions_tib$prediction_intervals, count_predictions
   geom_abline(colour = "blue", linetype = 2) +
   geom_hline(yintercept = 10, alpha = 0.5, linetype = 2) +
   geom_vline(xintercept = 10, alpha = 0.5, linetype = 2) +
-  scale_x_log10() + scale_y_log10() + theme_minimal() + labs(x = "True TIB", y = "Predicted TIB")}
+  scale_x_continuous(trans = scales::pseudo_log_trans(), breaks = c(0,10**(1:2))) + 
+  scale_y_continuous(trans = scales::pseudo_log_trans(), breaks = c(0,10**(1:2)), limit = c(0,NA)) +  
+    theme_minimal() + labs(x = "True TIB", y = "Predicted TIB")}
 
 ggsave(filename = "figures/fig10.png", plot = fig10, height = 6, width = 8)
 
@@ -782,7 +788,7 @@ write_tsv(s3.3.stats, "data/results/s3.3.stats.tsv")
 ### Section 3.4 Stats
 
 
-tst_170_genes <- read_tsv("data/tst_170_genes.tsv")$Hugo_Symbol
+tst_170_genes <- intersect(read_tsv("data/tst_170_genes.tsv")$Hugo_Symbol, ensembl_gene_lengths$Hugo_Symbol)
 n_genes_tst_170 <- length(tst_170_genes)
 
 # nsclc_pred_first_tmb_aug <- pred_first_fit(gen_model = nsclc_gen_model, lambda = exp(seq(-18, -26, length.out = 100)),
@@ -792,15 +798,20 @@ n_genes_tst_170 <- length(tst_170_genes)
 
 nsclc_pred_first_tmb_aug <- read_rds("data/results/nsclc_pred_first_tmb_aug")
 
-t_tst_170_r_test_stats <- pred_refit_panel(pred_first = nsclc_pred_first_tmb, gene_lengths = ensembl_gene_lengths, model = "T",
+t_tst_170_test <- pred_refit_panel(pred_first = nsclc_pred_first_tmb, gene_lengths = ensembl_gene_lengths, model = "T",
                                      genes = tst_170_genes, training_data = nsclc_tables$train, training_values = nsclc_tmb_values$train) %>% 
-  get_predictions(new_data = nsclc_tables$test) %>% 
-  get_stats(biomarker_values = nsclc_tmb_values$test, model = "Refitted T")
+  get_predictions(new_data = nsclc_tables$test)
 
-count_tst_170_r_test_stats <- pred_refit_panel(pred_first = nsclc_pred_first_tmb, gene_lengths = ensembl_gene_lengths, model = "Count",
+count_tst_170_test <- pred_refit_panel(pred_first = nsclc_pred_first_tmb, gene_lengths = ensembl_gene_lengths, model = "Count",
                                            genes = tst_170_genes, training_data = nsclc_tables$train, training_values = nsclc_tmb_values$train) %>% 
-  get_predictions(new_data = nsclc_tables$test) %>% 
-  get_stats(biomarker_values = nsclc_tmb_values$test, model = "Refitted T")
+  get_predictions(new_data = nsclc_tables$test) 
 
+linear_tst_170_test <- pred_refit_panel(pred_first = nsclc_pred_first_tmb, gene_lengths = ensembl_gene_lengths, model = "OLM",
+                                                 genes = tst_170_genes, training_data = nsclc_linear_tables$train, training_values = nsclc_tmb_values$train) %>% 
+  get_predictions(new_data = nsclc_linear_tables$test)
+
+t_tst_170_test_aug <- pred_refit_range(pred_first = nsclc_pred_first_tmb_aug, gene_lengths = ensembl_gene_lengths, model = "T",
+                                   training_data = nsclc_tables$train, training_values = nsclc_tmb_values$train) %>% 
+  get_predictions(new_data = nsclc_tables$test)
 
 
