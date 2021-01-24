@@ -451,9 +451,9 @@ In Figure~\ref{fig:indel_predictions_figure} we present the predictions on the t
 
 \subsection{A panel-augmentation case study \label{sec:augmentation}}
 
-% <<echo = FALSE>>=
-% s3.4.table = read.table(file = "data/results/s3.4.table.tsv", sep = '\t', head = TRUE)
-% @
+<<echo = FALSE>>=
+s3.4.table = read.table(file = "data/results/s3.4.table.tsv", sep = '\t', head = TRUE)
+@
 
 
 
