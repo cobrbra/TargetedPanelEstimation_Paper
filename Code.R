@@ -900,9 +900,9 @@ ectmb_aug_auprc <- read_tsv("data/results/test_pred_aug.tsv") %>%
                    scores.class1 = .$estimated_value[!classes_test_tmb])$auc.integral}
 
 s3.4.table <- data.frame(Model = c("Refitted T", "ecTMB", "Count", "Linear"),
-                         RT = signif(c(t_tst_170_test$stat[1], 0, count_tst_170_test$stat[1], linear_tst_170_test$stat[1]),2),
+                         RT = signif(c(t_tst_170_test$stat[1], ectmb_tst_170_r, count_tst_170_test$stat[1], linear_tst_170_test$stat[1]),2),
                          RA = signif(c(t_tst_170_test_aug$stat[1], ectmb_aug_r, count_tst_170_test_aug$stat[1], linear_tst_170_test_aug$stat[1]),2),
-                         CT = signif(c(t_tst_170_test$stat[2], 0, count_tst_170_test$stat[2], linear_tst_170_test$stat[2]),2),
+                         CT = signif(c(t_tst_170_test$stat[2], ectmb_tst_170_auprc, count_tst_170_test$stat[2], linear_tst_170_test$stat[2]),2),
                          CA = signif(c(t_tst_170_test_aug$stat[2], ectmb_aug_auprc, count_tst_170_test_aug$stat[2], linear_tst_170_test_aug$stat[2]),2))
 
 write_tsv(s3.4.table, "data/results/s3.4.table.tsv")
