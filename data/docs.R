@@ -105,32 +105,12 @@
 
 #' GRCh38 Build Non-Small Cell Lung Cancer Data
 #' 
-#' The same data as is loaded with the ICBioMark package,
-#' with some extra columns and lifted to the GRCh38 genome 
-#' build for use with ecTMB.
+#' Genomic data from the same study as is loaded with the ICBioMark package,
+#' with some extra columns, including synonymous variants (which are not available 
+#' from the automated download pipeline used in the ICBioMark package) and lifted 
+#' to the GRCh38 genome build for use with ecTMB. Switch to GRCh38 was done with 
+#' the python package LiftOver. Some very minor alterations had to be made to be usable with the
+#' ecTMB package, namely excluding mutations with Start_Position labels larger than
+#' their End_Position labels (affecting fewer than 100 mutations).
 #' 
-#' Produced with the following code:
-#' #install.pacakages("TCGAretriever")
-#' library(TCGAretriever)
-#' library(ICBioMark)
-#' library(dplyr)
-#' library(magrittr)
-#' library(readr)
-#' library(stringr)
-#' 
-#' fetch_all_tcgadata(case_id = "nsclc_tcga_broad_2016_sequenced", gprofile_id = "nsclc_tcga_broad_2016_mutations", glist = ensembl_gene_lengths$Hugo_Symbol, mutations = TRUE) %>%
-#'   select(Hugo_Symbol = gene_symbol, Entrez_Gene_Id = entrez_gene_id, Gene = entrez_gene_id, Chromosome = chr,  Start_Position = start_position, End_Position = end_position,
-#'          Consequence = mutation_type, Variant_Classification = mutation_type, Reference_Allele = reference_allele, Tumor_Seq_Allele1 = variant_allele, Tumor_Seq_Allele2 = variant_allele, 
-#'          Tumor_Sample_Barcode = case_id) %>%
-#'   mutate(Protein_position = NA, Strand = NA, Consequence = tolower(Consequence)) %>%
-#'   mutate(Variant_Type = if_else(Variant_Classification %in% c("Frame_Shift_Del", "In_Frame_Del"), "DEL", "SNP")) %>%
-#'   mutate(Variant_Type = if_else(Variant_Classification %in% c("Frame_Shift_Ins", "In_Frame_Ins"), "INS", Variant_Type)) %>% 
-#'   mutate(Variant_Type = if_else(Variant_Type == "SNP" & str_length(Reference_Allele) == 2, "DNP", Variant_Type)) %>% 
-#'   mutate(Variant_Type = if_else(Variant_Type == "SNP" & str_length(Reference_Allele) == 3, "TNP", Variant_Type)) %>% 
-#'   mutate(Chromosome = if_else(Chromosome == "23", "X", Chromosome), Chromosome = if_else(Chromosome == 24, "Y", Chromosome)) %>% 
-#'   filter(Chromosome != "NA") %>% 
-#'   write_tsv("data/nsclc_maf_full.tsv")
-#' 
-#' system("python3 data/maf_conversion.py")
-
-#' 
+#' @source \url{https://www.cbioportal.org/study/summary?id=nsclc_tcga_broad_2016}
