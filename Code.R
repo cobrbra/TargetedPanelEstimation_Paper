@@ -792,6 +792,7 @@ write_tsv(s3.3.stats, "data/results/s3.3.stats.tsv")
 
 tst_170_genes <- intersect(read_tsv("data/tst_170_genes.tsv")$Hugo_Symbol, ensembl_gene_lengths$Hugo_Symbol)
 
+
 # nsclc_pred_first_tmb_aug <- pred_first_fit(gen_model = nsclc_gen_model, lambda = exp(seq(-18, -26, length.out = 100)),
 #                                         gene_lengths = ensembl_gene_lengths, training_matrix = nsclc_tables$train$matrix, 
 #                                         free_genes = tst_170_genes)
