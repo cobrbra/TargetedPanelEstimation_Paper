@@ -790,6 +790,17 @@ n_genes_tst_170 <- length(tst_170_genes)
 #                                         free_genes = tst_170_genes)
 # write_rds(x = nsclc_pred_first_tmb_aug, file = "data/results/nsclc_pred_first_tmb_aug")
 
-nsclc_pred_first_tmb_aug <- read_rds("")
+nsclc_pred_first_tmb_aug <- read_rds("data/results/nsclc_pred_first_tmb_aug")
+
+t_tst_170_r_test_stats <- pred_refit_panel(pred_first = nsclc_pred_first_tmb, gene_lengths = ensembl_gene_lengths, model = "T",
+                                     genes = tst_170_genes, training_data = nsclc_tables$train, training_values = nsclc_tmb_values$train) %>% 
+  get_predictions(new_data = nsclc_tables$test) %>% 
+  get_stats(biomarker_values = nsclc_tmb_values$test, model = "Refitted T")
+
+count_tst_170_r_test_stats <- pred_refit_panel(pred_first = nsclc_pred_first_tmb, gene_lengths = ensembl_gene_lengths, model = "Count",
+                                           genes = tst_170_genes, training_data = nsclc_tables$train, training_values = nsclc_tmb_values$train) %>% 
+  get_predictions(new_data = nsclc_tables$test) %>% 
+  get_stats(biomarker_values = nsclc_tmb_values$test, model = "Refitted T")
+
 
 
