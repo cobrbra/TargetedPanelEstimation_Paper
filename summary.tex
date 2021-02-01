@@ -104,7 +104,13 @@
 \maketitle
 
 
+\begin{abstract}
+We introduce a novel data-driven framework for the design of targeted gene panels for estimating exome-wide biomarkers in cancer immunotherapy. Our first goal is to develop a generative model for the profile of mutation across the exome, which allows for gene- and variant type-dependent mutation rates. Based on this model, we then propose a new procedure for estimating biomarkers such as \acrlong{tmb} and \acrlong{tib}.  Our approach allows the practitioner to construct a targeted gene panel of a prespecified size, alongside an estimator that only depends on the selected genes, which facilitates cost-effective prediction.  Alternatively, the practitioner may apply our method to make predictions based on an existing gene panel, or to augment a gene panel to a given size. We demonstrate the excellent performance of our proposal using an annotated mutation dataset from 1144 \acrlong{nsclc} patients. 
 
+
+
+\textbf{Keywords: cancer, gene panel design, tumour indel burden, tumour mutation burden.}
+\end{abstract}
 
 It has been understood for a long time that cancer, a disease occurring in many distinct tissues of the body and giving rise to a wide range of presentations, is initiated and driven by the accumulation of mutations in a subset of a person's cells. Since the discovery of \gls{icb}\footnote{For their work on \gls{icb}, James Allison and Tasuku Honjo received the 2018 Nobel Prize for Physiology/Medicine.},  there has been an explosion of interest in cancer therapies targeting immune response and \gls{icb} therapy is now widely used in clinical practice.  \gls{icb} therapy works by targeting natural mechanisms (such as the proteins \gls{ctla4} and \gls{pdl1}) to disengage the immune system. Inhibition of these \emph{checkpoints} can promote a more aggressive anti-tumour immune response, and in some patients this leads to long-term remission . However, \gls{icb} therapy is not always effective and may have adverse side-effects, so determining which patients will benefit in advance of treatment is vital. 
 
