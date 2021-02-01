@@ -49,6 +49,10 @@
 \renewcommand*{\glsdonohyperlink}[2]{%
  {\glsxtrprotectlinks \glsdohypertarget{#1}{#2}}}
 
+\usepackage{lineno}
+\linenumbers
+
+
 \newtheorem{theorem}{Theorem}
 \newtheorem{lemma}[theorem]{Lemma}
 %\newtheorem{example}[]{Example}
