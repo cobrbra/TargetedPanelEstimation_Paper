@@ -112,6 +112,7 @@ We introduce a novel data-driven framework for the design of targeted gene panel
 \textbf{Keywords: cancer, gene panel design, tumour indel burden, tumour mutation burden.}
 \end{abstract}
 
+\newpage 
 % It has been understood for a long time that cancer, a disease occurring in many distinct tissues of the body and giving rise to a wide range of presentations, is initiated and driven by the accumulation of mutations in a subset of a person's cells. Since the discovery of \gls{icb}\footnote{For their work on \gls{icb}, James Allison and Tasuku Honjo received the 2018 Nobel Prize for Physiology/Medicine.},  there has been an explosion of interest in cancer therapies targeting immune response and \gls{icb} therapy is now widely used in clinical practice.  \gls{icb} therapy works by targeting natural mechanisms (such as the proteins \gls{ctla4} and \gls{pdl1}) to disengage the immune system. Inhibition of these \emph{checkpoints} can promote a more aggressive anti-tumour immune response, and in some patients this leads to long-term remission . However, \gls{icb} therapy is not always effective and may have adverse side-effects, so determining which patients will benefit in advance of treatment is vital. 
 
 
@@ -140,9 +141,9 @@ To demonstrate the performance of our proposal we make use of the \gls{nsclc} da
 
 Figure~\ref{fig:commercial_comparison} highlights the potential utility of our proposal: First, for each of the three panels considered here, we see that our refitted estimator applied to the panel outperforms all existing approaches in terms of regression performance, and that for smaller panels we are able to improve regression accuracy even further by selecting a panel based on the training data. For instance, in comparison to predictions based on the TST-170~panel, our procedure with a selected panel of the same size ($\Sexpr{signif(s3.2.stats[['tst_170_length']], 2)}$Mb) achieves an $R^2$ of $\Sexpr{signif(s3.2.stats[['tst_170_alt_r']], 2)}$. The best available existing method based on the TST-170~panel, in this case the linear estimator, has an $R^2$ of $\Sexpr{signif(s3.2.stats[['tst_170_r']], 2)}$. Moreover, data-driven selection of panels considerably increases the classification performance for the whole range of panel sizes considered. In particular, even for the smallest panel size shown in Figure~\ref{fig:commercial_comparison} ($\sim$0.2Mb), the classification performance of our method outperforms the best existing methodology applied to the MSK-IMPACT panel, despite being almost a factor of six times smaller.
 
-
+\section{Conclusions}
+We introduce a new data-driven framework for designing targeted gene panels which allows for cost-effective estimation of exome-wide biomarkers, such as \acrlong{tmb} and \acrlong{tib}.  Using the \acrlong{nsclc} dataset from \citet{campbell_distinct_2016}, we demonstrate the excellent predictive performance of our proposal, and show that it outperforms the existing state-of-the-art procedures. Our framework can be applied to any tumour dataset containing annotated mutations, and we provide an \texttt{R} package \citep{bradley_immune_2021} which implements the methodology.
 
 \bibliography{zotero-refs.bib}
-
 
 \end{document}
