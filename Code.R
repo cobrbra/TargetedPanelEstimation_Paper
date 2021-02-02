@@ -451,6 +451,10 @@ ggsave(filename = "figures/fig5.png", plot = fig5, width = 8, height = 4)
 
 
 ### Section 3.1 Stats
+
+nsclc_gen_model_unisamp <- fit_gen_mode_unisamp(gene_lengths = ensembl_gene_lengths, table = nsclc_tables$train,
+                                 progress = TRUE)
+
 ns_sparsity = 1 - mean(manhat_data$ns_coefficient != 0)
 i_sparsity = 1 - mean(manhat_data$i_coefficient != 0)
 print(paste0("Non-synonymous sparsity:", signif(100*ns_sparsity, 3), "%"))
