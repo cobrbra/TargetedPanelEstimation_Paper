@@ -466,15 +466,14 @@ devs_sat <- get_gen_estimates(nsclc_tables$train, gen_model = nsclc_gen_model, a
 devs_unigene <- get_gen_estimates(nsclc_tables$train, gen_model = nsclc_gen_model, alt_model_type = "UG", gene_lengths = ensembl_gene_lengths, calculate_deviance = TRUE)
 devs_unisamp <- get_gen_estimates(nsclc_tables$train, gen_model = nsclc_gen_model, alt_gen_model = nsclc_gen_model_unisamp, alt_model_type = "US", gene_lengths = ensembl_gene_lengths, calculate_deviance = TRUE)
 devs_uninteract <- get_gen_estimates(nsclc_tables$train, gen_model = nsclc_gen_model, alt_gen_model = nsclc_gen_model_uninteract, alt_model_type = "UI", gene_lengths = ensembl_gene_lengths, calculate_deviance = TRUE)
-# 
-# s3.1.table <- data.frame(dev = sprintf(c(devs_sat$deviance, devs_unisamp$deviance, devs_unigene$deviance, devs_uninteract$deviance), fmt = '%#.2e'),
-#                          df = sprintf(c(devs_sat$df, devs_unisamp$df, devs_unigene$df, devs_uninteract$df), fmt = '%#.2e'),
-#                          ratio = sprintf(c(devs_sat$deviance/devs_sat$df, devs_unisamp$deviance/devs_unisamp$df, 
-#                                    devs_unigene$deviance/devs_unigene$df, devs_uninteract$deviance/devs_uninteract$df), fmt = '%#.2e'),
-#                          p = sprintf(1 - c(pchisq(devs_sat$deviance, devs_sat$df), pchisq(devs_unisamp$deviance, devs_unisamp$df), pchisq(devs_unigene$deviance, devs_unigene$df), pchisq(devs_uninteract$deviance, devs_uninteract$df)), fmt = '%#.2f'))
-# write_tsv(x = s3.1.table, file = "data/results/s3.1.table.tsv")
 
+s3.1.table <- data.frame(dev = c(devs_sat$deviance, devs_unisamp$deviance, devs_unigene$deviance, devs_uninteract$deviance),
+                         df = c(devs_sat$df, devs_unisamp$df, devs_unigene$df, devs_uninteract$df),
+                         ratio = c(devs_sat$deviance/devs_sat$df, devs_unisamp$deviance/devs_unisamp$df,
+                                   devs_unigene$deviance/devs_unigene$df, devs_uninteract$deviance/devs_uninteract$df),
+                         p = 1 - c(pchisq(devs_sat$deviance, devs_sat$df), pchisq(devs_unisamp$deviance, devs_unisamp$df), pchisq(devs_unigene$deviance, devs_unigene$df), pchisq(devs_uninteract$deviance, devs_uninteract$df)))
 
+write_tsv(s3.1.table, "data/results/s3.1.table.tsv")
 
 ns_sparsity = 1 - mean(manhat_data$ns_coefficient != 0)
 i_sparsity = 1 - mean(manhat_data$i_coefficient != 0)
