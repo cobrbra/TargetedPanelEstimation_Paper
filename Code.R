@@ -3,9 +3,9 @@
 library(devtools)
 
 ## ICBioMark Package
-# devtools::install_github("cobrbra/ICBioMark", force = TRUE)
-# library(ICBioMark)
-load_all("../../ICBioMark/")
+devtools::install_github("cobrbra/ICBioMark", force = TRUE)
+library(ICBioMark)
+# load_all("../../ICBioMark/")
 
 ## ecTMB Package
 #
@@ -452,8 +452,9 @@ ggsave(filename = "figures/fig5.png", plot = fig5, width = 8, height = 4)
 
 ### Section 3.1 Stats
 
-nsclc_gen_model_unisamp <- fit_gen_mode_unisamp(gene_lengths = ensembl_gene_lengths, table = nsclc_tables$train,
+nsclc_gen_model_unisamp <- fit_gen_model_unisamp(gene_lengths = ensembl_gene_lengths, table = nsclc_tables$train,
                                  progress = TRUE)
+write_rds(nsclc_gen_model_unisamp, "data/temporary_storage/nsclc_gen_model_unisamp")
 
 ns_sparsity = 1 - mean(manhat_data$ns_coefficient != 0)
 i_sparsity = 1 - mean(manhat_data$i_coefficient != 0)
