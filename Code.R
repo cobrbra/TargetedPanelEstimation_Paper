@@ -3,9 +3,9 @@
 library(devtools)
 
 ## ICBioMark Package
-devtools::install_github("cobrbra/ICBioMark", force = TRUE)
-library(ICBioMark)
-# load_all("../../ICBioMark/")
+# devtools::install_github("cobrbra/ICBioMark", force = TRUE)
+# library(ICBioMark)
+load_all("../../ICBioMark/")
 
 ## ecTMB Package
 #
@@ -452,9 +452,24 @@ ggsave(filename = "figures/fig5.png", plot = fig5, width = 8, height = 4)
 
 ### Section 3.1 Stats
 
-nsclc_gen_model_unisamp <- fit_gen_model_unisamp(gene_lengths = ensembl_gene_lengths, table = nsclc_tables$train,
-                                 progress = TRUE)
-write_rds(nsclc_gen_model_unisamp, "data/temporary_storage/nsclc_gen_model_unisamp")
+# nsclc_gen_model_unisamp <- fit_gen_model_unisamp(gene_lengths = ensembl_gene_lengths, table = nsclc_tables$train,
+#                                  nlambda = 30, progress = TRUE)
+# write_rds(nsclc_gen_model_unisamp, "data/temporary_storage/nsclc_gen_model_unisamp")
+
+nsclc_gen_model_unisamp <- read_rds("data/temporary_storage/nsclc_gen_model_unisamp")
+
+# nsclc_gen_model_uninteract <- fit_gen_model_uninteract(gene_lengths = ensembl_gene_lengths, table = nsclc_tables$train,
+#                                                         nlambda = 30, progress = TRUE)
+# write_rds(nsclc_gen_model_uninteract, "data/temporary_storage/nsclc_gen_model_uninteract")
+
+nsclc_gen_model_uninteract <- read_rds("data/temporary_storage/nsclc_gen_model_uninteract")
+
+devs_sat <- get_gen_estimates(nsclc_tables$train, gen_model = nsclc_gen_model, alt_model_type = "S", gene_lengths = ensembl_gene_lengths, calculate_deviance = TRUE)
+devs_unigene <- get_gen_estimates(nsclc_tables$train, gen_model = nsclc_gen_model, alt_model_type = "UG", gene_lengths = ensembl_gene_lengths, calculate_deviance = TRUE)
+devs_unisamp <- get_gen_estimates(nsclc_tables$train, gen_model = nsclc_gen_model, alt_gen_model = nsclc_gen_model_unisamp, alt_model_type = "US", gene_lengths = ensembl_gene_lengths, calculate_deviance = TRUE)
+devs_uninteract <- get_gen_estimates(nsclc_tables$train, gen_model = nsclc_gen_model, alt_gen_model = nsclc_gen_model_uninteract, alt_model_type = "UI", gene_lengths = ensembl_gene_lengths, calculate_deviance = TRUE)
+
+
 
 ns_sparsity = 1 - mean(manhat_data$ns_coefficient != 0)
 i_sparsity = 1 - mean(manhat_data$i_coefficient != 0)
