@@ -3,9 +3,9 @@
 library(devtools)
 
 ## ICBioMark Package
-# devtools::install_github("cobrbra/ICBioMark", force = TRUE)
-# library(ICBioMark)
-load_all("../../ICBioMark/")
+devtools::install_github("cobrbra/ICBioMark", force = TRUE)
+library(ICBioMark)
+# load_all("../../ICBioMark/")
 
 ## ecTMB Package
 #
