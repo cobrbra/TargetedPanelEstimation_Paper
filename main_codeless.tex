@@ -34,8 +34,8 @@
 \renewcommand*{\glsdonohyperlink}[2]{%
  {\glsxtrprotectlinks \glsdohypertarget{#1}{#2}}}
 
-\usepackage{lineno}
-\linenumbers
+% \usepackage{lineno}
+% \linenumbers
 
 
 \newtheorem{theorem}{Theorem}
@@ -255,24 +255,18 @@ Finally we describe a heuristic procedure for producing prediction intervals aro
 
 \section{Experimental results \label{sec:experimentalresults}}
 
-<<echo = FALSE>>=
-# read in statistics
-s3.intro.stats = read.table(file = "data/results/s3.intro.stats.tsv", sep = '\t', head = TRUE)
-@
+
 
 In this section we demonstrate the practical performance of our proposal using the dataset from \citet{campbell_distinct_2016}, which we introduced in Section~\ref{sec:dataterminology}. Our main focus is the prediction of \gls{tmb}, and we show that our approach outperforms the state-of-the-art approaches. We also analyse the suitability of our generative model, consider the task of predicting the recently proposed biomarker \gls{tib}, and include a panel augmentation case study with the Foundation~One gene panel.
 
-Since we are only looking to produce estimators for \gls{tmb} and \gls{tib}, we group mutations into two categories -- \emph{indel} mutations and \emph{all other non-synonymous} mutations -- so that $|S|=2$.  This simplifies the presentation of our results and reduces the computational cost of fitting the generative model.  In order to assess the performance of each of the methods in this section, we randomly split the dataset into training, validation and test sets, which contain $n_{\text{train}} = n =  \Sexpr{s3.intro.stats[['n_train_samples']]}, \ n_{\text{val}} =  \Sexpr{s3.intro.stats[['n_val_samples']]}$ and $n_{\text{test}} = \Sexpr{s3.intro.stats[['n_test_samples']]}$ samples, respectively.  Mutations are observed in $|G| = \Sexpr{s3.intro.stats[['n_genes']]}$ genes. Our training set comprises samples with an average TMB of $\Sexpr{signif(s3.intro.stats[['tmb_mean']], 3)}$ and TIB of $\Sexpr{signif(s3.intro.stats[['tib_mean']], 3)}$. 
+Since we are only looking to produce estimators for \gls{tmb} and \gls{tib}, we group mutations into two categories -- \emph{indel} mutations and \emph{all other non-synonymous} mutations -- so that $|S|=2$.  This simplifies the presentation of our results and reduces the computational cost of fitting the generative model.  In order to assess the performance of each of the methods in this section, we randomly split the dataset into training, validation and test sets, which contain $n_{\text{train}} = n = 800, \ n_{\text{val}} =  171$ and $n_{\text{test}} = 173$ samples, respectively.  Mutations are observed in $|G| = 17358$ genes. Our training set comprises samples with an average TMB of $252$ and TIB of $9.25$. 
 
 
 \subsection{Generative model fit and validation \label{sec:genmodelfit}}
 
-<<echo = FALSE>>=
-s3.1.stats = read.table(file = "data/results/s3.1.stats.tsv", sep = '\t', head = TRUE)
-s3.1.table = read.table(file = "data/results/s3.1.table.tsv", sep = '\t', head = TRUE)
-@
 
-The first step in our analysis is to fit the model proposed in Section \ref{sec:genmodel} using only the training dataset. In particular, we obtain estimates of the model parameters using equation~\eqref{eq:genparams}, where the tuning parameter $\kappa_1$ is determined using 10-fold cross-validation as described in Section~\ref{sec:practicalconsiderations}.  The results are presented in Figure~\ref{fig:genmodelstats}. The best choice of $\kappa_1$ produces estimates of $\lambda$ and $\eta$ with $\Sexpr{signif(100 * s3.1.stats[['ns_sparsity']], 3)} \%$ and $\Sexpr{signif(100 * s3.1.stats[['i_sparsity']], 3)} \%$ sparsity respectively, i.e. that proportion of their components are estimated to be exactly zero. We plot $\hat{\lambda}$ and $\hat{\eta}$ for this value of $\kappa_1$ in Figures \ref{fig:manhat_plot} and \ref{fig:manhat_plot_indel}. Genes with $\hat{\lambda}_g = 0$ are interpreted to be mutating according to the background mutation rate, and genes with $\hat{\eta}_{\text{g,indel}} = 0$ are interpreted as having no specific selection pressure for or against indel mutations. In Figures \ref{fig:manhat_plot} and \ref{fig:manhat_plot_indel} we highlight genes with large (in absolute value) parameter estimates, some of which have known biological relevance in oncology; see Section~\ref{sec:conclusion} for further discussion.   
+
+The first step in our analysis is to fit the model proposed in Section \ref{sec:genmodel} using only the training dataset. In particular, we obtain estimates of the model parameters using equation~\eqref{eq:genparams}, where the tuning parameter $\kappa_1$ is determined using 10-fold cross-validation as described in Section~\ref{sec:practicalconsiderations}.  The results are presented in Figure~\ref{fig:genmodelstats}. The best choice of $\kappa_1$ produces estimates of $\lambda$ and $\eta$ with $44.4 \%$ and $77.8 \%$ sparsity respectively, i.e. that proportion of their components are estimated to be exactly zero. We plot $\hat{\lambda}$ and $\hat{\eta}$ for this value of $\kappa_1$ in Figures \ref{fig:manhat_plot} and \ref{fig:manhat_plot_indel}. Genes with $\hat{\lambda}_g = 0$ are interpreted to be mutating according to the background mutation rate, and genes with $\hat{\eta}_{\text{g,indel}} = 0$ are interpreted as having no specific selection pressure for or against indel mutations. In Figures \ref{fig:manhat_plot} and \ref{fig:manhat_plot_indel} we highlight genes with large (in absolute value) parameter estimates, some of which have known biological relevance in oncology; see Section~\ref{sec:conclusion} for further discussion.   
 
 \begin{figure}[htbp]
 \centering
@@ -315,11 +309,11 @@ In Table~\ref{table:goodnessoffit} we present the residual deviance and the resi
 Comparison  & Residual  & Residual Degrees & dev/df & $p$-value \\
 Model            & Deviance (dev)             & of Freedom (df)  &        &           \\
 \hline
-(i) & $\Sexpr{formatC(s3.1.table[1,1], format = "E", digits = 2)}$  & $\Sexpr{formatC(s3.1.table[1,2], format = "E", digits = 2)}$  &  $\Sexpr{formatC(s3.1.table[1,3], format = "E", digits = 2)}$  &  $\Sexpr{formatC(s3.1.table[1,4], format = "f", digits = 2)}$ \\
+(i) & $1.43 \times 10^6$  & $2.74 \times 10^7$  &  $5.22 \times 10^{-2}$  &  $1.00$ \\
 \hline
-(ii)  & $\Sexpr{formatC(s3.1.table[2,1], format = "E", digits = 2)}$  &  $\Sexpr{formatC(s3.1.table[2,2], format = "E", digits = 2)}$  & $\Sexpr{formatC(s3.1.table[2,3], format = "E", digits = 2)}$ & $\Sexpr{formatC(s3.1.table[2,4], format = "f", digits = 2)}$\\
-(iii)  &  $\Sexpr{formatC(s3.1.table[3,1], format = "E", digits = 2)}$ & $\Sexpr{formatC(s3.1.table[3,2], format = "E", digits = 2)}$  & $\Sexpr{formatC(s3.1.table[3,3], format = "E", digits = 2)}$ &  $\Sexpr{formatC(s3.1.table[3,4], format = "f", digits = 2)}$\\
-(iv) & $\Sexpr{formatC(s3.1.table[4,1], format = "E", digits = 2)}$ & $\Sexpr{formatC(s3.1.table[4,2], format = "E", digits = 2)}$ & $\Sexpr{formatC(s3.1.table[4,3], format = "E", digits = 2)}$ & $\Sexpr{formatC(s3.1.table[4,4], format = "f", digits = 2)}$ \\
+(ii)  & $1.42 \times 10^5$  &  $8.00 \times 10^2$  & $1.77 \times 10^2$ & $0.00$\\
+(iii)  &  $1.10 \times 10^5 $ & $1.33 \times 10^4$  & $8.24 \times 10^0$ &  $0.00$\\
+(iv) & $1.70 \times 10^4$ & $1.82 \times 10^3$ & $9.33 \times 10^0$ & $0.00$ \\
 \hline
 \end{tabular}
 \vspace*{-10mm}
@@ -329,9 +323,6 @@ Model            & Deviance (dev)             & of Freedom (df)  &        &     
 
 \subsection{Predicting tumour mutation burden \label{sec:tmb}}
 
-<<echo = FALSE>>=
-s3.2.stats = read.table(file = "data/results/s3.2.stats.tsv", sep = '\t', head = TRUE)
-@
 
 We now demonstrate the excellent practical performance of our procedure for estimating \gls{tmb}.  First it is shown that our method can indeed select gene panels of size specified by the practitioner and that good predictions can be made even with small panel sizes (i.e.~$\leq$ 1Mb). We then compare the performance of our proposal with state-of-the-art estimation procedures based on a number of widely used gene panels.
 
@@ -340,7 +331,7 @@ In order to evaluate the predictive performance of an estimator we calculate the
     R^2 := 1- \frac{\sum_{i =1}^{n_{val}}(t_i - \hat{t}_i)^2}{\sum_{i = 1}^{n_{val}}(t_i - \bar{t})^2}. 
     \]
     
- Other existing works have aimed to classify tumours into two groups (high \gls{tmb}, low \gls{tmb}); see, for example, \citet{buttner_implementing_2019} and \citet{wu_designing_2019}. Here we also report the estimated \gls{auprc} for a classifier based on our estimator. We define the classifier as follows: first, in line with major clinical studies \citep[e.g.][]{hellmann_nivolumab_2018, ramalingam_tumor_2018} the true class membership of a tumour is defined according to whether it has $t^* := 300$ or more exome mutations (approximately 10 Mut/Mb). In the validation set, this gives $\Sexpr{s3.2.stats[['n_tmb_h']]} \ (\Sexpr{signif(100*s3.2.stats[['prop_tmb_h']],3)}\% )$ tumours with high \gls{tmb} and $\Sexpr{s3.2.stats[['n_tmb_l']]} \ (\Sexpr{signif(100*s3.2.stats[['prop_tmb_l']],3)} \% ) $ with low \gls{tmb}. Now, for a cutoff $t \geq 0$, we can define a classifier by assigning a tumour to the high \gls{tmb} class if its estimated \gls{tmb} value is greater than or equal to $t$.  For such a classifier, we have precision and recall (estimated over the validation set) given by
+ Other existing works have aimed to classify tumours into two groups (high \gls{tmb}, low \gls{tmb}); see, for example, \citet{buttner_implementing_2019} and \citet{wu_designing_2019}. Here we also report the estimated \gls{auprc} for a classifier based on our estimator. We define the classifier as follows: first, in line with major clinical studies \citep[e.g.][]{hellmann_nivolumab_2018, ramalingam_tumor_2018} the true class membership of a tumour is defined according to whether it has $t^* := 300$ or more exome mutations (approximately 10 Mut/Mb). In the validation set, this gives $47 \ (27.5 \% )$ tumours with high \gls{tmb} and $124 \ (72.5 \% ) $ with low \gls{tmb}. Now, for a cutoff $t \geq 0$, we can define a classifier by assigning a tumour to the high \gls{tmb} class if its estimated \gls{tmb} value is greater than or equal to $t$.  For such a classifier, we have precision and recall (estimated over the validation set) given by
  \[
  p(t) := \frac{\sum_{i=1}^{n_{val}} \mathbbm{1}_{\{\hat{t}_i \geq t, \ t_i \geq t^*\}}}{\sum_{i=1}^{n_{val}} \mathbbm{1}_{\{\hat{t}_i \geq t\}}} \quad \text{and} \quad   r(t) := \frac{\sum_{i=1}^{n_{val}} \mathbbm{1}_{\{\hat{t}_i \geq t, \ t_i \geq t^*\}}}{\sum_{i=1}^{n_{val}} \mathbbm{1}_{\{t_i \geq t^*\}}},
  \]
@@ -375,9 +366,9 @@ The latter three comprise existing methods for estimating \gls{tmb} available to
 \vspace*{-2mm}
 \end{figure}
 
-We present results of these comparisons in  Figure~\ref{fig:commercial_comparison}. First, for each of the three panels considered here, we see that our refitted estimator applied to the panel outperforms all existing approaches in terms of regression performance, and that for smaller panels we are able to improve regression accuracy even further by selecting a panel based on the training data. For instance, in comparison to predictions based on the TST-170~panel, our procedure with a selected panel of the same size ($\Sexpr{signif(s3.2.stats[['tst_170_length']], 2)}$Mb) achieves an $R^2$ of $\Sexpr{signif(s3.2.stats[['tst_170_alt_r']], 2)}$. The best available existing method based on the TST-170~panel, in this case the linear estimator, has an $R^2$ of $\Sexpr{signif(s3.2.stats[['tst_170_r']], 2)}$. Moreover, data-driven selection of panels considerably increases the classification performance for the whole range of panel sizes considered. In particular, even for the smallest panel size shown in Figure~\ref{fig:commercial_comparison} ($\sim$0.2Mb), the classification performance of our method outperforms the best existing methodology applied to the MSK-IMPACT panel, despite being almost a factor of six times smaller.  
+We present results of these comparisons in  Figure~\ref{fig:commercial_comparison}. First, for each of the three panels considered here, we see that our refitted estimator applied to the panel outperforms all existing approaches in terms of regression performance, and that for smaller panels we are able to improve regression accuracy even further by selecting a panel based on the training data. For instance, in comparison to predictions based on the TST-170~panel, our procedure with a selected panel of the same size ($0.4$Mb) achieves an $R^2$ of $0.85$. The best available existing method based on the TST-170~panel, in this case the linear estimator, has an $R^2$ of $0.74$. Moreover, data-driven selection of panels considerably increases the classification performance for the whole range of panel sizes considered. In particular, even for the smallest panel size shown in Figure~\ref{fig:commercial_comparison} ($\sim$0.2Mb), the classification performance of our method outperforms the best existing methodology applied to the MSK-IMPACT panel, despite being almost a factor of six times smaller.  
 
-Finally in this section we demonstrate the practical performance of our method using the test set, which until this point has been held out. Based on the validation results above, we take the panel of size 0.6Mb selected by our procedure and use our refitted estimator on that panel to predict \gls{tmb} for the $\Sexpr{s3.intro.stats[['n_test_samples']]}$  samples in the test set. For comparison, we also present predictions from \gls{ectmb}, the count-based estimator and the linear regression estimator applied to the same panel.  In Figure~\ref{fig:8} we see that our procedure performs well; we obtain an $R^2$ value (on the test data) of $\Sexpr{signif(s3.2.stats[['t_0.6_r_tmb']],2)}$.  The other methods have $R^2$ values of $\Sexpr{signif(s3.2.stats[['ectmb_0.6_r_tmb']],2)}$ (\gls{ectmb}), $\Sexpr{signif(s3.2.stats[['count_0.6_r_tmb']],2)}$ (count) and $\Sexpr{signif(s3.2.stats[['linear_0.6_r_tmb']],2)}$ (linear regression). The count-based estimator here gives predictions which are reasonably well correlated to the true values of \gls{tmb} but are positively biased. This is as expected, since our selection procedure tends to favour genes with higher overall mutation rates.  We also include a red shaded region comprising all points for which heuristic 90\% prediction intervals (as described in Section~\ref{sec:practicalconsiderations}) include the true \gls{tmb} value. We find in this case that $\Sexpr{signif(100*s3.2.stats[['prop_confidence_tmb']],3)}$\% of the observations in the test set fall within this region, giving valid empirical coverage.
+Finally in this section we demonstrate the practical performance of our method using the test set, which until this point has been held out. Based on the validation results above, we take the panel of size 0.6Mb selected by our procedure and use our refitted estimator on that panel to predict \gls{tmb} for the $173$  samples in the test set. For comparison, we also present predictions from \gls{ectmb}, the count-based estimator and the linear regression estimator applied to the same panel.  In Figure~\ref{fig:8} we see that our procedure performs well; we obtain an $R^2$ value (on the test data) of $0.85$.  The other methods have $R^2$ values of $0.67$ (\gls{ectmb}), $-36$ (count) and $0.64$ (linear regression). The count-based estimator here gives predictions which are reasonably well correlated to the true values of \gls{tmb} but are positively biased. This is as expected, since our selection procedure tends to favour genes with higher overall mutation rates.  We also include a red shaded region comprising all points for which heuristic 90\% prediction intervals (as described in Section~\ref{sec:practicalconsiderations}) include the true \gls{tmb} value. We find in this case that $93.6$\% of the observations in the test set fall within this region, giving valid empirical coverage.
 
 \begin{figure}[htbp]
 \centering
@@ -390,15 +381,13 @@ Finally in this section we demonstrate the practical performance of our method u
 
 \subsection{Predicting tumour indel burden \label{sec:indel}}
 
-<<echo = FALSE>>=
-s3.3.stats = read.table(file = "data/results/s3.3.stats.tsv", sep = '\t', head = TRUE)
-@
+
 
 In this section we demonstrate how our method can be used to estimate \gls{tib}. 
 This is more challenging than estimating \gls{tmb} due to the low abundance of indel mutations relative to other variant types (see Figure~\ref{fig:2}), as well as issues involved in sequencing genomic loci of repetitive nucleotide constitution \citep{narzisi_challenge_2015}. Indeed, in contrast to the previous section, we are not aware of any existing methods designed to estimate \gls{tib} from targeted gene panels.  We therefore investigate the performance of our method across a much wider range (0-30Mb) of panel sizes, and find that we are able to accurately predict \gls{tib} with larger panels.
 Our results also demonstrate that accurate classification of \gls{tib} status is possible even with small gene panels. 
 
-We let $S_{\text{indel}}$ be the set of all frameshift insertion and deletion mutations, and apply our method introduced in Section~\ref{sec:linearestimator} with $\bar{S} = S_{\text{indel}}$. As in the previous section, we assess regression and classification performance via $R^2$ and \gls{auprc}, respectively, where in this case tumours are separated into two classes: high \gls{tib} (10 or more indel mutations) and low \gls{tib} (otherwise). In the validation dataset, this gives $\Sexpr{s3.3.stats[['n_tib_h']]} \ (\Sexpr{signif(100*s3.3.stats[['prop_tib_h']],3)}\% )$ tumours in the high \gls{tib} class. 
+We let $S_{\text{indel}}$ be the set of all frameshift insertion and deletion mutations, and apply our method introduced in Section~\ref{sec:linearestimator} with $\bar{S} = S_{\text{indel}}$. As in the previous section, we assess regression and classification performance via $R^2$ and \gls{auprc}, respectively, where in this case tumours are separated into two classes: high \gls{tib} (10 or more indel mutations) and low \gls{tib} (otherwise). In the validation dataset, this gives $57 \ (33.3 \% )$ tumours in the high \gls{tib} class. 
 
 \begin{figure}[htbp]
 \centering
@@ -414,7 +403,7 @@ We now assess the performance on the test set of our refitted estimator of \gls{
 \[
 \frac{\ell_G}{\ell_{P}} \frac{\sum_{i =1}^{n} \sum_{g \in G} \sum_{s \in S_{\text{indel}}} M_{igs}}{\sum_{i=1}^{n}\sum_{g \in G} \sum_{s \in S} M_{igs}}\sum_{g \in P} \sum_{s \in S} M_{0gs}.
 \]
-In Figure~\ref{fig:indel_predictions_figure} we present the predictions on the test set of our refitted estimator ($R^2 = \Sexpr{signif(s3.3.stats[['t_0.6_r_tib']],2)}$); the count estimator ($R^2 = \Sexpr{signif(s3.3.stats[['count_0.6_r_tib']],3)}$); and the linear regression estimator ($R^2 = \Sexpr{signif(s3.3.stats[['linear_0.6_r_tib']],2)}$). We also include (shaded in red) the set of points for which 90\% prediction intervals contain the true value. In this case we find that $\Sexpr{signif(100*s3.3.stats[['prop_confidence_tib']],3)} \%$ of test set points fall within this region.
+In Figure~\ref{fig:indel_predictions_figure} we present the predictions on the test set of our refitted estimator ($R^2 = 0.35$); the count estimator ($R^2 = -44$); and the linear regression estimator ($R^2 = 0.15$). We also include (shaded in red) the set of points for which 90\% prediction intervals contain the true value. In this case we find that $97.7 \%$ of test set points fall within this region.
 
 \begin{figure}[htbp]
 \centering
@@ -427,9 +416,7 @@ In Figure~\ref{fig:indel_predictions_figure} we present the predictions on the t
 
 \subsection{A panel-augmentation case study \label{sec:augmentation}}
 
-<<echo = FALSE>>=
-s3.4.table = read.table(file = "data/results/s3.4.table.tsv", sep = '\t', head = TRUE, colClasses = rep("character", 5))
-@
+
 
 As discussed in Section \ref{sec:panelaugmentation}, we may wish to include genes from a given panel, but use our methodology to augment the panel to include additional genes with goal of obtaining more accurate predictions of \gls{tmb} (or other biomarkers). In this section we demonstrate how this can be done starting with the TST-170 panel ($\sim$0.4Mb) and augmenting to 0.6Mb in length, demonstrating impressive gains in predictive performance.
 
@@ -445,10 +432,10 @@ We apply the augmentation method described in Section~\ref{sec:panelaugmentation
 \cline{2-5}
   & TST-170  & Aug. TST-170  & TST-170  & Aug. TST-170    \\
  \hline
- Refitted $\hat{T}$ & $\textbf{\Sexpr{s3.4.table[1,2]}}$ & $\textbf{\Sexpr{s3.4.table[1,3]}}$ & $\textbf{\Sexpr{s3.4.table[1,4]}}$  &  $\textbf{\Sexpr{s3.4.table[1,5]}}$       \\
-$\text{\Sexpr{s3.4.table[2,1]}}$  & $\Sexpr{s3.4.table[2,2]}$ & $\Sexpr{s3.4.table[2,3]}$ & $\Sexpr{s3.4.table[2,4]}$ & $\Sexpr{s3.4.table[2,5]}$  \\
-$\text{\Sexpr{s3.4.table[3,1]}}$ & $\Sexpr{s3.4.table[3,2]}$ & $\Sexpr{s3.4.table[3,3]}$ & $\textbf{\Sexpr{s3.4.table[3,4]}}$ & $\textbf{\Sexpr{s3.4.table[3,5]}}$ \\
-$\text{\Sexpr{s3.4.table[4,1]}}$ & $\Sexpr{s3.4.table[4,2]}$ & $\Sexpr{s3.4.table[4,3]}$ & $\Sexpr{s3.4.table[4,4]}$ & $\Sexpr{s3.4.table[4,5]}$ \\
+ Refitted $\hat{T}$ & $\textbf{0.58}$ & $\textbf{0.84}$ & $\textbf{0.83}$  &  $\textbf{0.94}$       \\
+ecTMB & 0.37  & 0.51 & 0.80 &  0.88  \\
+Count & 0.18 & 0.18& \textbf{0.83} & $\textbf{0.94}$ \\
+Linear & 0.47 & 0.74 & 0.78 & 0.89 \\
 \hline
 \end{tabular}
 \vspace*{-5mm}
