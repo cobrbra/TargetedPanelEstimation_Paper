@@ -4,4 +4,4 @@ Below is contained the code and LaTeX necessary to reproduce the paper. The file
 
 The code here is purely data analysis and figure production: the real implementation of our method is in the R package [ICBioMark](https://github.com/cobrbra/ICBioMark).
 
-If you have questions, please feel free to [get in touch](j.r.j.bradley@sms.ed.ac.uk).
+If you have questions, please feel free to [get in touch](mailto:j.r.j.bradley@sms.ed.ac.uk).
