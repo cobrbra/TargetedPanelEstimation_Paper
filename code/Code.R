@@ -3,13 +3,13 @@
 library(devtools)
 
 ## ICBioMark Package
-devtools::install_github("cobrbra/ICBioMark", force = TRUE)
+# install.packages("ICBioMark")
 library(ICBioMark)
-# load_all("../../ICBioMark/")
 
 ## ecTMB Package
-#
-library(ecTMB)
+
+#devtools::install_github("bioinform/ecTMB")
+# library(ecTMB)
 
 ## Other R packages needed
 #install.packages("cowplot")
@@ -34,7 +34,7 @@ library(tibble)
 library(PRROC)
 
 ## Figures path
-fig_path <- "figures/"
+fig_path <- "results/figures/"
 
 
 
@@ -46,16 +46,16 @@ nsclc_tables <- get_mutation_tables(maf = nsclc_maf, include_synonymous = FALSE,
 message("Getting generative model")
 # nsclc_gen_model <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = nsclc_tables$train,
 #                                  progress = TRUE)
-# write_rds(x = nsclc_gen_model, file = "data/results/nsclc_gen_model")
+# write_rds(x = nsclc_gen_model, file = "results/nsclc_gen_model")
 
-nsclc_gen_model <- read_rds("data/results/nsclc_gen_model")
+nsclc_gen_model <- read_rds("results/nsclc_gen_model")
 
 message("Getting first-fit")
 # nsclc_pred_first_tmb <- pred_first_fit(gen_model = nsclc_gen_model, lambda = exp(seq(-18, -26, length.out = 100)),
                                          # gene_lengths = ensembl_gene_lengths, training_matrix = nsclc_tables$train$matrix)
-# write_rds(x = nsclc_pred_first_tmb, file = "data/results/nsclc_pred_first_tmb")
+# write_rds(x = nsclc_pred_first_tmb, file = "results/nsclc_pred_first_tmb")
 
-nsclc_pred_first_tmb <- read_rds("data/results/nsclc_pred_first_tmb")
+nsclc_pred_first_tmb <- read_rds("results/nsclc_pred_first_tmb")
 
 message("Getting refit")
 nsclc_pred_refit_tmb <- pred_refit_range(pred_first = nsclc_pred_first_tmb, gene_lengths = ensembl_gene_lengths)
@@ -65,9 +65,9 @@ nsclc_tmb_values <- get_biomarker_tables(nsclc_maf, biomarker = "TMB")
 # nsclc_pred_first_tib <- pred_first_fit(gen_model = nsclc_gen_model, lambda = exp(seq(-18, -30, length.out = 100)),
 #                                        gene_lengths = ensembl_gene_lengths, training_matrix = nsclc_tables$train$matrix,
 #                                        biomarker = "TIB")
-# write_rds(x = nsclc_pred_first_tib, file = "data/results/nsclc_pred_first_tib")
+# write_rds(x = nsclc_pred_first_tib, file = "results/nsclc_pred_first_tib")
 
-nsclc_pred_first_tib <- read_rds("data/results/nsclc_pred_first_tib")
+nsclc_pred_first_tib <- read_rds("results/nsclc_pred_first_tib")
 nsclc_pred_refit_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gene_lengths = ensembl_gene_lengths,
                                          biomarker = "TIB")
 nsclc_tib_values <- get_biomarker_tables(nsclc_maf, biomarker = "TIB")
@@ -90,7 +90,7 @@ nsclc_pred_linear_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gen
 
 
 ### ecTMB Workflow
-# extdataDir = "./data/ecTMB_data/references"
+# extdataDir = "data/ecTMB_data/references"
 # exomef                 = file.path(extdataDir, "exome_hg38_vep.Rdata" )  #### hg38 exome file
 # covarf                 = file.path(extdataDir,"gene.covar.txt")   ### gene properties
 # mutContextf            = file.path(extdataDir,"mutation_context_96.txt" )  ### 96 mutation contexts
@@ -100,11 +100,11 @@ nsclc_pred_linear_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gen
 
 # URL = "https://github.com/bioinform/ecTMB/releases/download/v0.1.0/ecTMB_data.tar.gz"
 # download.file(URL,destfile = "data/ecTMB.example.tar.gz")
-# untar("./data/ecTMB.example.tar.gz")
+# untar("data/ecTMB.example.tar.gz")
 
 # URL_ref = "https://api.gdc.cancer.gov/data/254f697d-310d-4d7d-a27b-27fbf767a834"
-# download.file(URL_ref,destfile = "./data/ecTMB_data/GRCh38.d1.vd1.fa.tar.gz")
-# untar("./data/ecTMB_data/GRCh38.d1.vd1.fa.tar.gz")
+# download.file(URL_ref,destfile = "data/ecTMB_data/GRCh38.d1.vd1.fa.tar.gz")
+# untar("data/ecTMB_data/GRCh38.d1.vd1.fa.tar.gz")
 
 # trainset = nsclc_maf_grch38 %>%
 #   filter(Tumor_Sample_Barcode %in% nsclc_tables$train$sample_list) %>%
@@ -156,7 +156,7 @@ nsclc_pred_linear_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gen
 #   select(Tumor_Sample_Barcode, estimated_values, true_values) %>%
 #   mutate(panel = "TST-170")
 #
-# write_tsv(val_pred_tst_170, "data/results/val_pred_tst_170.tsv")
+# write_tsv(val_pred_tst_170, "results/val_pred_tst_170.tsv")
 #
 # ## Foundation One Panel
 # sample_f1_val = data.frame(SampleID = nsclc_tables$val$sample_list, BED = F1_panel, stringsAsFactors = FALSE)
@@ -175,7 +175,7 @@ nsclc_pred_linear_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gen
 #   select(Tumor_Sample_Barcode, estimated_values, true_values) %>%
 #   mutate(panel = "F1")
 #
-# write_tsv(val_pred_f1, "data/results/val_pred_f1.tsv")
+# write_tsv(val_pred_f1, "results/val_pred_f1.tsv")
 #
 # ## TSO-500 Panel
 # sample_tso_500_val = data.frame(SampleID = nsclc_tables$val$sample_list, BED = TSO_500_panel, stringsAsFactors = FALSE)
@@ -193,7 +193,7 @@ nsclc_pred_linear_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gen
 #   select(Tumor_Sample_Barcode, estimated_values, true_values) %>%
 #   mutate(panel = "TSO-500")
 #
-# write_tsv(val_pred_tso_500, "data/results/val_pred_tso_500.tsv")
+# write_tsv(val_pred_tso_500, "results/val_pred_tso_500.tsv")
 #
 # ## MSK-IMPACT Panel
 # sample_msk_val = data.frame(SampleID = nsclc_tables$val$sample_list, BED = MSK_panel, stringsAsFactors = FALSE)
@@ -211,7 +211,7 @@ nsclc_pred_linear_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gen
 #   select(Tumor_Sample_Barcode, estimated_values, true_values) %>%
 #   mutate(panel = "MSK-I")
 #
-# write_tsv(val_pred_msk, "data/results/val_pred_msk.tsv")
+# write_tsv(val_pred_msk, "results/val_pred_msk.tsv")
 
 
 
@@ -328,7 +328,7 @@ s3.intro.stats <- data.frame(n_train_samples = n_train_samples,
                               n_genes = n_genes,
                               tmb_mean = tmb_mean,
                               tib_mean = tib_mean)
-write_tsv(x = s3.intro.stats, file = 'data/results/s3.intro.stats.tsv')
+write_tsv(x = s3.intro.stats, file = 'results/s3.intro.stats.tsv')
 
 
 ### Figure 3
@@ -414,7 +414,7 @@ fig4 <- manhat_data %>%
     panel.grid.minor.x = element_blank(),
     axis.text.x = element_text(angle = 90, size = 8, vjust = 0.5)
   )
-ggsave(filename = "figures/fig4.png", plot = fig4, width = 8, height = 4)
+ggsave(filename = "results/figures/fig4.png", plot = fig4, width = 8, height = 4)
 
 
 
@@ -446,7 +446,7 @@ fig5 <- manhat_data %>%
     panel.grid.minor.x = element_blank(),
     axis.text.x = element_text(angle = 90, size = 8, vjust = 0.5)
   )
-ggsave(filename = "figures/fig5.png", plot = fig5, width = 8, height = 4)
+ggsave(filename = "results/figures/fig5.png", plot = fig5, width = 8, height = 4)
 
 
 
@@ -470,7 +470,7 @@ ggsave(filename = "figures/fig5.png", plot = fig5, width = 8, height = 4)
 #                                    devs_unigene$deviance/devs_unigene$df, devs_uninteract$deviance/devs_uninteract$df),
 #                          p = 1 - c(pchisq(devs_sat$deviance, devs_sat$df), pchisq(devs_unisamp$deviance, devs_unisamp$df), pchisq(devs_unigene$deviance, devs_unigene$df), pchisq(devs_uninteract$deviance, devs_uninteract$df)))
 # 
-# write_tsv(s3.1.table, "data/results/s3.1.table.tsv")
+# write_tsv(s3.1.table, "results/s3.1.table.tsv")
 
 ns_sparsity = 1 - mean(manhat_data$ns_coefficient != 0)
 i_sparsity = 1 - mean(manhat_data$i_coefficient != 0)
@@ -479,7 +479,7 @@ print(paste0("Indel sparsity: ", signif(100*i_sparsity,3), "%"))
 
 s3.1.stats <- data.frame(ns_sparsity = ns_sparsity,
                          i_sparsity = i_sparsity)
-write_tsv(x = s3.1.stats, file = "data/results/s3.1.stats.tsv")
+write_tsv(x = s3.1.stats, file = "results/s3.1.stats.tsv")
 
 
 
@@ -497,6 +497,7 @@ refit_stats_tmb <- nsclc_pred_refit_tmb %>%
   get_stats(biomarker_values = nsclc_tmb_values$val, model = "Refitted T", threshold = 300)
 
 fig6 <- bind_rows(refit_stats_tmb, first_stats_tmb) %>%
+  mutate(model = factor(model, levels = c("Refitted T", "First-fit T"))) %>% 
   mutate(type = if_else(metric == "R", "Regression ~ (R^2)", "Classification ~ (AUPRC)")) %>%
   mutate(type = factor(type, levels = c("Regression ~ (R^2)", "Classification ~ (AUPRC)"))) %>%
   filter(panel_length <= 2000000) %>%
@@ -506,7 +507,7 @@ fig6 <- bind_rows(refit_stats_tmb, first_stats_tmb) %>%
   theme(legend.position = "bottom") + labs(x = "Panel Size (Mb)", y = "") +
   scale_linetype(name = "Procedure:", labels = list(TeX("Refitted $\\hat{T}$"), TeX("First-Fit $\\hat{T}$")))
 
-ggsave(filename = "figures/fig6.png", plot = fig6, height = 4, width = 8)
+ggsave(filename = "results/figures/fig6.png", plot = fig6, height = 4, width = 8)
 
 
 
@@ -538,10 +539,10 @@ non_ectmb_model_stats <- panels %>%
 
 rm(datasets)
 
-ectmb_preds <- list("TST-170" = read_tsv("data/results/val_pred_tst_170.tsv"),
-                    "F1" = read_tsv("data/results/val_pred_f1.tsv"),
-                    "MSK-I" = read_tsv("data/results/val_pred_msk.tsv"))#,
-                    #"TSO-500" = read_tsv("data/results/val_pred_tso_500.tsv"))
+ectmb_preds <- list("TST-170" = read_tsv("results/val_pred_tst_170.tsv"),
+                    "F1" = read_tsv("results/val_pred_f1.tsv"),
+                    "MSK-I" = read_tsv("results/val_pred_msk.tsv"))#,
+                    #"TSO-500" = read_tsv("results/val_pred_tso_500.tsv"))
 ectmb_model_stats <- purrr::map(ectmb_preds, ~ list(predictions = select(column_to_rownames(., "Tumor_Sample_Barcode"), estimated_values),
                                                     panel_lengths = c(0))) %>%
   purrr::map(~ get_stats(., biomarker_values = nsclc_tmb_values$val, model = "ecTMB")) %>%
@@ -559,6 +560,7 @@ model_stats <- bind_rows(non_ectmb_model_stats, ectmb_model_stats) %>%
   mutate(panel_length = panel_length / 1000000)
 
 fig7 <- bind_rows(refit_stats_tmb, first_stats_tmb) %>%
+  mutate(model = factor(model, levels = c("Refitted T", "First-fit T"))) %>% 
   mutate(metric = if_else(metric == "R", "Regression ~ (R^2)", "Classification ~ (AUPRC)")) %>%
   mutate(metric = factor(metric, levels = c("Regression ~ (R^2)", "Classification ~ (AUPRC)"))) %>%
   mutate(panel = factor("Our Procedure", levels = c("Our Procedure", "TST-170", "F1", "MSK-I"))) %>% #, "TSO-500"))) %>%
@@ -576,7 +578,7 @@ fig7 <- bind_rows(refit_stats_tmb, first_stats_tmb) %>%
   guides(shape = guide_legend(label.position = "top"), colour = guide_legend(label.position = "top"), linetype = guide_legend(label.position = "top")) +
   scale_x_continuous(limits = c(0.2,1.5), breaks = c(0.4,0.8,1.2))
 
-ggsave(filename = "figures/fig7.png", fig7, height = 5, width = 9)
+ggsave(filename = "results/figures/fig7.png", fig7, height = 5, width = 9)
 
 
 ### Figure 8
@@ -620,9 +622,9 @@ linear_predictions_tmb <- nsclc_pred_linear_tmb %>%
 #          true_value = mean(nsclc_tmb_values$test$TMB)*WES_TMB / mean(WES_TMB),
 #          Tumor_Sample_Barcode = sample) %>%
 #   select(Tumor_Sample_Barcode, estimated_value, true_value)
-# write_tsv(test_pred_0.6, "data/results/test_pred_0.6.tsv")
+# write_tsv(test_pred_0.6, "results/test_pred_0.6.tsv")
 
-ectmb_predictions_tmb <- read_tsv("data/results/test_pred_0.6.tsv") %>%
+ectmb_predictions_tmb <- read_tsv("results/test_pred_0.6.tsv") %>%
   mutate(lower = NA, upper = NA, model = "ecTMB") %>%
   column_to_rownames("Tumor_Sample_Barcode")
 
@@ -630,18 +632,19 @@ ectmb_predictions_tmb <- read_tsv("data/results/test_pred_0.6.tsv") %>%
 fig8 <- bind_rows(refit_predictions_tmb$prediction_intervals, ectmb_predictions_tmb, count_predictions_tmb, linear_predictions_tmb) %>%
   mutate(model = factor(model, levels = c("Refitted T", "ecTMB", "Count", "Linear"))) %>%
   {ggplot() + geom_point(data = ., aes(x = true_value, y = estimated_value), size = 0.5) + facet_wrap(~model, nrow = 2) +
-    geom_ribbon(data = refit_predictions_tmb$confidence_region, aes(x = x, ymin = y_lower, ymax = y_upper),
-                alpha = 0.2, fill = "red") +
+    geom_ribbon(data = refit_predictions_tmb$confidence_region %>% mutate(model = factor(model, levels = c("Refitted T", "ecTMB", "Count", "Linear"))), 
+                aes(x = x, ymin = y_lower, ymax = y_upper),
+                alpha = 0.2, fill = "red")  +
     geom_abline(colour = "blue", linetype = 2) +
     geom_hline(yintercept = 300, alpha = 0.5, linetype = 2) +
     geom_vline(xintercept = 300, alpha = 0.5, linetype = 2) +
-    scale_x_continuous(trans = scales::pseudo_log_trans(), breaks = c(0,10**(1:3))) + 
-    scale_y_continuous(trans = scales::pseudo_log_trans(), breaks = c(0,10**(1:3)), limit = c(0,NA)) + 
-    theme_minimal() + labs(x = "True TMB", y = "Predicted TMB")} 
+    scale_x_continuous(trans = scales::pseudo_log_trans(), breaks = c(0,10**(1:3))) +
+    scale_y_continuous(trans = scales::pseudo_log_trans(), breaks = c(0,10**(1:3)), limit = c(0,NA)) +
+    theme_minimal() + labs(x = "True TMB", y = "Predicted TMB")}
 
 
 
-ggsave(fig8, filename = "figures/fig8.png", width = 8, height = 6)
+ggsave(fig8, filename = "results/figures/fig8.png", width = 8, height = 6)
 
 
 
@@ -707,7 +710,7 @@ s3.2.stats <- data.frame(tst_170_length = tst_170_length,
                          ectmb_0.6_r_tmb = ectmb_0.6_r_tmb,
                          prop_confidence_tmb = prop_confidence_tmb)
 
-write_tsv(s3.2.stats, "data/results/s3.2.stats.tsv")
+write_tsv(s3.2.stats, "results/s3.2.stats.tsv")
 
 
 
@@ -725,6 +728,7 @@ refit_stats_tib <- nsclc_pred_refit_tib %>%
   get_stats(biomarker_values = nsclc_tib_values$val, model = "Refitted T", threshold = 10)
 
 fig9 <- bind_rows(refit_stats_tib, first_stats_tib) %>%
+  mutate(model = factor(model, levels = c("Refitted T", "First-fit T"))) %>% 
   mutate(type = if_else(metric == "R", "Regression ~ (R^2)", "Classification ~ (AUPRC)")) %>%
   mutate(type = factor(type, levels = c("Regression ~ (R^2)", "Classification ~ (AUPRC)"))) %>%
   mutate(panel_length = panel_length / 1000000) %>%
@@ -732,7 +736,7 @@ fig9 <- bind_rows(refit_stats_tib, first_stats_tib) %>%
   theme_minimal() + facet_wrap(~type, labeller = label_parsed, strip.position = "top") + theme(legend.position = "bottom") + labs(x = "Panel Size (Mb)", y = "") +
   scale_linetype(name = "Procedure:", labels = list(TeX("Refitted $\\hat{T}$"), TeX("First-Fit $\\hat{T}$")))
 
-ggsave(filename = "figures/fig9.png", plot = fig9, height = 4, width = 8)
+ggsave(filename = "results/figures/fig9.png", plot = fig9, height = 4, width = 8)
 
 
 
@@ -758,8 +762,10 @@ linear_predictions_tib <- nsclc_pred_linear_tib %>%
               model = "Linear", lower = NA, upper = NA)}
 
 fig10 <- bind_rows(refit_predictions_tib$prediction_intervals, count_predictions_tib, linear_predictions_tib) %>%
+  mutate(model = factor(model, levels = c("Refitted T", "ecTMB", "Count", "Linear"))) %>% 
   {ggplot() + geom_point(data = ., aes(x = true_value, y = estimated_value), size = 0.5) + facet_wrap(~model, nrow = 2) +
-  geom_ribbon(data = refit_predictions_tib$confidence_region, aes(x = x, ymin = y_lower, ymax = y_upper),
+  geom_ribbon(data = refit_predictions_tib$confidence_region %>% mutate(model = factor(model, levels = c("Refitted T", "ecTMB", "Count", "Linear"))), 
+              aes(x = x, ymin = y_lower, ymax = y_upper),
               alpha = 0.2, fill = "red") +
   geom_abline(colour = "blue", linetype = 2) +
   geom_hline(yintercept = 10, alpha = 0.5, linetype = 2) +
@@ -768,7 +774,7 @@ fig10 <- bind_rows(refit_predictions_tib$prediction_intervals, count_predictions
   scale_y_continuous(trans = scales::pseudo_log_trans(), breaks = c(0,10**(1:2)), limit = c(0,NA)) +  
     theme_minimal() + labs(x = "True TIB", y = "Predicted TIB")}
 
-ggsave(filename = "figures/fig10.png", plot = fig10, height = 6, width = 8)
+ggsave(filename = "results/figures/fig10.png", plot = fig10, height = 6, width = 8)
 
 
 
@@ -804,7 +810,7 @@ s3.3.stats <- data.frame(n_tib_h = n_tib_h,
                          linear_0.6_r_tib = linear_0.6_r_tib,
                          prop_confidence_tib = prop_confidence_tib)
 
-write_tsv(s3.3.stats, "data/results/s3.3.stats.tsv")
+write_tsv(s3.3.stats, "results/s3.3.stats.tsv")
 
 
 
@@ -817,9 +823,9 @@ tst_170_genes <- intersect(read_tsv("data/tst_170_genes.tsv")$Hugo_Symbol, ensem
 # nsclc_pred_first_tmb_aug <- pred_first_fit(gen_model = nsclc_gen_model, lambda = exp(seq(-18, -26, length.out = 100)),
 #                                         gene_lengths = ensembl_gene_lengths, training_matrix = nsclc_tables$train$matrix, 
 #                                         free_genes = tst_170_genes)
-# write_rds(x = nsclc_pred_first_tmb_aug, file = "data/results/nsclc_pred_first_tmb_aug")
+# write_rds(x = nsclc_pred_first_tmb_aug, file = "results/nsclc_pred_first_tmb_aug")
 
-nsclc_pred_first_tmb_aug <- read_rds("data/results/nsclc_pred_first_tmb_aug")
+nsclc_pred_first_tmb_aug <- read_rds("results/nsclc_pred_first_tmb_aug")
 
 t_tst_170_test <- pred_refit_panel(pred_first = nsclc_pred_first_tmb, gene_lengths = ensembl_gene_lengths, model = "T",
                                      genes = tst_170_genes, training_data = nsclc_tables$train, training_values = nsclc_tmb_values$train) %>% 
@@ -842,7 +848,9 @@ t_tst_170_test_aug <- pred_refit_range(pred_first = nsclc_pred_first_tmb_aug, ge
   get_stats(biomarker_values = nsclc_tmb_values$test) %>% 
   filter(panel_length <= 600000) %>% 
   group_by(metric) %>% 
-  summarise(stat = max(stat))
+  summarise(stat = max(stat)) %>% 
+  mutate(metric = factor(metric, levels = c("R", "AUPRC"))) %>% 
+  arrange(metric)
 
 count_tst_170_test_aug <- pred_refit_range(pred_first = nsclc_pred_first_tmb_aug, gene_lengths = ensembl_gene_lengths, model = "Count",
                                        training_data = nsclc_tables$train, training_values = nsclc_tmb_values$train, max_panel_length = 600000) %>% 
@@ -850,7 +858,9 @@ count_tst_170_test_aug <- pred_refit_range(pred_first = nsclc_pred_first_tmb_aug
   get_stats(biomarker_values = nsclc_tmb_values$test) %>% 
   filter(panel_length <= 600000) %>% 
   group_by(metric) %>% 
-  summarise(stat = max(stat))
+  summarise(stat = max(stat)) %>% 
+  mutate(metric = factor(metric, levels = c("R", "AUPRC"))) %>% 
+  arrange(metric)
 
 linear_tst_170_test_aug <- pred_refit_range(pred_first = nsclc_pred_first_tmb_aug, gene_lengths = ensembl_gene_lengths, model = "OLM",
                                        training_data = nsclc_linear_tables$train, training_values = nsclc_tmb_values$train, max_panel_length = 600000) %>% 
@@ -858,7 +868,9 @@ linear_tst_170_test_aug <- pred_refit_range(pred_first = nsclc_pred_first_tmb_au
   get_stats(biomarker_values = nsclc_tmb_values$test) %>% 
   filter(panel_length <= 600000) %>% 
   group_by(metric) %>% 
-  summarise(stat = max(stat))
+  summarise(stat = max(stat)) %>% 
+  mutate(metric = factor(metric, levels = c("R", "AUPRC"))) %>% 
+  arrange(metric)
 
 # write_tsv(data.frame(Hugo_Symbol = names(which(nsclc_pred_first_tmb_aug$panel_genes[, max(which(nsclc_pred_first_tmb_aug$panel_lengths <= 600000))]))),
 #           file = "data/panel_aug_genes.tsv")
@@ -878,7 +890,7 @@ linear_tst_170_test_aug <- pred_refit_range(pred_first = nsclc_pred_first_tmb_au
 #          true_value = mean(nsclc_tmb_values$test$TMB)*WES_TMB / mean(WES_TMB),
 #          Tumor_Sample_Barcode = sample) %>%
 #   select(Tumor_Sample_Barcode, estimated_value, true_value)
-# write_tsv(test_pred_aug, "data/results/test_pred_aug.tsv")
+# write_tsv(test_pred_aug, "results/test_pred_aug.tsv")
 
 # sample_tst_170_test = data.frame(SampleID = nsclc_tables$test$sample_list, BED = TST_170_panel, stringsAsFactors = FALSE)
 # 
@@ -896,27 +908,27 @@ linear_tst_170_test_aug <- pred_refit_range(pred_first = nsclc_pred_first_tmb_au
 #   select(Tumor_Sample_Barcode, estimated_values, true_values) %>%
 #   mutate(panel = "TST-170")
 # 
-# write_tsv(test_pred_tst_170, "data/results/test_pred_tst_170.tsv")
+# write_tsv(test_pred_tst_170, "results/test_pred_tst_170.tsv")
 
 classes_test_tmb <- nsclc_tmb_values$test[["TMB"]] >= 300
 
-ectmb_tst_170_r <- read_tsv("data/results/test_pred_tst_170.tsv") %>%
+ectmb_tst_170_r <- read_tsv("results/test_pred_tst_170.tsv") %>%
   column_to_rownames("Tumor_Sample_Barcode") %>% 
   {1 - sum((.$estimated_value - .$true_value)^2)/
       sum((.$true_value - mean(.$true_value))^2)}
 
-ectmb_tst_170_auprc <- read_tsv("data/results/test_pred_tst_170.tsv") %>%
+ectmb_tst_170_auprc <- read_tsv("results/test_pred_tst_170.tsv") %>%
   column_to_rownames("Tumor_Sample_Barcode") %>% 
   {PRROC::pr.curve(scores.class0 = .$estimated_value[classes_test_tmb], 
                    scores.class1 = .$estimated_value[!classes_test_tmb])$auc.integral}
 
 
-ectmb_aug_r <- read_tsv("data/results/test_pred_aug.tsv") %>%
+ectmb_aug_r <- read_tsv("results/test_pred_aug.tsv") %>%
   column_to_rownames("Tumor_Sample_Barcode") %>% 
   {1 - sum((.$estimated_value - .$true_value)^2)/
       sum((.$true_value - mean(.$true_value))^2)}
 
-ectmb_aug_auprc <- read_tsv("data/results/test_pred_aug.tsv") %>%
+ectmb_aug_auprc <- read_tsv("results/test_pred_aug.tsv") %>%
   column_to_rownames("Tumor_Sample_Barcode") %>% 
   {PRROC::pr.curve(scores.class0 = .$estimated_value[classes_test_tmb], 
                    scores.class1 = .$estimated_value[!classes_test_tmb])$auc.integral}
@@ -927,4 +939,4 @@ s3.4.table <- data.frame(Model = c("Refitted T", "ecTMB", "Count", "Linear"),
                          CT = signif(c(t_tst_170_test$stat[2], ectmb_tst_170_auprc, count_tst_170_test$stat[2], linear_tst_170_test$stat[2]),2),
                          CA = signif(c(t_tst_170_test_aug$stat[2], ectmb_aug_auprc, count_tst_170_test_aug$stat[2], linear_tst_170_test_aug$stat[2]),2))
 
-write_tsv(s3.4.table, "data/results/s3.4.table.tsv")
+write_tsv(s3.4.table, "results/s3.4.table.tsv")
