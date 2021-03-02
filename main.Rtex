@@ -462,7 +462,13 @@ Our work also has the scope to help understand mutational processes. For example
 
 Finally, we believe there are many ways in which our general framework can be extended. For example, it may be adapted to incorporate alternate data types (e.g.~transcriptomics); we may seek to predict other features (e.g.~outcomes such as survival); or we may wish to extend the method to incorporate multiple data sources (e.g.~on different cancer types and tissues of origin). 
 
-\section{Acknowledgements}
+\section*{Data availability}
+All data used in this manuscript is publicly available.  The \gls{nsclc} dataset of \citet{campbell_distinct_2016} and the \emph{Ensembl} gene length dataset are available as part of our \texttt{R} package \texttt{ICBioMark} \citep{bradley_icbiomark_2021} -- see below for more detail. The BED files for the gene panels used in Section~\ref{sec:tmb} can be downloaded from \url{https://github.com/cobrbra/TargetedPanelEstimation_Paper}.
+
+\section*{Code availability}
+All figures and tables in this manuscript may be reproduced using the code available at \url{https://github.com/cobrbra/TargetedPanelEstimation_Paper}. We also provide an open access \texttt{R} package \texttt{ICBioMark} \citep{bradley_icbiomark_2021}, which is available on CRAN \url{https://cran.r-project.org}. Alternatively, the package may be accessed and downloaded at \url{https://github.com/cobrbra/ICBioMark}.
+
+\section*{Acknowledgements}
 We gratefully acknowledge funding provided by Cambridge Cancer Genomics (CCG) through their PhD Scholarship at the University of Edinburgh. We also benefited from discussions with several individuals, including Adnan Akbar, Philip Beer, Harry Clifford, Aleksandra Jartseva, Morton, Kevin Myant, William Orchard, Nirmesh Patel and Charlotte Paterson.
 
 
