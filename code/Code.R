@@ -46,16 +46,16 @@ nsclc_tables <- get_mutation_tables(maf = nsclc_maf, include_synonymous = FALSE,
 message("Getting generative model")
 # nsclc_gen_model <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = nsclc_tables$train,
 #                                  progress = TRUE)
-# write_rds(x = nsclc_gen_model, file = "results/nsclc_gen_model")
+# write_rds(x = nsclc_gen_model, file = "data/pre_loaded/nsclc_gen_model")
 
-nsclc_gen_model <- read_rds("results/nsclc_gen_model")
+nsclc_gen_model <- read_rds("data/pre_loaded/nsclc_gen_model")
 
 message("Getting first-fit")
 # nsclc_pred_first_tmb <- pred_first_fit(gen_model = nsclc_gen_model, lambda = exp(seq(-18, -26, length.out = 100)),
                                          # gene_lengths = ensembl_gene_lengths, training_matrix = nsclc_tables$train$matrix)
-# write_rds(x = nsclc_pred_first_tmb, file = "results/nsclc_pred_first_tmb")
+# write_rds(x = nsclc_pred_first_tmb, file = "data/pre_loaded/nsclc_pred_first_tmb")
 
-nsclc_pred_first_tmb <- read_rds("results/nsclc_pred_first_tmb")
+nsclc_pred_first_tmb <- read_rds("data/pre_loaded/nsclc_pred_first_tmb")
 
 message("Getting refit")
 nsclc_pred_refit_tmb <- pred_refit_range(pred_first = nsclc_pred_first_tmb, gene_lengths = ensembl_gene_lengths)
@@ -65,9 +65,9 @@ nsclc_tmb_values <- get_biomarker_tables(nsclc_maf, biomarker = "TMB")
 # nsclc_pred_first_tib <- pred_first_fit(gen_model = nsclc_gen_model, lambda = exp(seq(-18, -30, length.out = 100)),
 #                                        gene_lengths = ensembl_gene_lengths, training_matrix = nsclc_tables$train$matrix,
 #                                        biomarker = "TIB")
-# write_rds(x = nsclc_pred_first_tib, file = "results/nsclc_pred_first_tib")
+# write_rds(x = nsclc_pred_first_tib, file = "data/pre_loaded/nsclc_pred_first_tib")
 
-nsclc_pred_first_tib <- read_rds("results/nsclc_pred_first_tib")
+nsclc_pred_first_tib <- read_rds("data/pre_loaded/nsclc_pred_first_tib")
 nsclc_pred_refit_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gene_lengths = ensembl_gene_lengths,
                                          biomarker = "TIB")
 nsclc_tib_values <- get_biomarker_tables(nsclc_maf, biomarker = "TIB")
@@ -156,7 +156,7 @@ nsclc_pred_linear_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gen
 #   select(Tumor_Sample_Barcode, estimated_values, true_values) %>%
 #   mutate(panel = "TST-170")
 #
-# write_tsv(val_pred_tst_170, "results/val_pred_tst_170.tsv")
+# write_tsv(val_pred_tst_170, "data/pre_loaded/val_pred_tst_170.tsv")
 #
 # ## Foundation One Panel
 # sample_f1_val = data.frame(SampleID = nsclc_tables$val$sample_list, BED = F1_panel, stringsAsFactors = FALSE)
@@ -175,7 +175,7 @@ nsclc_pred_linear_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gen
 #   select(Tumor_Sample_Barcode, estimated_values, true_values) %>%
 #   mutate(panel = "F1")
 #
-# write_tsv(val_pred_f1, "results/val_pred_f1.tsv")
+# write_tsv(val_pred_f1, "data/pre_loaded/val_pred_f1.tsv")
 #
 # ## TSO-500 Panel
 # sample_tso_500_val = data.frame(SampleID = nsclc_tables$val$sample_list, BED = TSO_500_panel, stringsAsFactors = FALSE)
@@ -193,7 +193,7 @@ nsclc_pred_linear_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gen
 #   select(Tumor_Sample_Barcode, estimated_values, true_values) %>%
 #   mutate(panel = "TSO-500")
 #
-# write_tsv(val_pred_tso_500, "results/val_pred_tso_500.tsv")
+# write_tsv(val_pred_tso_500, "data/pre_loaded/val_pred_tso_500.tsv")
 #
 # ## MSK-IMPACT Panel
 # sample_msk_val = data.frame(SampleID = nsclc_tables$val$sample_list, BED = MSK_panel, stringsAsFactors = FALSE)
@@ -211,7 +211,7 @@ nsclc_pred_linear_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gen
 #   select(Tumor_Sample_Barcode, estimated_values, true_values) %>%
 #   mutate(panel = "MSK-I")
 #
-# write_tsv(val_pred_msk, "results/val_pred_msk.tsv")
+# write_tsv(val_pred_msk, "data/pre_loaded/val_pred_msk.tsv")
 
 
 
@@ -454,23 +454,27 @@ ggsave(filename = "results/figures/fig5.png", plot = fig5, width = 8, height = 4
 
 # nsclc_gen_model_unisamp <- fit_gen_model_unisamp(gene_lengths = ensembl_gene_lengths, table = nsclc_tables$train,
 #                                  nlambda = 30, progress = TRUE)
-
+# write_rds(nsclc_gen_model_unisamp, "data/pre_loaded/nsclc_gen_model_unisamp")
 
 # nsclc_gen_model_uninteract <- fit_gen_model_uninteract(gene_lengths = ensembl_gene_lengths, table = nsclc_tables$train,
 #                                                         nlambda = 30, progress = TRUE)
+# write_rds(nsclc_gen_model_uninteract, "data/pre_loaded/nsclc_gen_model_uninteract")
 
-# devs_sat <- get_gen_estimates(nsclc_tables$train, gen_model = nsclc_gen_model, alt_model_type = "S", gene_lengths = ensembl_gene_lengths, calculate_deviance = TRUE)
-# devs_unigene <- get_gen_estimates(nsclc_tables$train, gen_model = nsclc_gen_model, alt_model_type = "UG", gene_lengths = ensembl_gene_lengths, calculate_deviance = TRUE)
-# devs_unisamp <- get_gen_estimates(nsclc_tables$train, gen_model = nsclc_gen_model, alt_gen_model = nsclc_gen_model_unisamp, alt_model_type = "US", gene_lengths = ensembl_gene_lengths, calculate_deviance = TRUE)
-# devs_uninteract <- get_gen_estimates(nsclc_tables$train, gen_model = nsclc_gen_model, alt_gen_model = nsclc_gen_model_uninteract, alt_model_type = "UI", gene_lengths = ensembl_gene_lengths, calculate_deviance = TRUE)
-# 
-# s3.1.table <- data.frame(dev = c(devs_sat$deviance, devs_unisamp$deviance, devs_unigene$deviance, devs_uninteract$deviance),
-#                          df = c(devs_sat$df, devs_unisamp$df, devs_unigene$df, devs_uninteract$df),
-#                          ratio = c(devs_sat$deviance/devs_sat$df, devs_unisamp$deviance/devs_unisamp$df,
-#                                    devs_unigene$deviance/devs_unigene$df, devs_uninteract$deviance/devs_uninteract$df),
-#                          p = 1 - c(pchisq(devs_sat$deviance, devs_sat$df), pchisq(devs_unisamp$deviance, devs_unisamp$df), pchisq(devs_unigene$deviance, devs_unigene$df), pchisq(devs_uninteract$deviance, devs_uninteract$df)))
-# 
-# write_tsv(s3.1.table, "results/s3.1.table.tsv")
+nsclc_gen_model_unisamp <- read_rds("data/pre_loaded/nsclc_gen_model_unisamp")
+nsclc_gen_model_uninteract <- read_rds("data/pre_loaded/nsclc_gen_model_uninteract")
+
+devs_sat <- get_gen_estimates(nsclc_tables$train, gen_model = nsclc_gen_model, alt_model_type = "S", gene_lengths = ensembl_gene_lengths, calculate_deviance = TRUE)
+devs_unigene <- get_gen_estimates(nsclc_tables$train, gen_model = nsclc_gen_model, alt_model_type = "UG", gene_lengths = ensembl_gene_lengths, calculate_deviance = TRUE)
+devs_unisamp <- get_gen_estimates(nsclc_tables$train, gen_model = nsclc_gen_model, alt_gen_model = nsclc_gen_model_unisamp, alt_model_type = "US", gene_lengths = ensembl_gene_lengths, calculate_deviance = TRUE)
+devs_uninteract <- get_gen_estimates(nsclc_tables$train, gen_model = nsclc_gen_model, alt_gen_model = nsclc_gen_model_uninteract, alt_model_type = "UI", gene_lengths = ensembl_gene_lengths, calculate_deviance = TRUE)
+
+s3.1.table <- data.frame(dev = c(devs_sat$deviance, devs_unisamp$deviance, devs_unigene$deviance, devs_uninteract$deviance),
+                         df = c(devs_sat$df, devs_unisamp$df, devs_unigene$df, devs_uninteract$df),
+                         ratio = c(devs_sat$deviance/devs_sat$df, devs_unisamp$deviance/devs_unisamp$df,
+                                   devs_unigene$deviance/devs_unigene$df, devs_uninteract$deviance/devs_uninteract$df),
+                         p = 1 - c(pchisq(devs_sat$deviance, devs_sat$df), pchisq(devs_unisamp$deviance, devs_unisamp$df), pchisq(devs_unigene$deviance, devs_unigene$df), pchisq(devs_uninteract$deviance, devs_uninteract$df)))
+
+write_tsv(s3.1.table, "results/s3.1.table.tsv")
 
 ns_sparsity = 1 - mean(manhat_data$ns_coefficient != 0)
 i_sparsity = 1 - mean(manhat_data$i_coefficient != 0)
@@ -539,10 +543,10 @@ non_ectmb_model_stats <- panels %>%
 
 rm(datasets)
 
-ectmb_preds <- list("TST-170" = read_tsv("results/val_pred_tst_170.tsv"),
-                    "F1" = read_tsv("results/val_pred_f1.tsv"),
-                    "MSK-I" = read_tsv("results/val_pred_msk.tsv"))#,
-                    #"TSO-500" = read_tsv("results/val_pred_tso_500.tsv"))
+ectmb_preds <- list("TST-170" = read_tsv("data/pre_loaded/val_pred_tst_170.tsv"),
+                    "F1" = read_tsv("data/pre_loaded/val_pred_f1.tsv"),
+                    "MSK-I" = read_tsv("data/pre_loaded/val_pred_msk.tsv"))#,
+                    #"TSO-500" = read_tsv("data/pre_loaded/val_pred_tso_500.tsv"))
 ectmb_model_stats <- purrr::map(ectmb_preds, ~ list(predictions = select(column_to_rownames(., "Tumor_Sample_Barcode"), estimated_values),
                                                     panel_lengths = c(0))) %>%
   purrr::map(~ get_stats(., biomarker_values = nsclc_tmb_values$val, model = "ecTMB")) %>%
@@ -622,9 +626,9 @@ linear_predictions_tmb <- nsclc_pred_linear_tmb %>%
 #          true_value = mean(nsclc_tmb_values$test$TMB)*WES_TMB / mean(WES_TMB),
 #          Tumor_Sample_Barcode = sample) %>%
 #   select(Tumor_Sample_Barcode, estimated_value, true_value)
-# write_tsv(test_pred_0.6, "results/test_pred_0.6.tsv")
+# write_tsv(test_pred_0.6, "data/pre_loaded/test_pred_0.6.tsv")
 
-ectmb_predictions_tmb <- read_tsv("results/test_pred_0.6.tsv") %>%
+ectmb_predictions_tmb <- read_tsv("data/pre_loaded/test_pred_0.6.tsv") %>%
   mutate(lower = NA, upper = NA, model = "ecTMB") %>%
   column_to_rownames("Tumor_Sample_Barcode")
 
@@ -823,9 +827,9 @@ tst_170_genes <- intersect(read_tsv("data/tst_170_genes.tsv")$Hugo_Symbol, ensem
 # nsclc_pred_first_tmb_aug <- pred_first_fit(gen_model = nsclc_gen_model, lambda = exp(seq(-18, -26, length.out = 100)),
 #                                         gene_lengths = ensembl_gene_lengths, training_matrix = nsclc_tables$train$matrix, 
 #                                         free_genes = tst_170_genes)
-# write_rds(x = nsclc_pred_first_tmb_aug, file = "results/nsclc_pred_first_tmb_aug")
+# write_rds(x = nsclc_pred_first_tmb_aug, file = "data/pre_loaded/nsclc_pred_first_tmb_aug")
 
-nsclc_pred_first_tmb_aug <- read_rds("results/nsclc_pred_first_tmb_aug")
+nsclc_pred_first_tmb_aug <- read_rds("data/pre_loaded/nsclc_pred_first_tmb_aug")
 
 t_tst_170_test <- pred_refit_panel(pred_first = nsclc_pred_first_tmb, gene_lengths = ensembl_gene_lengths, model = "T",
                                      genes = tst_170_genes, training_data = nsclc_tables$train, training_values = nsclc_tmb_values$train) %>% 
@@ -890,7 +894,7 @@ linear_tst_170_test_aug <- pred_refit_range(pred_first = nsclc_pred_first_tmb_au
 #          true_value = mean(nsclc_tmb_values$test$TMB)*WES_TMB / mean(WES_TMB),
 #          Tumor_Sample_Barcode = sample) %>%
 #   select(Tumor_Sample_Barcode, estimated_value, true_value)
-# write_tsv(test_pred_aug, "results/test_pred_aug.tsv")
+# write_tsv(test_pred_aug, "data/pre_loaded/test_pred_aug.tsv")
 
 # sample_tst_170_test = data.frame(SampleID = nsclc_tables$test$sample_list, BED = TST_170_panel, stringsAsFactors = FALSE)
 # 
@@ -908,27 +912,27 @@ linear_tst_170_test_aug <- pred_refit_range(pred_first = nsclc_pred_first_tmb_au
 #   select(Tumor_Sample_Barcode, estimated_values, true_values) %>%
 #   mutate(panel = "TST-170")
 # 
-# write_tsv(test_pred_tst_170, "results/test_pred_tst_170.tsv")
+# write_tsv(test_pred_tst_170, "data/pre_loaded/test_pred_tst_170.tsv")
 
 classes_test_tmb <- nsclc_tmb_values$test[["TMB"]] >= 300
 
-ectmb_tst_170_r <- read_tsv("results/test_pred_tst_170.tsv") %>%
+ectmb_tst_170_r <- read_tsv("data/pre_loaded/test_pred_tst_170.tsv") %>%
   column_to_rownames("Tumor_Sample_Barcode") %>% 
   {1 - sum((.$estimated_value - .$true_value)^2)/
       sum((.$true_value - mean(.$true_value))^2)}
 
-ectmb_tst_170_auprc <- read_tsv("results/test_pred_tst_170.tsv") %>%
+ectmb_tst_170_auprc <- read_tsv("data/pre_loaded/test_pred_tst_170.tsv") %>%
   column_to_rownames("Tumor_Sample_Barcode") %>% 
   {PRROC::pr.curve(scores.class0 = .$estimated_value[classes_test_tmb], 
                    scores.class1 = .$estimated_value[!classes_test_tmb])$auc.integral}
 
 
-ectmb_aug_r <- read_tsv("results/test_pred_aug.tsv") %>%
+ectmb_aug_r <- read_tsv("data/pre_loaded/test_pred_aug.tsv") %>%
   column_to_rownames("Tumor_Sample_Barcode") %>% 
   {1 - sum((.$estimated_value - .$true_value)^2)/
       sum((.$true_value - mean(.$true_value))^2)}
 
-ectmb_aug_auprc <- read_tsv("results/test_pred_aug.tsv") %>%
+ectmb_aug_auprc <- read_tsv("data/pre_loaded/test_pred_aug.tsv") %>%
   column_to_rownames("Tumor_Sample_Barcode") %>% 
   {PRROC::pr.curve(scores.class0 = .$estimated_value[classes_test_tmb], 
                    scores.class1 = .$estimated_value[!classes_test_tmb])$auc.integral}
