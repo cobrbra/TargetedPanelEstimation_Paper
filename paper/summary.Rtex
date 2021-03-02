@@ -125,7 +125,7 @@ Further contributions in our paper include the following: since our model allows
 \section{Results highlights}
 
 <<echo = FALSE>>=
-s3.2.stats = read.table(file = "data/results/s3.2.stats.tsv", sep = '\t', head = TRUE)
+s3.2.stats = read.table(file = "../results/s3.2.stats.tsv", sep = '\t', head = TRUE)
 @
 
 To demonstrate the performance of our proposal we make use of the \gls{nsclc} dataset produced by \citet{campbell_distinct_2016}, which contains data from 1144 patient-derived tumours, and apply our method for estimating \gls{tmb}.  We compare our method with state-of-the-art estimators applied to commonly used gene panels. The three next-generation sequencing panels that we consider are chosen for their relevance to \gls{tmb}. These are TST-170 \citep{heydt_evaluation_2018}, Foundation~One \citep{frampton_development_2013} and MSK-IMPACT \citep{cheng_memorial_2015}. For each panel we use four different methods to predict \gls{tmb}: a) Our refitted estimator applied to the panel $P$; b) \gls{ectmb}: the procedure proposed by \citet{yao_ectmb_2020}; c) A count estimator; and d) A linear model. The latter three comprise existing methods for estimating \gls{tmb} available to practitioners. The second (\gls{ectmb}), which is based on a negative binomial model, is the state-of-the-art.
@@ -133,7 +133,7 @@ To demonstrate the performance of our proposal we make use of the \gls{nsclc} da
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=6in]{figures/fig7.png}
+\includegraphics[width=6in]{../results/figures/fig7.png}
 \vspace*{-5mm}
 \caption{The performance of our \gls{tmb} estimator in comparison to existing approaches. \textbf{Left}: $R^2$, \textbf{Right}: \gls{auprc}. \label{fig:commercial_comparison}}
 \vspace*{-2mm}
