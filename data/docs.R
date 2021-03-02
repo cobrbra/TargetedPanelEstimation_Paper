@@ -103,3 +103,14 @@
 #' browser at \url{https://genome.ucsc.edu/cgi-bin/hgTables}
 "msk_impact_bed"
 
+#' GRCh38 Build Non-Small Cell Lung Cancer Data
+#' 
+#' Genomic data from the same study as is loaded with the ICBioMark package,
+#' with some extra columns, including synonymous variants (which are not available 
+#' from the automated download pipeline used in the ICBioMark package) and lifted 
+#' to the GRCh38 genome build for use with ecTMB. Switch to GRCh38 was done with 
+#' the python package LiftOver. Some very minor alterations had to be made to be usable with the
+#' ecTMB package, namely excluding mutations with Start_Position labels larger than
+#' their End_Position labels (affecting fewer than 100 mutations).
+#' 
+#' @source \url{https://www.cbioportal.org/study/summary?id=nsclc_tcga_broad_2016}

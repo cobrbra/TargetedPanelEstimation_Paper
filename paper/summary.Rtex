@@ -1,0 +1,149 @@
+\documentclass[12pt]{article}
+\textwidth 16.5cm
+\textheight 23.5cm
+\oddsidemargin 0pt
+\topmargin -2cm
+\usepackage{epsf}
+%\usepackage{enumerate}
+%\usepackage{natbib}
+%\usepackage{url} % not crucial - just used below for the URL 
+
+%\pdfminorversion=4
+% NOTE: To produce blinded version, replace "0" with "1" below.
+
+
+
+%\setlength{\parindent}{.3in}
+%\setlength{\parskip}{.05in}
+\usepackage{latexsym,amsmath,amssymb,amsfonts,amsthm,bbm,mathrsfs,breakcites,dsfont,xcolor}
+\usepackage{stmaryrd,epsf}
+\usepackage{natbib}
+\bibliographystyle{abbrvnat}
+
+\setcitestyle{authoryear, open={(},close={)}}
+\usepackage{soul}
+\usepackage{url}
+\usepackage{dsfont}
+\usepackage{enumerate}
+\usepackage{graphicx}
+\usepackage{graphics}
+\usepackage{psfrag}
+\usepackage{caption, subcaption}
+\usepackage{multirow}
+%\usepackage{algorithm}
+\usepackage[ruled,vlined]{algorithm2e}
+
+% \usepackage[backend = biber, natbib,
+    % style = authoryear]{biblatex}
+
+%\usepackage{comment}
+%\newcommand{\indep}{\rotatebox[origin=c]{90}{$\models4[]}
+\usepackage[colorlinks,linkcolor=black,citecolor=blue,urlcolor=blue,breaklinks = true]{hyperref}
+
+\usepackage[acronym, toc]{glossaries-extra}
+
+\setabbreviationstyle[acronym]{long-short}
+
+\glssetcategoryattribute{acronym}{nohyperfirst}{true}
+
+\renewcommand*{\glsdonohyperlink}[2]{%
+ {\glsxtrprotectlinks \glsdohypertarget{#1}{#2}}}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+%\newtheorem{example}[]{Example}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{assumption}{A\!\!}
+\newtheorem{example}{Example}
+
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+% \renewcommand{\baselinestretch}{1.25}
+\newcommand{\indep}{\rotatebox[origin=c]{90}{$\models$}}
+\newcommand{\red}[1]{\textcolor{red}{#1}}
+\newcommand{\blue}[1]{\textcolor{blue}{#1}}
+\newcommand{\green}[1]{\textcolor{green}{#1}}
+\newcommand{\orange}[1]{\textcolor{orange}{#1}}
+\newcommand{\var}{\mathrm{Var}}
+\newcommand{\cov}{\mathrm{Cov}}
+\newcommand{\bbE}{\mathbb{E}}
+
+\usepackage{xcolor}
+\usepackage[draft,inline,nomargin,index]{fixme}
+\fxsetup{theme=color,mode=multiuser}
+\FXRegisterAuthor{tc}{atc}{\color{red} TC}
+\FXRegisterAuthor{jb}{abc}{\color{green} JB}
+
+
+
+\makeglossaries 
+
+\newacronym{lasso}{LASSO}{Least Absolute Shrinkage and Selection Operator}
+\newacronym{tmb}{TMB}{Tumour Mutation Burden}
+\newacronym{tib}{TIB}{Tumour Indel Burden}
+\newacronym{icb}{ICB}{Immune Checkpoint Blockade}
+\newacronym{ici}{ICI}{Immune Checkpoint Inhibitor}
+\newacronym{msi}{MSI}{Micro-Satellite Instability}
+\newacronym{ctla4}{CTLA-4}{Cytotoxic T Lymphocyte Associated protein 4}
+\newacronym{pdl1}{PD-L1}{Programmed Death Ligand 1}
+\newacronym{wes}{WES}{Whole Exome Sequencing}
+\newacronym{ctdna}{ctDNA}{Circulating Tumour DNA}
+\newacronym{bmr}{BMR}{Background Mutation Rate}
+\newacronym{nsclc}{NSCLC}{Non-Small Cell Lung Cancer}
+\newacronym{auprc}{AUPRC}{area under the precision-recall curve}
+\newacronym{ectmb}{ecTMB}{Estimation and Classification of Tumour Mutation Burden}
+
+\title{Data-driven design of targeted gene panels for estimating immunotherapy biomarkers}
+ \author{Jacob R. Bradley and Timothy I. Cannings
+ \\ \emph{School of Mathematics, University of Edinburgh}}
+\date{}
+\begin{document}
+
+
+\maketitle
+
+
+\begin{abstract}
+We introduce a novel data-driven framework for the design of targeted gene panels for estimating exome-wide biomarkers in cancer immunotherapy. Our first goal is to develop a generative model for the profile of mutation across the exome, which allows for gene- and variant type-dependent mutation rates. Based on this model, we then propose a new procedure for estimating biomarkers such as \acrlong{tmb} and \acrlong{tib}.  Our approach allows the practitioner to construct a targeted gene panel of a prespecified size, alongside an estimator that only depends on the selected genes, which facilitates cost-effective prediction.  Alternatively, the practitioner may apply our method to make predictions based on an existing gene panel, or to augment a gene panel to a given size. We demonstrate the excellent performance of our proposal using an annotated mutation dataset from 1144 \acrlong{nsclc} patients. 
+
+
+
+\textbf{Keywords: cancer, gene panel design, tumour indel burden, tumour mutation burden.}
+\end{abstract}
+
+\newpage 
+% It has been understood for a long time that cancer, a disease occurring in many distinct tissues of the body and giving rise to a wide range of presentations, is initiated and driven by the accumulation of mutations in a subset of a person's cells. Since the discovery of \gls{icb}\footnote{For their work on \gls{icb}, James Allison and Tasuku Honjo received the 2018 Nobel Prize for Physiology/Medicine.},  there has been an explosion of interest in cancer therapies targeting immune response and \gls{icb} therapy is now widely used in clinical practice.  \gls{icb} therapy works by targeting natural mechanisms (such as the proteins \gls{ctla4} and \gls{pdl1}) to disengage the immune system. Inhibition of these \emph{checkpoints} can promote a more aggressive anti-tumour immune response, and in some patients this leads to long-term remission . However, \gls{icb} therapy is not always effective and may have adverse side-effects, so determining which patients will benefit in advance of treatment is vital. 
+
+
+% Exome-wide prognostic biomarkers for immunotherapy are now well-established -- in particular, \gls{tmb} is used to predict response to immunotherapy.  \gls{tmb} is defined as the total number of non-synonymous mutations occurring throughout the tumour exome, and can be thought of as a proxy for how easily a tumour cell can be recognised as foreign by immune cells. However, the cost of measuring \gls{tmb} using \gls{wes} currently prohibits its widespread use as standard-of-care.  Sequencing costs, both financial and in terms of the time taken for results to be returned, are especially problematic in situations where high-depth sequencing is required, such as when utilising blood-based \gls{ctdna} from liquid biopsy samples. The same issues are encountered when measuring more recently proposed biomarkers such as \gls{tib}, which counts the number of frameshift insertion and deletion mutations. There is, therefore, demand for cost-effective approaches to estimate these biomarkers.
+\section{Overview}
+\gls{tmb} is an emerging genomic biomarker of response to immunotherapy in a variety of cancer types. In this paper we propose a novel, data-driven method for estimating \gls{tmb} and other biomarkers, based on a generative model of how mutations arise in the tumour exome.  More precisely, we model mutation counts as independent Poisson variables, where the mean number of mutations depends on the gene of origin and variant type, as well as the \gls{bmr} of the tumour. Due to the ultrahigh-dimensional nature of sequencing data, we use a regularisation penalty when estimating the model parameters, in order to reflect the fact that in many genes' mutations arise purely according to the \gls{bmr}. In addition, this identifies a subset of genes that are mutated above or below the background rate. Our model facilitates the construction of a new estimator of \gls{tmb}, based on a weighted linear combination of the number of mutations in each gene. The vector of weights is chosen to be sparse (i.e.~have many entries equal to zero), so that our estimator of \gls{tmb} may be calculated using only the mutation counts in a subset of genes. In particular, this allows for accurate estimation of \gls{tmb} from a targeted gene panel, where the panel size (and therefore the cost) may be determined by the user.  We demonstrate the excellent practical performance of our framework using a \gls{nsclc} dataset, and include a comparison with the existing state-of-the-art data-driven approaches for estimating \gls{tmb} -- see the results higlights below.  
+
+Further contributions in our paper include the following: since our model allows variant type-dependent mutation rates, it can be adapted easily to predict other biomarkers, such as \gls{tib}. Our method may also be used in combination with an existing targeted gene panel. In particular, we can estimate a biomarker directly from the panel, or first augment the panel and then construct an estimator.  We also discuss a number of practical considerations in detail. 
+
+\section{Results highlights}
+
+<<echo = FALSE>>=
+s3.2.stats = read.table(file = "../results/s3.2.stats.tsv", sep = '\t', head = TRUE)
+@
+
+To demonstrate the performance of our proposal we make use of the \gls{nsclc} dataset produced by \citet{campbell_distinct_2016}, which contains data from 1144 patient-derived tumours, and apply our method for estimating \gls{tmb}.  We compare our method with state-of-the-art estimators applied to commonly used gene panels. The three next-generation sequencing panels that we consider are chosen for their relevance to \gls{tmb}. These are TST-170 \citep{heydt_evaluation_2018}, Foundation~One \citep{frampton_development_2013} and MSK-IMPACT \citep{cheng_memorial_2015}. For each panel we use four different methods to predict \gls{tmb}: a) Our refitted estimator applied to the panel $P$; b) \gls{ectmb}: the procedure proposed by \citet{yao_ectmb_2020}; c) A count estimator; and d) A linear model. The latter three comprise existing methods for estimating \gls{tmb} available to practitioners. The second (\gls{ectmb}), which is based on a negative binomial model, is the state-of-the-art.
+
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=6in]{../results/figures/fig7.png}
+\vspace*{-5mm}
+\caption{The performance of our \gls{tmb} estimator in comparison to existing approaches. \textbf{Left}: $R^2$, \textbf{Right}: \gls{auprc}. \label{fig:commercial_comparison}}
+\vspace*{-2mm}
+\end{figure}
+
+Figure~\ref{fig:commercial_comparison} highlights the potential utility of our proposal: First, for each of the three panels considered here, we see that our refitted estimator applied to the panel outperforms all existing approaches in terms of regression performance, and that for smaller panels we are able to improve regression accuracy even further by selecting a panel based on the training data. For instance, in comparison to predictions based on the TST-170~panel, our procedure with a selected panel of the same size ($\Sexpr{signif(s3.2.stats[['tst_170_length']], 2)}$Mb) achieves an $R^2$ of $\Sexpr{signif(s3.2.stats[['tst_170_alt_r']], 2)}$. The best available existing method based on the TST-170~panel, in this case the linear estimator, has an $R^2$ of $\Sexpr{signif(s3.2.stats[['tst_170_r']], 2)}$. Moreover, data-driven selection of panels considerably increases the classification performance for the whole range of panel sizes considered. In particular, even for the smallest panel size shown in Figure~\ref{fig:commercial_comparison} ($\sim$0.2Mb), the classification performance of our method outperforms the best existing methodology applied to the MSK-IMPACT panel, despite being almost a factor of six times smaller.
+
+\section{Conclusions}
+We introduce a new data-driven framework for designing targeted gene panels which allows for cost-effective estimation of exome-wide biomarkers, such as \acrlong{tmb} and \acrlong{tib}.  Using the \acrlong{nsclc} dataset from \citet{campbell_distinct_2016}, we demonstrate the excellent predictive performance of our proposal, and show that it outperforms the existing state-of-the-art procedures. Our framework can be applied to any tumour dataset containing annotated mutations, and we provide an \texttt{R} package \citep{bradley_immune_2021} which implements the methodology.
+
+\bibliography{zotero-refs.bib}
+
+\end{document}

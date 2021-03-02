@@ -2,3 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
+data/ecTMB_data/
+data/temporary_storage/
+TargetedPanelEstimation_Paper.Rproj

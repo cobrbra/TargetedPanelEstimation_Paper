@@ -10,12 +10,10 @@
 
 export R_LIBS_USER=/exports/eddie/scratch/s1505825/R/library; . /etc/profile.d/modules.sh; module load igmm/apps/R/3.6.3; module load igmm/apps/BEDTools/2.27.1
 
-Rscript Code.R
+Rscript code/Code.R
 
 # Notes to self on pushing from Eddie:
 #--------------------------------------
 
 # 1. Eddie sometimes seems to lose track of ssh keys. This can normally be fixed from the repository folder
 # with 'eval "$(ssh-agent -s)"; ssh-add ~/.ssh/id_rsa'. 
-
-# 2. To push from Eddie requires 'git push origin HEAD:master'.
