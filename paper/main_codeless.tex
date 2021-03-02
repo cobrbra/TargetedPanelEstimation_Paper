@@ -124,7 +124,7 @@ To demonstrate our proposal we make use of the \gls{nsclc} dataset produced by \
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=6in]{figures/fig1.png}
+\includegraphics[width=6in]{../results/figures/fig1.png}
 \vspace*{-5mm}
 \caption{Demographic data for the clinical cohort in \citet{campbell_distinct_2016}. \textbf{A}: Violin plots of age for patients, stratified by sex. \textbf{B}: Stacked bar chart of patients' smoking histories, shaded according to cancer stage diagnosis. \label{fig:1}}
 \vspace*{-2mm}
@@ -133,7 +133,7 @@ To demonstrate our proposal we make use of the \gls{nsclc} dataset produced by \
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=6in]{figures/fig2.png}
+\includegraphics[width=6in]{../results/figures/fig2.png}
 \vspace*{-5mm}
 \caption{ Dataset-wide distribution of mutations. \textbf{A}: Violin plot of the distribution of \gls{tmb} and \gls{tib} across training samples. \textbf{B}: The relative frequency of different nonsynonymous mutation types. \label{fig:2}}
 \vspace*{-2mm}
@@ -271,7 +271,7 @@ The first step in our analysis is to fit the model proposed in Section \ref{sec:
 \begin{figure}[htbp]
 \centering
 \vspace*{-2mm}
-\includegraphics[width=4in]{figures/fig3.png}
+\includegraphics[width=4in]{../results/figures/fig3.png}
 \vspace*{0mm}
 \caption{The average deviance (with one standard deviation) across the 10 folds in our cross-validation procedure plotted against $\log(\kappa_1)$. The minimum average deviance is highlighted red.\label{fig:genmodelstats}}
 \vspace*{-2mm}
@@ -279,14 +279,14 @@ The first step in our analysis is to fit the model proposed in Section \ref{sec:
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=6.5in]{figures/fig4.png}
+\includegraphics[width=6.5in]{../results/figures/fig4.png}
 \vspace*{0mm}
 \caption{Manhattan plot of fitted parameters $\hat{\lambda}_g$ and their associated genes' chromosomal locations. The genes with the five largest positive parameter estimates are labelled. \label{fig:manhat_plot}}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=6.5in]{figures/fig5.png}
+\includegraphics[width=6.5in]{../results/figures/fig5.png}
 \caption{Manhattan plot of fitted parameters $\hat{\eta}_{g,\text{indel}}$ and their associated genes' chromosomal locations. The five largest positive and negative genes are labelled.  \label{fig:manhat_plot_indel}}
 \end{figure}
 
@@ -342,7 +342,7 @@ Now recall that \gls{tmb} is given by equation~\eqref{eq:biomarker} with $\bar{S
 \begin{figure}[ht]
 \centering
 \vspace{-3mm}
-\includegraphics[width=6in]{figures/fig6.png}
+\includegraphics[width=6in]{../results/figures/fig6.png}
 \vspace*{-5mm}
 \caption{Performance of our first-fit and refitted estimators of \gls{tmb} as the selected panel size varies. \textbf{Left}: $R^2$, \textbf{Right}: \gls{auprc}. \label{fig:6}}
 \vspace*{-2mm}
@@ -360,7 +360,7 @@ The latter three comprise existing methods for estimating \gls{tmb} available to
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=6in]{figures/fig7.png}
+\includegraphics[width=6in]{../results/figures/fig7.png}
 \vspace*{-5mm}
 \caption{The performance of our \gls{tmb} estimator in comparison to existing approaches. \textbf{Left}: $R^2$, \textbf{Right}: \gls{auprc}. \label{fig:commercial_comparison}}
 \vspace*{-2mm}
@@ -372,7 +372,7 @@ Finally in this section we demonstrate the practical performance of our method u
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=5.5in]{figures/fig8.png}
+\includegraphics[width=5.5in]{../results/figures/fig8.png}
 \vspace*{-5mm}
 \caption{Prediction of TMB on the test dataset. Dashed blue (diagonal) line represents perfect prediction, and the black dashed lines indicate true and predicted TMB values of 300. \label{fig:8}}
 \vspace*{-2mm}
@@ -391,7 +391,7 @@ We let $S_{\text{indel}}$ be the set of all frameshift insertion and deletion mu
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=6in]{figures/fig9.png}
+\includegraphics[width=6in]{../results/figures/fig9.png}
 \vspace*{-5mm}
 \caption{Performance of our first-fit and refitted estimators of \gls{tib} as the selected panel size varies. \textbf{Left}: $R^2$, \textbf{Right}: \gls{auprc}. \label{fig:indelstatsplot}}
 \vspace*{-2mm}
@@ -407,7 +407,7 @@ In Figure~\ref{fig:indel_predictions_figure} we present the predictions on the t
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=5.5in]{figures/fig10.png}
+\includegraphics[width=5.5in]{../results/figures/fig10.png}
 \vspace*{-5mm}
 \caption{Estimation of TIB on the test dataset. Dashed blue (diagonal) line represents perfect prediction, and the grey dashed lines indicate true and predicted TIB values of 10. 
 \label{fig:indel_predictions_figure}}
@@ -448,6 +448,13 @@ Linear & 0.47 & 0.74 & 0.78 & 0.89 \\
 Our work also has the scope to help understand mutational processes. For example, the parameters of our fitted model in Section~\ref{sec:genmodelfit} have interesting interpretations: of the five genes highlighted in Figure~\ref{fig:manhat_plot} as having the highest mutation rates relative to the \gls{bmr}, three (\textit{TP53, KRAS, CDKN2A}) are known tumour suppressors \citep{olivier_tp53_2010, jancik_clinical_2010, foulkes_cdkn2a_1997}.  Furthermore, indel mutations in \textit{KRAS} are known to be deleterious for tumour cells \citep{lee_selective_2018} -- in our work the \textit{KRAS} gene has a large negative indel-specific parameter (see Figure~\ref{fig:manhat_plot_indel}).  Our methodology identifies a number of other genes with large parameter estimates.
 
 Finally, we believe there are many ways in which our general framework can be extended. For example, it may be adapted to incorporate alternate data types (e.g.~transcriptomics); we may seek to predict other features (e.g.~outcomes such as survival); or we may wish to extend the method to incorporate multiple data sources (e.g.~on different cancer types and tissues of origin). 
+
+\section{Data availablity}
+
+All data used in this manuscript is publicly available. The \gls{nsclc} dataset of \citet{campbell_distinct_2016} and the \emph{Ensembl} gene length dataset are available as part of our \texttt{R} package \texttt{ICBioMark} \citep{bradley_icbiomark_2021} - see below for more detail. The BED files for the gene panels used in Section \ref{sec:tmb} can be downloaded from \url{https://github.com/cobrbra/TargetedPanelEstimation_Paper}.
+
+\section{Code availability}
+All figures and tables in this manuscript may be reproduced using the code available at \url{https://github.com/cobrbra/TargetedPanelEstimation_Paper}. We also provide an open access \texttt{R} package \texttt{ICBioMark} \citep{bradley_icbiomark_2021}, which is available on CRAN \url{https://cran.r-project.org}. Alternatively, the package may be accessed and downloaded at \url{https://github.com/cobrbra/ICBioMark}.
 
 \section{Acknowledgements}
 We gratefully acknowledge funding provided by Cambridge Cancer Genomics (CCG) through their PhD Scholarship at the University of Edinburgh. We also benefited from discussions with several individuals, including Adnan Akbar, Philip Beer, Harry Clifford, Aleksandra Jartseva, Morton, Kevin Myant, William Orchard, Nirmesh Patel and Charlotte Paterson.
