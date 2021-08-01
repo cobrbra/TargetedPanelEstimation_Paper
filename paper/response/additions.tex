@@ -82,8 +82,18 @@
 \newacronym{ectmb}{ecTMB}{Estimation and Classification of Tumour Mutation Burden}
 
 \title{Additional figures for revisions}
- \author{Cob}
-\date{}
 \begin{document}
-\maketitle
+\section{Multi-cancer analysis}
+\subsection{Three-cancer comparisons versions of figures 6 and 8}
+See Figure~\ref{fig:joint_versions_figs68}. Broadly speaking, decreasing performance for decreasing levels of average \gls{tmb}. Since 0.6Mb panel size was selected in advance (from NSCLC study), only train and test split (no val). For SKCM: $n_{\text{train}} = 250$, $n_{\text{test}} = 96$. For COADREAD: $n_{\text{train}} = 500$, $n_{\text{test}} = 119$. For BLCA: $n_{\text{train}} = 300$, $n_{\text{test}} = 109$. Note that the quality of predictions doesn't seem to be particularly dependent on training sample size, and far more so on average \gls{tmb} value (SKCM: 570, COADREAD: 330, BLCA: 250).
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=3in]{results/figures/joint_version_fig6.png} \hspace{5pt}
+    \includegraphics[width=2.7in]{results/figures/joint_version_fig8.png}
+    \caption{\textbf{Left}: Test set panel performances for a range of panel sizes, each of three cancer types. \textbf{Right}: True versus predicted TMB for 0.6Mb selected panel on test set, each of three cancer types.
+    \label{fig:joint_versions_figs68}}
+\end{figure}
+\newpage
+
+
 \end{document}
