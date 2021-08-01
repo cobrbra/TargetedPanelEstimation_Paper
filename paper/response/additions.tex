@@ -1,0 +1,89 @@
+\documentclass[12pt]{article}
+\textwidth 16.5cm
+\textheight 23.5cm
+\oddsidemargin 0pt
+\topmargin -2cm
+\usepackage{epsf}
+
+\usepackage{latexsym,amsmath,amssymb,amsfonts,amsthm,bbm,mathrsfs,breakcites,dsfont,xcolor}
+\usepackage{stmaryrd,epsf}
+\usepackage{natbib}
+\bibliographystyle{plainnat}
+
+\setcitestyle{authoryear, open={(},close={)}}
+\usepackage{soul}
+\usepackage{url}
+\usepackage{dsfont}
+\usepackage{enumerate}
+\usepackage{graphicx}
+\usepackage{graphics}
+\usepackage{psfrag}
+\usepackage{caption, subcaption}
+\usepackage{multirow}
+\usepackage[ruled,vlined]{algorithm2e}
+
+
+\usepackage[colorlinks,linkcolor=black,citecolor=blue,urlcolor=blue,breaklinks = true]{hyperref}
+
+\usepackage[acronym, toc]{glossaries-extra}
+
+\setabbreviationstyle[acronym]{long-short}
+
+\glssetcategoryattribute{acronym}{nohyperfirst}{true}
+
+\renewcommand*{\glsdonohyperlink}[2]{%
+ {\glsxtrprotectlinks \glsdohypertarget{#1}{#2}}}
+
+\usepackage{lineno}
+% \linenumbers
+
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{assumption}{A\!\!}
+\newtheorem{example}{Example}
+
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\newcommand{\indep}{\rotatebox[origin=c]{90}{$\models$}}
+\newcommand{\red}[1]{\textcolor{red}{#1}}
+\newcommand{\blue}[1]{\textcolor{blue}{#1}}
+\newcommand{\green}[1]{\textcolor{green}{#1}}
+\newcommand{\orange}[1]{\textcolor{orange}{#1}}
+\newcommand{\var}{\mathrm{Var}}
+\newcommand{\cov}{\mathrm{Cov}}
+\newcommand{\bbE}{\mathbb{E}}
+
+\usepackage{xcolor}
+\usepackage[draft,inline,nomargin,index]{fixme}
+\fxsetup{theme=color,mode=multiuser}
+\FXRegisterAuthor{tc}{atc}{\color{red} TC}
+\FXRegisterAuthor{jb}{abc}{\color{green} JB}
+
+\newcommand{\vtwo}[1]{\textcolor{red}{#1}}
+
+\makeglossaries 
+
+\newacronym{lasso}{LASSO}{Least Absolute Shrinkage and Selection Operator}
+\newacronym{tmb}{TMB}{Tumour Mutation Burden}
+\newacronym{tib}{TIB}{Tumour Indel Burden}
+\newacronym{icb}{ICB}{Immune Checkpoint Blockade}
+\newacronym{ici}{ICI}{Immune Checkpoint Inhibitor}
+\newacronym{msi}{MSI}{Micro-Satellite Instability}
+\newacronym{ctla4}{CTLA-4}{Cytotoxic T Lymphocyte Associated protein 4}
+\newacronym{pdl1}{PD-L1}{Programmed Death Ligand 1}
+\newacronym{wes}{WES}{Whole Exome Sequencing}
+\newacronym{ctdna}{ctDNA}{Circulating Tumour DNA}
+\newacronym{bmr}{BMR}{Background Mutation Rate}
+\newacronym{nsclc}{NSCLC}{Non-Small Cell Lung Cancer}
+\newacronym{auprc}{AUPRC}{area under the precision-recall curve}
+\newacronym{ectmb}{ecTMB}{Estimation and Classification of Tumour Mutation Burden}
+
+\title{Additional figures for revisions}
+ \author{Cob}
+\date{}
+\begin{document}
+\maketitle
+\end{document}
