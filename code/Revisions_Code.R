@@ -182,7 +182,7 @@ blca_pred_refit_tmb <- pred_refit_range(pred_first = blca_pred_first_tmb,
                                             gene_lengths = ensembl_gene_lengths,
                                             marker_mut_types = c("NS"))
 
-blca_tmb_values <- get_biomarker_tables(blca_maf, biomarker = "TMB", split =  c(train = 500.1, val = 0, test = 119))
+blca_tmb_values <- get_biomarker_tables(blca_maf, biomarker = "TMB", split =  c(train = 500.1, val = 0, test = 119)) ### why this number different?
 
 
 
@@ -221,7 +221,8 @@ blca_version_fig8 <- blca_refit_predictions_tmb$prediction_intervals %>%
       geom_ribbon(data = blca_refit_predictions_tmb$confidence_region %>% mutate(model = factor(model, levels = c("Refitted T", "ecTMB", "Count", "Linear"))), 
                   aes(x = x, ymin = y_lower, ymax = y_upper),
                   alpha = 0.2, fill = "red")  +
-      geom_abline(colour = "blue", linetype = 2) +
+      geom_abline(colour = "blue", 
+                  linetype = 2) +
       geom_hline(yintercept = 300, alpha = 0.5, linetype = 2) +
       geom_vline(xintercept = 300, alpha = 0.5, linetype = 2) +
       scale_x_continuous(trans = scales::pseudo_log_trans(), breaks = c(0,10**(1:3))) +
@@ -384,7 +385,7 @@ external_validation_fig <- bind_rows(skcm_refit_stats, skcm_refit_stats_val, coa
   mutate(type = factor(type, levels = c("Regression ~ (R^2)", "Classification ~ (AUPRC)"))) %>%
   filter(panel_length <= 2000000) %>%
   mutate(panel_length = panel_length / 1000000) %>%
-  ggplot(aes(x = panel_length, y = stat, colour = Dataset)) + geom_line(size = 1) + ylim(0, 1) + xlim(0, 1) +
+  ggplot(aes(x = panel_length, y = stat, colour = Dataset)) + geom_line(size = 1) + ylim(0, 1) + xlim(0.2, 1.2) +
   theme_minimal() + facet_wrap(~cancer_type, labeller = label_parsed, strip.position = "top") +
   theme(legend.position = "bottom") + labs(x = "Panel Size (Mb)", y = TeX("$R^2$")) +
   scale_color_manual(name = "Dataset:", values = c("blue", "black"), labels = list("External Validation", "Internal Validation"))
