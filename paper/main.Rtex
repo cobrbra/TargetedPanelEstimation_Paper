@@ -463,7 +463,7 @@ $\text{\Sexpr{s3.4.table[4,1]}}$ & $\Sexpr{s3.4.table[4,2]}$ & $\Sexpr{s3.4.tabl
 
 
 \section{Further validation and robustness \label{sec:robust}} 
-\vtwo{The aim of this section is to further demonstrate the performance of our proposal in a number of practical settings.  We first apply our method for estimating \gls{tmb} in three other cancer types.  For this we use the melanoma dataset from \citet{??}, the colorectal cancer dataset from \citet{???} and the bladder cancer dataset from \citet{???}.  We then investigate the robustness of our proposal for predicting \gls{tmb} for melanoma patients by training our model on data from the \citet{???} study, but evaluate the performance by making predictions on a test set from a separate study \citep{???}. This latter study also allows us to validate the relationship between our estimates of \gls{tmb} and the response to immunotherapy. }
+\vtwo{The aim of this section is to further demonstrate the performance of our proposal in a number of practical settings.  We first apply our method for estimating \gls{tmb} in three other cancer types.  For this we make use of  use the melanoma dataset from \citet{??}, the colorectal cancer dataset from \citet{???} and the bladder cancer dataset from \citet{???}.  We then investigate the robustness of our proposal for predicting \gls{tmb} for melanoma patients by training our model on data from the \citet{???} study, but evaluate the performance by making predictions on a test set from a separate study \citep{???}. This latter study also allows us to validate the relationship between our estimates of \gls{tmb} and the response to immunotherapy. }
 
 \subsection{TMB estimation for different cancers}
 
