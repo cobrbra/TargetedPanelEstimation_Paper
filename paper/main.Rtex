@@ -107,10 +107,12 @@ Exome-wide prognostic biomarkers for immunotherapy are now well-established -- i
 
 In this paper we propose a novel, data-driven method for biomarker estimation, based on a generative model of how mutations arise in the tumour exome.  More precisely, we model mutation counts as independent Poisson variables, where the mean number of mutations depends on the gene of origin and variant type, as well as the \gls{bmr} of the tumour. Due to the ultrahigh-dimensional nature of sequencing data and the fact that in many genes mutations arise purely according to the \gls{bmr}, we use a regularisation penalty when estimating the parameters of the model. In addition, this identifies a subset of genes that are mutated above or below the background rate. Our model facilitates the construction of a new estimator of \gls{tmb}, based on a weighted linear combination of the number of mutations in each gene. The vector of weights is chosen to be sparse (i.e.~have many entries equal to zero), so that our estimator of \gls{tmb} may be calculated using only the mutation counts in a subset of genes. In particular, this allows for accurate estimation of \gls{tmb} from a targeted gene panel, where the panel size (and therefore the cost) may be determined by the user.  We demonstrate the excellent practical performance of our framework using a \gls{nsclc} dataset \vtwo{\citep{campbell_distinct_2016}}, and include a comparison with existing state-of-the-art approaches for estimating \gls{tmb}.  Moreover, since our model allows variant type-dependent mutation rates, it can be adapted easily to predict other biomarkers, such as \gls{tib}. Finally, our method may also be used in combination with an existing targeted gene panel. In particular, we can estimate a biomarker directly from the panel, or first augment the panel and then construct an estimator.  
 
+\vtwo{In order to... COME BACK TO THIS!} 
+
 
 Due to its emergence as a biomarker for immunotherapy in recent years, a variety of groups have considered methods for estimating \gls{tmb}. A simple and common way to estimate \gls{tmb} is via the proportion of mutated codons in a targeted region. \citet{budczies_optimizing_2019} investigate how the accuracy of predictions made in this way are affected by the size of the targeted region, where mutations are assumed to occur at uniform rate throughout the genome. More recently \citet{yao_ectmb_2020} modelled mutations as following a negative binomial distribution while allowing for gene-dependent rates, which are inferred by comparing nonsynonymous and synonymous mutation counts. In contrast, our method does not require data including synonymous mutations. Where they are included, we do not assume that synonymous mutations occur at a uniform rate throughout the genome, giving us the flexibility to account for location-specific effects on synonymous mutation rate such as chromatin configuration \citep{makova_effects_2015} and transcription-dependent repair mechanisms \citep{fong_intertwined_2013}. Linear regression models have been used for both panel selection \citep{lyu_mutation_2018} and for biomarker prediction \citep{guo_exon_2020}. A review of some of the issues arising when dealing with targeted panel-based predictions of \gls{tmb} biomarkers is given by \citet{wu_designing_2019}. Finally, we are unaware of any methods for estimating \gls{tib} from targeted gene panels. 
 
-The remainder of the paper is as follows. In Section \ref{sec:methodology}, we introduce our data sources, and provide a detailed description of our methodological proposal. Experimental results are given in Section~\ref{sec:experimentalresults} and we conclude in Section~\ref{sec:conclusion}.  Finally, we also provide an \texttt{R} package \texttt{ICBioMark} \citep{bradley_icbiomark_2021} which implements the methodology and reproduces the experimental results in the paper. 
+The remainder of the paper is as follows. In Section \ref{sec:methodology}, we introduce our data sources, and provide a detailed description of our methodological proposal.  \vtwo{The full demonstration of our method using the NSCLC dataset is}  given in Section~\ref{sec:experimentalresults}. \vtwo{Section~\ref{sec:robust} provides several further analyses to investigate the robustness of our proposal} and we conclude in Section~\ref{sec:conclusion}.  Finally, we also provide an \texttt{R} package \texttt{ICBioMark} \citep{bradley_icbiomark_2021} which implements the methodology and reproduces the experimental results in the paper. 
 
 
 
@@ -253,7 +255,7 @@ We now comment briefly on some computational aspects of our method. The generati
 
 Finally we describe a heuristic procedure for producing prediction intervals around our point estimates.  In particular, for a given confidence level $\alpha \in (0,1)$, we aim to find an interval $[\hat{T}_{\mathrm{L}}, \hat{T}_{\mathrm{U}}]$ such that $\mathbb{P}\bigl(\hat{T}_{\mathrm{L}} \leq T \leq \hat{T}_{\mathrm{U}}\bigr) \geq 1- \alpha.$  To that end, let $t_\alpha := \mathbb{E}\{(\hat{T} - T)^2\}/\alpha$, then by Markov's inequality we have that $\mathbb{P}(|\hat{T} - T|^2 \geq t_\alpha) \leq \alpha$. It follows that $[\hat{T} - t_\alpha^{1/2} , \hat{T}+ t_\alpha^{1/2}]$ is a $(1-\alpha)$-prediction interval for $T$. Of course, the mean squared error $\mathbb{E}\{(\hat{T}-T)^2\}$ defined in \eqref{eq:MSE} depends on the parameters $\lambda, \eta, \nu$ and $\mu_0$, which are unknown.  Our approach is to utilise the estimates $\hat{\lambda}, \hat{\eta}, \hat{\nu}$ (see \eqref{eq:genparams}) and replace $\mu_0$ with $\log(\hat{T}/\sum_{g,s}\ell_g\exp(\hat{\lambda}_g + \hat{\nu}_s + \hat{\eta}_{gs}))$. While this is not an exact $(1-\alpha)$-prediction interval for $T$,  we will see in our experimental results in Sections~\ref{sec:tmb}~and~\ref{sec:indel} that in practice this approach provides intervals with valid empirical coverage.  
 
-\section{Experimental results \label{sec:experimentalresults}}
+\section{Demonstration using an NSCLC dataset \label{sec:experimentalresults}}
 
 <<echo = FALSE>>=
 # read in statistics
@@ -459,6 +461,17 @@ $\text{\Sexpr{s3.4.table[4,1]}}$ & $\Sexpr{s3.4.table[4,2]}$ & $\Sexpr{s3.4.tabl
 \end{center}
 \end{table}
 
+
+\section{Further validation and robustness \label{sec:robust}} 
+\vtwo{The aim of this section is to further demonstrate the performance of our proposal in a number of practical settings.  We first apply our method for estimating \gls{tmb} in three other cancer types.  For this we use the melanoma dataset from \citet{??}, the colorectal cancer dataset from \citet{???} and the bladder cancer dataset from \citet{???}.  We then investigate the robustness of our proposal for predicting \gls{tmb} for melanoma patients by training our model on data from the \citet{???} study, but evaluate the performance by making predictions on a test set from a separate study \citep{???}. This latter study also allows us to validate the relationship between our estimates of \gls{tmb} and the response to immunotherapy. }
+
+\subsection{TMB estimation for different cancers}
+
+\subsection{Robustness to study effects} 
+
+
+
+
 \section{Conclusions \label{sec:conclusion}}
  We have introduced a new data-driven framework for designing targeted gene panels which allows for cost-effective estimation of exome-wide biomarkers.  Using the \acrlong{nsclc} dataset from \citet{campbell_distinct_2016}, we have demonstrated the excellent predictive performance of our proposal for estimating \acrlong{tmb} and \acrlong{tib}, and shown that it outperforms the state-of-the-art procedures. Our framework can be applied to any tumour dataset containing annotated mutations, and we provide an \texttt{R} package \citep{bradley_icbiomark_2021} which implements the methodology.
  
@@ -467,7 +480,7 @@ Our work also has the scope to help understand mutational processes. For example
 
 Finally, we believe there are many ways in which our general framework can be extended. For example, it may be adapted to incorporate alternate data types (e.g.~transcriptomics); we may seek to predict other features (e.g.~outcomes such as survival); or we may wish to extend the method to incorporate multiple data sources (e.g.~on different cancer types and tissues of origin). 
 
-\section{Data availablity}
+\section{Data availability}
 
 All data used in this manuscript is publicly available. The \gls{nsclc} dataset of \citet{campbell_distinct_2016} and the \emph{Ensembl} gene length dataset are available as part of our \texttt{R} package \texttt{ICBioMark} \citep{bradley_icbiomark_2021} - see below for more detail. The BED files for the gene panels used in Section \ref{sec:tmb} can be downloaded from \url{https://github.com/cobrbra/TargetedPanelEstimation_Paper}.
 
