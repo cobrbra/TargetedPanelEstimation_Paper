@@ -463,11 +463,24 @@ $\text{\Sexpr{s3.4.table[4,1]}}$ & $\Sexpr{s3.4.table[4,2]}$ & $\Sexpr{s3.4.tabl
 
 
 \section{Further validation and robustness \label{sec:robust}} 
-\vtwo{The aim of this section is to further demonstrate the performance of our proposal in a number of practical settings.  We first apply our method for estimating \gls{tmb} in three other cancer types.  For this we make use of  use the melanoma dataset from \citet{??}, the colorectal cancer dataset from \citet{???} and the bladder cancer dataset from \citet{???}.  We then investigate the robustness of our proposal for predicting \gls{tmb} for melanoma patients by training our model on data from the \citet{???} study, but evaluate the performance by making predictions on a test set from a separate study \citep{???}. This latter study also allows us to validate the relationship between our estimates of \gls{tmb} and the response to immunotherapy. }
+\vtwo{The first aim of this section is to further demonstrate the performance of our proposal in a number of practical settings.  We apply our method for estimating \gls{tmb} in three more cancer types, namely bladder cancer, colorectal cancer and melanoma.  In each case, the data is split into a training and validation set; the training data is used to construct our estimator for a range of panel sizes and then evaluate the predictive performance using the validation set (in contrast to our analysis in Section~\ref{sec:experimentalresults}, we do not require a separate test set since the panel size is not selected based on the data). We will also make use of test data from a separate study for each cancer type, in order to test the robustness of our approach to study effects.}
 
-\subsection{TMB estimation for different cancers}
 
-\subsection{Robustness to study effects} 
+\vtwo{We use the bladder cancer datasets from the TCGA Pan-Cancer Atlas\footnote{data available at \url{https://www.cbioportal.org/study/clinicalData?id=blca_tcga_pan_can_atlas_2018}} ($n_{\mathrm{train}} = 300$, $n_{\mathrm{val}} = 109$) and \citet{guo_whole-genome_2013} ($n_{\mathrm{test}} = 99$), the colorectal cancer datasets from \citet{giannakis_genomic_2016}  ($n_{\mathrm{train}} = 500$, $n_{\mathrm{val}} = 119$)  and \citet{seshagiri_recurrent_2012} ($n_{\mathrm{test}} = 72$), and the melanoma datasets from \citet{cancer_genome_atlas_network_genomic_2015} ($n_{\mathrm{train}} = 250$, $n_{\mathrm{val}} = 96$)  and \citet{krauthammer_exome_2012} ($n_{\mathrm{test}} = 91$).} 
+
+\tcnote{Something about the different ranges of TMB values.}
+
+\vtwo{In Figure~\ref{fig:external_validation_fig}, we present the 
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=6.5in]{results/figures/external_validation_fig.png} 
+    \caption{
+    \label{fig:external_validation_fig}}
+\end{figure}
+
+
+
 
 
 
