@@ -182,7 +182,7 @@ blca_pred_refit_tmb <- pred_refit_range(pred_first = blca_pred_first_tmb,
                                             gene_lengths = ensembl_gene_lengths,
                                             marker_mut_types = c("NS"))
 
-blca_tmb_values <- get_biomarker_tables(blca_maf, biomarker = "TMB", split =  c(train = 500.1, val = 0, test = 119)) ### why this number different?
+blca_tmb_values <- get_biomarker_tables(blca_maf, biomarker = "TMB", split =  c(train = 300.1, val = 0, test = 109)) 
 
 
 
@@ -263,12 +263,12 @@ skcm_val_tmb_values <- get_biomarker_tables(skcm_val_maf, biomarker = "TMB", spl
 skcm_refit_stats <- skcm_pred_refit_tmb %>%
   get_predictions(new_data = skcm_tables$test) %>%
   get_stats(biomarker_values = skcm_tmb_values$test, metrics = c("R"), model = "Refitted T", threshold = 300) %>% 
-  mutate(Dataset = "Internal Validation", cancer_type = "SKCM")
+  mutate(Dataset = "Internal Validation", cancer_type = "Melanoma")
 
 skcm_refit_stats_val <- skcm_pred_refit_tmb %>%
   get_predictions(new_data = skcm_val_tables$test) %>%
   get_stats(biomarker_values = skcm_val_tmb_values$test, metrics = c("R"), model = "Refitted T", threshold = 300) %>% 
-  mutate(Dataset = "External Validation", cancer_type = "SKCM")
+  mutate(Dataset = "External Test", cancer_type = "Melanoma")
 
 skcm_val_predictions <- skcm_pred_refit_tmb %>%
   get_predictions(new_data = skcm_val_tables$test) %>%
@@ -348,12 +348,12 @@ coadread_val_tmb_values <- get_biomarker_tables(coadread_val_maf, biomarker = "T
 coadread_refit_stats <- coadread_pred_refit_tmb %>%
   get_predictions(new_data = coadread_tables$test) %>%
   get_stats(biomarker_values = coadread_tmb_values$test, metrics = c("R"), model = "Refitted T", threshold = 300) %>% 
-  mutate(Dataset = "Internal Validation", cancer_type = "COADREAD")
+  mutate(Dataset = "Internal Validation", cancer_type = "Colorectal")
 
 coadread_refit_stats_val <- coadread_pred_refit_tmb %>%
   get_predictions(new_data = coadread_val_tables$test) %>%
   get_stats(biomarker_values = coadread_val_tmb_values$test, metrics = c("R"), model = "Refitted T", threshold = 300) %>% 
-  mutate(Dataset = "External Validation", cancer_type = "COADREAD")
+  mutate(Dataset = "External Test", cancer_type = "Colorectal")
 
 
 
@@ -372,14 +372,15 @@ blca_val_tmb_values <- get_biomarker_tables(blca_val_maf, biomarker = "TMB", spl
 blca_refit_stats <- blca_pred_refit_tmb %>%
   get_predictions(new_data = blca_tables$test) %>%
   get_stats(biomarker_values = blca_tmb_values$test, metrics = c("R"), model = "Refitted T", threshold = 300) %>% 
-  mutate(Dataset = "Internal Validation", cancer_type = "BLCA")
+  mutate(Dataset = "Internal Validation", cancer_type = "Bladder")
 
 blca_refit_stats_val <- blca_pred_refit_tmb %>%
   get_predictions(new_data = blca_val_tables$test) %>%
   get_stats(biomarker_values = blca_val_tmb_values$test, metrics = c("R"), model = "Refitted T", threshold = 300) %>% 
-  mutate(Dataset = "External Validation", cancer_type = "BLCA")
+  mutate(Dataset = "External Test", cancer_type = "Bladder")
 
 external_validation_fig <- bind_rows(skcm_refit_stats, skcm_refit_stats_val, coadread_refit_stats, coadread_refit_stats_val, blca_refit_stats, blca_refit_stats_val) %>%
+  mutate(Dataset = factor(Dataset, levels = c("Internal Validation", "External Test"))) %>% 
   mutate(model = factor(model, levels = c("Refitted T", "First-fit T"))) %>% 
   mutate(type = if_else(metric == "R", "Regression ~ (R^2)", "Classification ~ (AUPRC)")) %>%
   mutate(type = factor(type, levels = c("Regression ~ (R^2)", "Classification ~ (AUPRC)"))) %>%
@@ -388,6 +389,6 @@ external_validation_fig <- bind_rows(skcm_refit_stats, skcm_refit_stats_val, coa
   ggplot(aes(x = panel_length, y = stat, colour = Dataset)) + geom_line(size = 1) + ylim(0, 1) + xlim(0.2, 1.2) +
   theme_minimal() + facet_wrap(~cancer_type, labeller = label_parsed, strip.position = "top") +
   theme(legend.position = "bottom") + labs(x = "Panel Size (Mb)", y = TeX("$R^2$")) +
-  scale_color_manual(name = "Dataset:", values = c("blue", "black"), labels = list("External Validation", "Internal Validation"))
+  scale_color_manual(name = "Dataset:", values = c("black", "blue"), labels = list("Internal Validation", "External Test"))
 
 ggsave(filename = "results/figures/external_validation_fig.png", external_validation_fig, width = 10, height = 4)

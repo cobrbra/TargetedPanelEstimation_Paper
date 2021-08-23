@@ -944,3 +944,24 @@ s3.4.table <- data.frame(Model = c("Refitted T", "ecTMB", "Count", "Linear"),
                          CA = signif(c(t_tst_170_test_aug$stat[2], ectmb_aug_auprc, count_tst_170_test_aug$stat[2], linear_tst_170_test_aug$stat[2]),2))
 
 write_tsv(s3.4.table, "results/s3.4.table.tsv")
+
+### Extra Section 3 figure
+quantile_auprc_data <- data.frame(quant = seq(0.1, 0.9, by = 0.1))
+quantile_auprc_data <- quantile_auprc_data %>% 
+  mutate(tmb_threshold = unlist(map(quant, ~ quantile(nsclc_tmb_values$train$TMB, .)))) %>% 
+  mutate(AUPRC = unlist(map(tmb_threshold, function(x) (nsclc_pred_refit_tmb %>%
+                              get_predictions(new_data = nsclc_tables$test) %>%
+                              get_auprc(biomarker_values = nsclc_tmb_values$test, threshold = x) %>% 
+                              filter(panel_length == 591162) %>% 
+                              pull(stat)))))
+
+quantile_thresholds_fig <- quantile_auprc_data %>% 
+  ggplot(aes(x = quant, y = tmb_threshold, colour = AUPRC)) + geom_point(size = 6) + 
+  theme_minimal() +
+  labs(x = "TMB Quantile", y = "Threshold Value")
+ggsave(filename = "results/figures/quantile_thresholds_fig.png", plot = quantile_thresholds_fig, width = 5, height = 5)
+
+quantile_auprc_data %>% 
+  ggplot(aes(x = tmb_threshold, y = AUPRC)) + geom_col(colour = "grey", alpha = 0.8) + 
+  theme_minimal() +
+  labs(x = "TMB Quantile", y = "Threshold Value")
