@@ -393,12 +393,6 @@ The count-based estimator here gives predictions which are reasonably well corre
 \vspace*{-2mm}
 \end{figure} 
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=4in]{../results/figures/quantile_thresholds_fig.png}
-\caption{}
-\end{figure} 
-
 
 
 \subsection{Predicting tumour indel burden \label{sec:indel}}
