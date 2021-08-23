@@ -166,7 +166,16 @@ Thank you for this comment. Technical variation is indeed another key considerat
 
 \textbf{4. Similarly, the authors apply their model to a specific TMB cut-off; many previously selected TMB cut-offs are around the 50th percentile; how robust is the classifier to different TMB thresholds?}
 
-\tcnote{We can do something here, come back to it} 
+Thank you for this question.   In the paper we used a cutoff of 300 (which corresponds to around 10 mutations per megabase, and to around the 75th percentile of TMB values).  We have investigated the robustness using the NSCLC dataset, and perform the classification step of our analysis in the test set for a range of high/low TMB cutoffs -- see figure 1 below. We see that the classifier is indeed robust to the different thresholds; the area under the receiver operator characteristics curves (AUROC) and the precision recall curves (AUPRC) are all above 0.93 (an AUROC or AUPRC of 1 corresponds to perfect classification). 
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=4in]{../results/figures/}
+\caption{}
+\end{figure} 
+
+
+The main aim of our proposal is to predict TMB directly as opposed to classifying tumours into high TMB or low TMB classes. Nevertheless, we included the classification performance since it is often the case that practitioners would like to make a binary decision based on the TMB value. We feel that the extra detail adds little to what we have presented in the paper, and have opted against including the further analysis.  We will of course reconsider this if you feel strongly.  
 
 \textbf{Minor points: 1. KRAS is an oncogene, not a tumor suppressor gene}
 
