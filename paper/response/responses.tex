@@ -105,7 +105,9 @@ This is because our selection procedure tends to favour genes with higher overal
 
 \textbf{2. Based on the developed framework, the authors applied the methods on a set of NSCLC data and evaluate the performances. The results shown in the manuscript indicate that their approach outperforms others. However, in my opinion, the authors should verify the generalization of the proposed method. First, the authors need to apply the proposed methods in other cancer types and evaluate the performance. Second, the authors need to use data from other studies for performance evaluation. For example, the authors train the model using the NSCLC data from \citet{campbell_distinct_2016} and then test the performance in other datasets such as data from TCGA. Third, in addition to the commonly used gene panels and ecTMB, the authors need to compare their methods with other panel selection methods such as the one mentioned in the introduction section.}
 
-\tcnote{This will be covered in our main changes -- i.e. evaluating the performance on different data. } 
+\tcnote{This will be covered in our main changes -- i.e. evaluating the performance on different data. }  
+
+Thank you also for your third suggestion. We have now included the comparison on the panel selected by the proposal of \citet{lyu_mutation_2018} in Figure~7 of our revision. 
 
 \textbf{3. In line 272, the authors indicated they randomly split the dataset into training, validation and test sets, which contain $n_{train} = 800$, $n_{val} = 171$ and $n_{test} = 173$ samples. I think the authors should perform the random split multiple times to verify the robustness of the proposed method.}
 
@@ -115,7 +117,7 @@ Nevertheless, robustness is of course a key consideration -- we hope that the ad
 
 \textbf{4. In line 135, parameter $\mu_i$ corresponds to the background mutation rate. I wonder that is there significant correlation between the identified $\mu_i$ and the status of cigarette smoking for the sample? In other words, does higher $\mu_i$ indicate more cigarette smoking? This should be clarified since the authors claimed that their work has the scope to help understand mutational processes in the conclusions section.}
 
-This is an interesting question.  We have calculated the association between $\mu_i$ and smoking status in our training dataset. Non-smokers had an average BMR of \tcnote{???$\pm$ ??}, reformed smokers \tcnote{???$\pm$ ??} and current smokers \tcnote{???$\pm$ ??}. Indeed, as expected those with higher $\mu_i$ are more likely to be smokers.  We have opted against including this in the manuscript since we have not designed the study to investigate such an association. In order to clarify the scope of the discussion in Section 5 (previously section 4), we now write at the end of the penultimate paragraph:
+This is an interesting question.  We have calculated the association between $\mu_i$ and smoking status in our training dataset. Non-smokers had an average BMR (with standard deviation in brackets) of 4.04 (1.12), reformed smokers 5.26 (0.84) and current smokers 5.40 (0.76). Indeed, as expected those with higher $\mu_i$ are more likely to be smokers.  We have opted against including this in the manuscript since we have not designed the study to investigate such an association. In order to clarify the scope of the discussion in Section 5 (previously Section 4), we now write at the end of the penultimate paragraph:
 \begin{quotation}
 Of course, any such associations need to be carefully investigated in follow up studies.
 \end{quotation}
@@ -141,6 +143,8 @@ Thank you -- the references are now correctly formatted. \tcnote{ Let's not forg
 \bibitem[Campbell et al.(2016)]{campbell_distinct_2016} Campbell, J., D., Alexandrov, A. and Kim, J. (2016) Distinct patterns of somatic genome alterations in lung adenocarcinomas and squamous cell carcinomas, \emph{Nature Genetics}, \textbf{48}, 607--616.
 
 \bibitem[Chalmers et al. (2017)]{chalmers_analysis_2017} Chalmers, Z. R., Connelly, C. F. and Fabrizio, D. (2017) Analysis of 100,000 human cancer genomes reveals the landscape of tumor mutational burden, \emph{Genome Medicine}, \textbf{9}, 34.
+
+\bibitem[Lyu et al.(2018)]{lyu_mutation_2018} Lyu, G.-Y., Yeh, Y.-H. and Yeh, Y.-C. (2018) Mutation load estimation model as a predictor of the response to cancer immunotherapy. \emph{Nature Genomic Medicine}, \textbf{3}, 1-9.
 \end{thebibliography}
 
 \clearpage
@@ -158,23 +162,25 @@ Thank you for summarising our work, and for your constructive comments below.
 \textbf{2. Additionally, the NSCLC cohort used in this analysis includes both squamous and non-squamous NSCLC. Does the model perform equally well on both? What about in tumors without dominant smoking signature (e.g. EGFR mutated samples or from never smokers)? What about microsatellite stable vs unstable colorectal cancer? These subgroup analyses would help clarify how precise the training and validation datasets need to be relative to the underlying mutational process. }
 
 
-These are interesting questions.  For your first point, the performance on squamous vs. non-squamous cells is as follows: \tcnote{numbers needed here}.  However, we need to be extremely careful in performing subgroup analyses, and since our study was not designed to investigate any particular subgroups, we have decided not to report these subgroup specific results in the paper.  Similarly for your other points, that are of course of interest, one would need to carry out a carefully designed follow-up study in order to conclusively report valid subgroup analyses, which is beyond the scope of this work.  
+These are interesting questions.  For your first point, the performance in the test set for squamous cells was $R^2 = 0.77$ and for non-squamous cells was $R^2 = 0.91$. Further, the regression performance on EGFR mutated samples was $R^2 = 0.92$ and for never smokers was $R^2 = 0.84$.  However, we need to be extremely careful in performing these kind of subgroup analyses (especially with small sample sizes), and since our study was not designed to investigate any particular subgroups, we have decided not to report these subgroup specific results in the paper.  Similarly for your final point, which is of course of interest, one would need to carry out a carefully designed follow-up study in order to conclusively report valid subgroup analyses, which is beyond the scope of this work.  
 
 \textbf{3. Discrepancies between WES and panel-derived TMB arise not only from gene downsampling, but also from differences in the performance of sequencing assays (sample processing, sequence coverage, artifacts, etc).}
 
-Thank you for this comment. Technical variation is indeed another key consideration for the accuracy of gene panel-based sequencing. We hope that our inclusion of MSK-IMPACT derived validation data in our new Section~4 demonstrates robustness to the sequencing technology employed. \tcnote{Make sure we do this!}
+\tcnote{Thank you for this comment. Technical variation is indeed another key consideration for the accuracy of gene panel-based sequencing. We hope that our inclusion of MSK-IMPACT derived validation data in our new Section~4 demonstrates robustness to the sequencing technology employed. } \tcnote{Make sure we do this!}
 
 \textbf{4. Similarly, the authors apply their model to a specific TMB cut-off; many previously selected TMB cut-offs are around the 50th percentile; how robust is the classifier to different TMB thresholds?}
 
-Thank you for this question.   In the paper we used a cutoff of 300 (which corresponds to around 10 mutations per megabase, and to around the 75th percentile of TMB values).  We have investigated the robustness using the NSCLC dataset, and perform the classification step of our analysis in the test set for a range of high/low TMB cutoffs -- see figure 1 below. We see that the classifier is indeed robust to the different thresholds; the area under the receiver operator characteristics curves (AUROC) and the precision recall curves (AUPRC) are all above 0.93 (an AUROC or AUPRC of 1 corresponds to perfect classification). 
+Thank you for this question.  The main aim of our proposal is to predict TMB directly via a regression model, and our model does not depend on the classification step (in particular it doesn't depend on the cutoff of 300 mutations used in Section 3;  note that 300 corresponds to around 10 mutations per megabase, and to around the 75th percentile of TMB values).  In fact, the classification performance for different TMB cutoffs may be informally assessed by further inspection of the plot in top left panel of Figure~8.  For example the recall is the number of points in the top right quadrant divided by the number of points in the top two quadrants.  This calculation may be carried out for any TMB cutoffs by moving the appropriate horizontal and vertical grey dotted lines. 
+
+We calculated the classification performance on the NSCLC dataset for different high/low TMB thresholds -- see the figure below.   We see that the classifier is indeed robust to the different thresholds; the area under the receiver operating characteristics curves (AUROC) and the precision recall curves (AUPRC) are all above 0.93 (an AUROC or AUPRC of 1 corresponds to perfect classification).  %Note that while classification typically becomes harder in terms of precision and recall as the TMB cutoff quantile increases (this is due to the fact that minority class is smaller and cases in that class are harder to identify), the performance of our classifier remains high since it is based on thresholding a regression estimate.  
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=4in]{../../results/figures/quantile_thresholds_fig.png}
-\caption{}
+%\caption{}
 \end{figure} 
 
-The main aim of our proposal is to predict TMB directly as opposed to classifying tumours into high TMB or low TMB classes. Nevertheless, we included the classification performance since it is often the case that practitioners would like to make a binary decision based on the TMB value. We feel that the extra detail adds little to what we have presented in the paper, and have opted against including the further analysis.  We will of course reconsider this if you feel strongly.  
+We feel that, since the reader can get an intuitive sense of the model's robustness in terms of classification performance from Figure 8, the extra detail here adds little to what we have presented in the paper, and have opted against including these additional calculations.  We will of course reconsider and include this if you feel strongly.  
 
 \textbf{Minor points: 1. KRAS is an oncogene, not a tumor suppressor gene}
 

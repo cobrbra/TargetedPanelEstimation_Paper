@@ -59,7 +59,7 @@
 \usepackage{xcolor}
 \usepackage[draft,inline,nomargin,index]{fixme}
 \fxsetup{theme=color,mode=multiuser}
-\FXRegisterAuthor{tc}{atc}{\color{red} TC}
+\FXRegisterAuthor{tc}{atc}{\color{green} TC}
 \FXRegisterAuthor{jb}{abc}{\color{green} JB}
 
 \newcommand{\vtwo}[1]{\textcolor{red}{#1}}
@@ -359,8 +359,7 @@ Now recall that \gls{tmb} is given by equation~\eqref{eq:biomarker} with $\bar{S
 \vspace*{-2mm}
 \end{figure}
 
-We now compare our method with state-of-the-art estimators applied to commonly used gene panels. The three next-generation sequencing panels that we consider are chosen for their relevance to \gls{tmb}. These are TST-170 \citep{heydt_evaluation_2018}, Foundation~One \citep{frampton_development_2013} and MSK-IMPACT \citep{cheng_memorial_2015}.
-For each panel $P \subseteq G$, we use four different methods to predict \gls{tmb}:
+We now compare our method with state-of-the-art estimators applied to commonly used gene panels\vtwo{, as well as a panel selected by the proposal of \citet{lyu_mutation_2018}.} The three next-generation sequencing panels that we consider are chosen for their relevance to \gls{tmb}. These are TST-170 \citep{heydt_evaluation_2018}, Foundation~One \citep{frampton_development_2013} and MSK-IMPACT \citep{cheng_memorial_2015}. \vtwo{Further, the panel selected by the approach in \citet{lyu_mutation_2018} consists of the genes that are mutated more than 10$\%$ of the time, that are less than 0.015Mb in length and for which the presence of a mutation in the gene is significantly associated with higher \gls{tmb} values.} For each panel $P \subseteq G$, we use four different methods to predict \gls{tmb}:
 \begin{enumerate}[(i)]
  \item Our refitted estimator applied to the panel $P$: we estimate \gls{tmb} using $T(\hat{w}_P)$, where $\hat{w}_P \in \argmin_{w \in W_P} \{f(w)\}$, and $W_P$ is defined in \eqref{eq:Wp}. 
  \item \gls{ectmb}: the procedure proposed by \citet{yao_ectmb_2020}.
@@ -393,6 +392,10 @@ The count-based estimator here gives predictions which are reasonably well corre
 \vspace*{-2mm}
 \end{figure} 
 
+\subsection{External validation and classification of response to immunotherapy} 
+\vtwo{The aim of this section is to further validate our proposed estimator of \gls{tmb} by making use of a second \gls{nsclc} dataset \citep{hellmann_genomic_2018} on 75 samples for which the response to immunotherapy is available.  The average \gls{tmb} in this dataset is 258. We first use our refitted estimator trained on the same data as in Section~\ref{sec:tmb} to predict \gls{tmb} for the samples in the new dataset using the selected panel of size 0.6Mb. The predictions are given in Figure~\ref{fig:externalTMB}; the corresponding regression performance is $R^2 = 0.71$, and the AUPRC for classifying tumours to high or low \gls{tmb} classes has an AUPRC of 0.94.}
+
+This dataset also allows us to assess the practical utility of using our estimated \gls{tmb} values to predict the response to immonotherapy.   
 
 
 \subsection{Predicting tumour indel burden \label{sec:indel}}
@@ -464,12 +467,10 @@ $\text{\Sexpr{s3.4.table[4,1]}}$ & $\Sexpr{s3.4.table[4,2]}$ & $\Sexpr{s3.4.tabl
 
 
 \section{Further validation and robustness \label{sec:robust}} 
-\vtwo{The first aim of this section is to further demonstrate the performance of our proposal in a number of practical settings.  We apply our method for estimating \gls{tmb} in three more cancer types, namely bladder cancer, colorectal cancer and melanoma.  In each case data from two studies are used. Data from the first study is split into a training and validation set; the training data is used to construct our estimator for a range of panel sizes, we then evaluate the predictive performance on the validation set (in contrast to our analysis in Section~\ref{sec:experimentalresults}, we do not require a separate test set since the panel size is not selected based on the data). Then, in order to test the robustness of our approach to study effects, we will also apply our fitted estimator to predict \gls{tmb} for tumours from the second study for each cancer type.}
+\vtwo{The first aim of this section is to further demonstrate the performance of our proposal in a number of practical settings.  We apply our method for estimating \gls{tmb} in three more cancer types, namely bladder cancer, colorectal cancer and melanoma.  In each case data from two studies are used. Data from the first study is split into a training and validation set; the training data is used to construct our estimator for a range of panel sizes, we then evaluate the predictive performance on the validation set (note that in contrast to our analysis in Section~\ref{sec:experimentalresults}, we do not require a separate test set since the panel size is not selected based on the data). Further, in order to test the robustness of our approach to study effects, we will also apply our fitted estimator to predict \gls{tmb} for tumours from the second study for each cancer type.}
 
 
-\vtwo{We use the bladder cancer datasets from the TCGA Pan-Cancer Atlas\footnote{data available at \url{https://www.cbioportal.org/study/clinicalData?id=blca_tcga_pan_can_atlas_2018}} ($n_{\mathrm{train}} = 300$, $n_{\mathrm{val}} = 109$) and \citet{guo_whole-genome_2013} ($n_{\mathrm{test}} = 99$), the colorectal cancer datasets from \citet{giannakis_genomic_2016}  ($n_{\mathrm{train}} = 500$, $n_{\mathrm{val}} = 119$)  and \citet{seshagiri_recurrent_2012} ($n_{\mathrm{test}} = 72$), and the melanoma datasets from \citet{cancer_genome_atlas_network_genomic_2015} ($n_{\mathrm{train}} = 250$, $n_{\mathrm{val}} = 96$)  and \citet{krauthammer_exome_2012} ($n_{\mathrm{test}} = 91$).} 
-
-\tcnote{Something about the different ranges of TMB values.}
+\vtwo{We use the bladder cancer datasets from the TCGA Pan-Cancer Atlas\footnote{data available at \url{https://www.cbioportal.org/study/clinicalData?id=blca_tcga_pan_can_atlas_2018}} ($n_{\mathrm{train}} = 300$, $n_{\mathrm{val}} = 109$) and \citet{guo_whole-genome_2013} ($n_{\mathrm{test}} = 99$), the colorectal cancer datasets from \citet{giannakis_genomic_2016}  ($n_{\mathrm{train}} = 500$, $n_{\mathrm{val}} = 119$)  and \citet{seshagiri_recurrent_2012} ($n_{\mathrm{test}} = 72$), and the melanoma datasets from \citet{cancer_genome_atlas_network_genomic_2015} ($n_{\mathrm{train}} = 250$, $n_{\mathrm{val}} = 96$)  and \citet{krauthammer_exome_2012} ($n_{\mathrm{test}} = 91$).} \vtwo{These datasets have a range of mutation rates, specifically the average \gls{tmb} values are 250, 330 and 570 for the three cancer types, respectively.  }
 
 \vtwo{In Figure~\ref{fig:external_validation_fig}, the black lines plot the $R^2$ values obtained on the internal validation set from the first study for the three cancer types as the panel size varies from 0.25Mb to 1.25Mb. The blue lines show the $R^2$ values obtained when predicting \gls{tmb} for tumours in the external test set from the second study.}
 
