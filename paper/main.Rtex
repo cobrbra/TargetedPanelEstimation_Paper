@@ -395,7 +395,7 @@ The count-based estimator here gives predictions which are reasonably well corre
 \subsection{External testing and classification of response to immunotherapy} 
 \vtwo{The aim of this section is to further test our proposed estimator of \gls{tmb} by making use of a second \gls{nsclc} dataset \citep{hellmann_genomic_2018} on 75 samples for which the response to immunotherapy is available.  The average \gls{tmb} in this dataset is 258.}
 
-\vtwo{We first use our refitted estimator trained on the same data as in Section~\ref{sec:tmb} to predict \gls{tmb} for the samples in the new dataset using the selected panel of size 0.6Mb. The predictions are given in Figure~\ref{fig:externalTMB}; the corresponding regression performance is $R^2 = 0.71$, and the AUPRC for classifying tumours to high or low \gls{tmb} classes has an AUPRC of 0.94.}
+\vtwo{We first use our refitted estimator trained on the same data as in Section~\ref{sec:tmb} to predict \gls{tmb} for the samples in the new dataset using the selected panel of size 0.6Mb. The predictions are given in Figure~\ref{fig:externalTMB}; the corresponding regression performance is $R^2 = 0.71$, and the AUPRC for classifying tumours to high or low \gls{tmb} classes is 0.94.}
 
 \begin{figure}
     \centering
@@ -404,7 +404,7 @@ The count-based estimator here gives predictions which are reasonably well corre
     \label{fig:externalTMB}
 \end{figure}
 
-This dataset also allows us to assess the practical utility of using our estimated \gls{tmb} values to predict the response to immonotherapy.   
+\vtwo{This dataset also allows us to assess the practical utility of using our estimated \gls{tmb} values to predict the response to immonotherapy. In Figure~\ref{fig:responseclass}. }
 
 
 \subsection{Predicting tumour indel burden \label{sec:indel}}
