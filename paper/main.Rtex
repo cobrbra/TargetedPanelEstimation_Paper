@@ -404,7 +404,7 @@ The count-based estimator here gives predictions which are reasonably well corre
     \label{fig:externalTMB}
 \end{figure}
 
-\vtwo{This dataset also allows us to assess the practical utility of using our estimated \gls{tmb} values to predict the response to immonotherapy. In Figure~\ref{fig:responseclass}. }
+\vtwo{This dataset also allows us to assess the practical utility of using our estimated \gls{tmb} values to predict the response to immunotherapy. Of the 75 samples in the study, 37 were identified as  having a \emph{Durable Clinical Benefit} (Class 1) in response to immunotherapy (\gls{pdl1}+\gls{ctla4} blockade), and the remaining 38 were deemed to have \emph{No Benefit} (Class 0).  We construct two simple classifiers for comparison, the first assigns a sample to Class 1 if the true \gls{tmb} value is greater than some threshold $t$, and the second uses our estimated value of \gls{tmb} in the same way.  In Figure~\ref{fig:responseclass}, we plot the receiver operating characteristic curve (ROC) (that is the false positive rate against the true positive rate as the classification threshold varies). The area under the ROC curves are 0.68 when using the true \gls{tmb} value and 0.64 when using the estimated \gls{tmb} value.}
 
 
 \subsection{Predicting tumour indel burden \label{sec:indel}}
