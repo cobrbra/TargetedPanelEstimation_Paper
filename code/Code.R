@@ -8,7 +8,7 @@ library(ICBioMark)
 
 ## ecTMB Package
 
-#devtools::install_github("bioinform/ecTMB")
+# devtools::install_github("bioinform/ecTMB")
 # library(ecTMB)
 
 ## Other R packages needed
@@ -96,7 +96,7 @@ nsclc_pred_linear_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gen
 # covarf                 = file.path(extdataDir,"gene.covar.txt")   ### gene properties
 # mutContextf            = file.path(extdataDir,"mutation_context_96.txt" )  ### 96 mutation contexts
 # ref                    = file.path(extdataDir,"GRCh38.d1.vd1.fa" )
-
+# 
 # nsclc_maf_grch38 <- read_tsv("data/nsclc_maf_grch38.tsv", comment = "#")
 
 # URL = "https://github.com/bioinform/ecTMB/releases/download/v0.1.0/ecTMB_data.tar.gz"
@@ -113,19 +113,19 @@ nsclc_pred_linear_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gen
 #   readData(exomef = exomef, covarf = covarf, mutContextf = mutContextf, ref = ref)
 # write_rds(x = trainset, file = "data/temporary_storage/trainset")
 #
-# trainset <- read_rds("data/temporary_storage/trainset")
+trainset <- read_rds("data/temporary_storage/trainset")
 #
-# MRtriProb = getBgMRtri(trainset)
+MRtriProb = getBgMRtri(trainset)
 
 # trainedModel = fit_model(trainset, MRtriProb, cores = 1)
 # write_rds(trainedModel, "data/temporary_storage/trainedModel")
 #
 # trainedModel = read_rds("data/temporary_storage/trainedModel")
 #
-# TSO_500_panel <- "data/tso_500_bed.bed"
 # F1_panel <- "data/foundation_bed.bed"
 # MSK_panel <- "data/msk_impact_bed.bed"
 # TST_170_panel <- "data/tst_170_bed.bed"
+# lyu_panel <- "data/lyu_bed.bed"
 
 # valset_WES <- nsclc_maf_grch38 %>%
 #   filter(Tumor_Sample_Barcode %in% nsclc_tables$val$sample_list) %>%
@@ -178,23 +178,6 @@ nsclc_pred_linear_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gen
 #
 # write_tsv(val_pred_f1, "data/pre_loaded/val_pred_f1.tsv")
 #
-# ## TSO-500 Panel
-# sample_tso_500_val = data.frame(SampleID = nsclc_tables$val$sample_list, BED = TSO_500_panel, stringsAsFactors = FALSE)
-#
-# valset_tso_500 <- nsclc_maf_grch38 %>%
-#   filter(Tumor_Sample_Barcode %in% nsclc_tables$val$sample_list) %>%
-#   readData(exomef, covarf, mutContextf, ref, samplef = sample_tso_500_val)
-# write_rds(valset_tso_500, "data/temporary_storage/valset_tso_500")
-#
-# val_pred_tso_500 <- pred_TMB(valset_tso_500, WES = valset_WES, cores = 1, params = trainedModel, mut.nonsil = T,
-#                         gid_nonsil_p = trainset$get_nonsil_passengers(0.95)) %>%
-#   mutate(estimated_values = mean(nsclc_tmb_values$val$TMB) *ecTMB_panel_TMB/ mean(WES_TMB),
-#          true_values = mean(nsclc_tmb_values$val$TMB)*WES_TMB / mean(WES_TMB),
-#          Tumor_Sample_Barcode = sample) %>%
-#   select(Tumor_Sample_Barcode, estimated_values, true_values) %>%
-#   mutate(panel = "TSO-500")
-#
-# write_tsv(val_pred_tso_500, "data/pre_loaded/val_pred_tso_500.tsv")
 #
 # ## MSK-IMPACT Panel
 # sample_msk_val = data.frame(SampleID = nsclc_tables$val$sample_list, BED = MSK_panel, stringsAsFactors = FALSE)
@@ -213,6 +196,26 @@ nsclc_pred_linear_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gen
 #   mutate(panel = "MSK-I")
 #
 # write_tsv(val_pred_msk, "data/pre_loaded/val_pred_msk.tsv")
+#
+#
+# ## Lyu Panel
+# sample_lyu_val = data.frame(SampleID = nsclc_tables$val$sample_list, BED = lyu_panel, stringsAsFactors = FALSE)
+# 
+# valset_lyu <- nsclc_maf_grch38 %>%
+#   filter(Tumor_Sample_Barcode %in% nsclc_tables$val$sample_list) %>%
+#   readData(exomef, covarf, mutContextf, ref, samplef = sample_lyu_val)
+# write_rds(valset_lyu, "data/temporary_storage/valset_lyu")
+# 
+# val_pred_lyu <- pred_TMB(valset_lyu, WES = valset_WES, cores = 1, params = trainedModel, mut.nonsil = T,
+#                              gid_nonsil_p = trainset$get_nonsil_passengers(0.95)) %>%
+#   mutate(estimated_values = mean(nsclc_tmb_values$val$TMB) *ecTMB_panel_TMB/ mean(WES_TMB),
+#          true_values = mean(nsclc_tmb_values$val$TMB)*WES_TMB / mean(WES_TMB),
+#          Tumor_Sample_Barcode = sample) %>%
+#   select(Tumor_Sample_Barcode, estimated_values, true_values) %>%
+#   mutate(panel = "Lyu")
+# 
+# write_tsv(val_pred_lyu, "data/pre_loaded/val_pred_lyu.tsv")
+
 
 
 
@@ -525,11 +528,11 @@ message("Creating Figure 7")
 
 panels <- list("TST-170" = read_tsv("data/tst_170_genes.tsv")$Hugo_Symbol,
                "F1" = read_tsv("data/foundation_genes.tsv")$Hugo_Symbol,
-               "MSK-I" = read_tsv("data/msk_impact_genes.tsv")$Hugo_Symbol)#,
-               #"TSO-500" = read_tsv("data/tso_500_genes.tsv")$Hugo_Symbol)
+               "Lyu" = read_tsv("data/lyu_genes.tsv")$Hugo_Symbol,
+               "MSK-I" = read_tsv("data/msk_impact_genes.tsv")$Hugo_Symbol)
 models <- c("T", "Count", "OLM")
 
-datasets <- list(nsclc_tables, nsclc_tables, nsclc_linear_tables)
+datasets <- list(nsclc_tables, nsclc_tables, nsclc_tables)
 names(datasets) <- models
 
 
@@ -548,8 +551,8 @@ rm(datasets)
 
 ectmb_preds <- list("TST-170" = read_tsv("data/pre_loaded/val_pred_tst_170.tsv"),
                     "F1" = read_tsv("data/pre_loaded/val_pred_f1.tsv"),
-                    "MSK-I" = read_tsv("data/pre_loaded/val_pred_msk.tsv"))#,
-                    #"TSO-500" = read_tsv("data/pre_loaded/val_pred_tso_500.tsv"))
+                    "Lyu" = read_tsv("data/pre_loaded/val_pred_lyu.tsv"),
+                    "MSK-I" = read_tsv("data/pre_loaded/val_pred_msk.tsv"))
 ectmb_model_stats <- purrr::map(ectmb_preds, ~ list(predictions = select(column_to_rownames(., "Tumor_Sample_Barcode"), estimated_values),
                                                     panel_lengths = c(0))) %>%
   purrr::map(~ get_stats(., biomarker_values = nsclc_tmb_values$val, model = "ecTMB")) %>%
@@ -562,7 +565,7 @@ model_stats <- bind_rows(non_ectmb_model_stats, ectmb_model_stats) %>%
   ungroup() %>%
   mutate(metric = if_else(metric == "R", "Regression ~ (R^2)", "Classification ~ (AUPRC)")) %>%
   mutate(metric = factor(metric, levels = c("Regression ~ (R^2)", "Classification ~ (AUPRC)"))) %>%
-  mutate(panel = factor(panel, levels = c("Our Procedure", "TST-170", "F1", "MSK-I", "TSO-500"))) %>%
+  mutate(panel = factor(panel, levels = c("Our Procedure", "TST-170", "Lyu", "F1", "MSK-I"))) %>%
   mutate(model = factor(model, c("T", "ecTMB", "Count", "OLM"))) %>%
   mutate(panel_length = panel_length / 1000000)
 
@@ -570,7 +573,7 @@ fig7 <- bind_rows(refit_stats_tmb, first_stats_tmb) %>%
   mutate(model = factor(model, levels = c("Refitted T", "First-fit T"))) %>% 
   mutate(metric = if_else(metric == "R", "Regression ~ (R^2)", "Classification ~ (AUPRC)")) %>%
   mutate(metric = factor(metric, levels = c("Regression ~ (R^2)", "Classification ~ (AUPRC)"))) %>%
-  mutate(panel = factor("Our Procedure", levels = c("Our Procedure", "TST-170", "F1", "MSK-I"))) %>% #, "TSO-500"))) %>%
+  mutate(panel = factor("Our Procedure", levels = c("Our Procedure", "TST-170", "Lyu", "F1", "MSK-I"))) %>% 
   mutate(panel_length = panel_length / 1000000) %>%
   ggplot(aes(x = panel_length, y = stat, colour = panel)) +
   geom_point(data = model_stats, aes(pch = model), size = 3, stroke = 1) +
@@ -1142,16 +1145,6 @@ ggsave(filename = "results/figures/nsclc_val_pred.png", plot = nsclc_val_pred_fi
 nsclc_val_predictions$prediction_intervals %>% 
   {1 - sum((.$true_value - .$estimated_value)^2)/sum((.$true_value - mean(.$true_value))^2)}
 
-nsclc_val_predictions$prediction_intervals %>% 
-  {pr.curve(scores.class0 = nsclc_val_clinical %>% 
-              filter(NONSYNONYMOUS_MUTATION_BURDEN > 300) %>% 
-              pull(estimated_value),
-            scores.class1 = nsclc_val_clinical %>% 
-              filter(NONSYNONYMOUS_MUTATION_BURDEN <= 300) %>% 
-              pull(estimated_value),
-            curve = T)} %>% 
-  plot()
-
 nsclc_val_clinical <- read_tsv("data/nsclc_mskcc_2018/data_clinical_patient.txt", comment = "#") %>% 
   inner_join(read_tsv("data/nsclc_mskcc_2018/data_clinical_sample.txt", comment = "#"), by = "PATIENT_ID") %>% 
   mutate(Tumor_Sample_Barcode = SAMPLE_ID) %>% 
@@ -1159,30 +1152,14 @@ nsclc_val_clinical <- read_tsv("data/nsclc_mskcc_2018/data_clinical_patient.txt"
   select(Tumor_Sample_Barcode, estimated_value, true_value, PFS_STATUS, PFS_MONTHS, DURABLE_CLINICAL_BENEFIT, SEX, AGE_YRS, CANCER_TYPE, NONSYNONYMOUS_MUTATION_BURDEN) 
 
 
-nsclc_val_clinical %>% 
-  pivot_longer(cols = c("NONSYNONYMOUS_MUTATION_BURDEN", "estimated_value"), names_to = "TMB_CALC_METHOD", values_to = "TMB") %>% 
-  ggplot(aes(x = DURABLE_CLINICAL_BENEFIT, y = TMB, fill = TMB_CALC_METHOD)) + geom_violin() + 
-  theme_minimal() + theme(legend.title = element_blank()) + 
-  scale_fill_manual(labels = c("Estimated", "True"), values = c("#00BFC4", "#F8766D")) + 
-  labs(x = "")
-
-wilcox.test(x = nsclc_val_clinical %>% 
-              filter(DURABLE_CLINICAL_BENEFIT == "Durable Clinical Benefit") %>% 
-              pull(NONSYNONYMOUS_MUTATION_BURDEN),
-            y = nsclc_val_clinical %>% 
-              filter(DURABLE_CLINICAL_BENEFIT == "No Durable Benefit") %>% 
-              pull(NONSYNONYMOUS_MUTATION_BURDEN),
-            alternative = "two.sided",
-            exact = FALSE)
-
-wilcox.test(x = nsclc_val_clinical %>% 
-              filter(DURABLE_CLINICAL_BENEFIT == "Durable Clinical Benefit") %>% 
+nsclc_val_predictions$prediction_intervals %>% 
+  {pr.curve(scores.class0 = nsclc_val_clinical %>% 
+              filter(NONSYNONYMOUS_MUTATION_BURDEN > 300) %>% 
               pull(estimated_value),
-            y = nsclc_val_clinical %>% 
-              filter(DURABLE_CLINICAL_BENEFIT == "No Durable Benefit") %>% 
-              pull(estimated_value),
-            alternative = "two.sided",
-            exact = FALSE)
+            scores.class1 = nsclc_val_clinical %>% 
+              filter(NONSYNONYMOUS_MUTATION_BURDEN <= 300) %>% 
+              pull(estimated_value))}
+
 
 estimated_tmb_pr <- roc.curve(scores.class0 = nsclc_val_clinical %>% 
            filter(DURABLE_CLINICAL_BENEFIT == "Durable Clinical Benefit") %>% 
@@ -1200,6 +1177,8 @@ true_tmb_pr <- roc.curve(scores.class0 = nsclc_val_clinical %>%
                         curve = T)
 setEPS()
 png(file = "results/figures/response_pred_roc.png", width = 600, height = 600) 
-plot(true_tmb_pr, legend = FALSE, color = "#F8766D", auc.main = FALSE, main = "Predicting response to immunotherapy", xlab = "False Positive Rate", ylab = "True Positive Rate"); plot(estimated_tmb_pr, legend = FALSE, color = "black", add = TRUE)
+plot(true_tmb_pr, legend = FALSE, color = "#F8766D", auc.main = FALSE, main = "Predicting response to immunotherapy", xlab = "False Positive Rate", ylab = "True Positive Rate")
+plot(estimated_tmb_pr, legend = FALSE, color = "black", add = TRUE)
+lines(seq(0,1,0.1), seq(0,1,0.1), lty = 3)
 dev.off()
 
