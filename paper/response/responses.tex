@@ -32,6 +32,9 @@
 \newcommand{\green}[1]{\textcolor{green!60!black}{#1}}
 \newcommand{\orange}[1]{\textcolor{orange!90!black}{#1}}
 
+\newcommand{\vtwo}[1]{\textcolor{red}{#1}}
+
+
 \newcommand{\vertiii}[1]{{\left\vert\kern-0.25ex\left\vert\kern-0.25ex\left\vert #1 
     \right\vert\kern-0.25ex\right\vert\kern-0.25ex\right\vert}}
 \newenvironment{prooftitle}[1]{{\noindent \textsc{Proof #1}}\\}
@@ -55,10 +58,11 @@ Thank you very much for your decision on our manuscript on the 6th July.
 
 We are very grateful to you and the three reviewers for their helpful and constructive comments, and we have revised the paper accordingly.  The main changes are as follows: 
 \begin{itemize}
-    \item We have... \tcnote{included a new Section 4 which covers several further analyses.  different cancer types, robustness, meta analysis, TMB vs Response. } 
+    \item We have \tcnote{Section 3.3} ... 
+    \item \tcnote{We have included a new Section 4 which covers several further analyses on different cancer types. } 
     \item \tcnote{We include in our conclusion section a detailed discussion of the potential limitations of our method -- see also our detailed response to referee 3.} 
 \end{itemize}
-Please also see our detailed point-by-point response to the reviewers comments below.  
+Please also see our detailed point-by-point response to the reviewers comments below.  All changes in the main text are highlighted in \vtwo{red}.
 
 %\textbf{The referees’ reports seem to be quite clear. Naturally, we will need you to address all of the points raised. } \textbf{While we ask you to address all of the points raised, the following points need to be substantially worked on:} \textbf{- Please provide all details of the method and the model as pointed out by reviewer~1.}\textbf{- Please verify the generalization of the proposed method as requested by reviewer~1.}\textbf{- Reviewer~2 has mentioned that the general utility of the model needs to be explored.}\textbf{- Reviewer~3 has pointed out the need for validation of the method on datasets in which response to immunotherapy is available.}\textbf{- Please show how robust the classifier is to different TMB thresholds.}\textbf{- Please compare the methods with other panel selection methods such as the ones mentioned in the introduction section as requested by Reviewer~1.}\textbf{- Please discuss the underlying flaws in the study as pointed out by Reviewer 3.}
 
@@ -132,15 +136,15 @@ Thank you for pointing out these typos, they have been corrected in our revision
 (a) In line 140: should the free parameters be $n + |G| + |S| + |G||S|$?
 (b) In Figure 4, it seems that only 4 largest negative genes are labeled.}
 
-Thank you for these points. (a) The number of free parameters is given as follows: there a $n$ parameters $\mu_i$ for $i = 1, \ldots, n$, $|G|$ parameters $\lambda_g$ for $g \in G$, $|S|$ parameters $\nu_s$ for $s \in S$, and $(|S| - 1) |G|$ parameters $\eta_{gs}$ for $g \in G$ and $s \in S \setminus \{s_1\}$. Note in particular (as mentioned in line 134) that $\eta_{gs_1} = 0$ for all $g \in G$, thus these last $|G|$ parameters are fixed to be zero and do not contribute to the total number of free parameters. In total we do therefore have $n + |G| + |S| + (|S|-1)|G| = n + |S| + |S||G|$ free parameters as stated in the paper.  We hope that clarifies things; we will happily add these extra details to the paper if needed.  \tcnote{(b) In figure 4, we have only labelled the 5 largest gene parameters (and none of the negative gene parameters), unfortunately the previous formatting of the figure meant that the labels overlapped -- this has been rectified in our revision.} 
+Thank you for these points. (a) The number of free parameters is given as follows: there a $n$ parameters $\mu_i$ for $i = 1, \ldots, n$, $|G|$ parameters $\lambda_g$ for $g \in G$, $|S|$ parameters $\nu_s$ for $s \in S$, and $(|S| - 1) |G|$ parameters $\eta_{gs}$ for $g \in G$ and $s \in S \setminus \{s_1\}$. Note in particular (as mentioned in line 134) that $\eta_{gs_1} = 0$ for all $g \in G$, thus these last $|G|$ parameters are fixed to be zero and do not contribute to the total number of free parameters. In total we do therefore have $n + |G| + |S| + (|S|-1)|G| = n + |S| + |S||G|$ free parameters as stated in the paper.  We hope that clarifies things; we will happily add these extra details to the paper if needed. (b) In figure 4, we have only labelled the 5 largest gene parameters (and none of the negative gene parameters), unfortunately the previous formatting of the figure meant that the labels overlapped -- this has been rectified in our revision. 
 
 \textbf{7. The format of the references need modification. Specifically, the papers with more than three authors only showed the first three authors in the references.}
 
-Thank you -- the references are now correctly formatted. \tcnote{ Let's not forget to actually do this! This appears to be an issue with importing from Zotero.}  
+Thank you -- the references are now correctly formatted. 
 
 
 \begin{thebibliography}{75}
-\bibitem[Campbell et al.(2016)]{campbell_distinct_2016} Campbell, J., D., Alexandrov, A. and Kim, J. (2016) Distinct patterns of somatic genome alterations in lung adenocarcinomas and squamous cell carcinomas, \emph{Nature Genetics}, \textbf{48}, 607--616.
+\bibitem[Campbell et al.(2016)]{campbell_distinct_2016} Campbell, Joshua D. and Alexandrov, Anton and Kim, Jaegil and Wala, Jeremiah and Berger, Alice H. and Pedamallu, Chandra Sekhar and Shukla, Sachet A. and Guo, Guangwu and Brooks, Angela N. and Murray, Bradley A. and Imielinski, Marcin and Hu, Xin and Ling, Shiyun and Akbani, Rehan and Rosenberg, Mara and Cibulskis, Carrie and Ramachandran, Aruna and Collisson, Eric A. and Kwiatkowski, David J. and Lawrence, Michael S. and Weinstein, John N. and Verhaak, Roel G. W. and Wu, Catherine J. and Hammerman, Peter S. and Cherniack, Andrew D. and Getz, Gad and {Cancer Genome Atlas Research Network} and Artyomov, Maxim N. and Schreiber, Robert and Govindan, Ramaswamy and Meyerson, Matthew (2016) Distinct patterns of somatic genome alterations in lung adenocarcinomas and squamous cell carcinomas, \emph{Nature Genetics}, \textbf{48}, 607--616.
 
 \bibitem[Chalmers et al. (2017)]{chalmers_analysis_2017} Chalmers, Z. R., Connelly, C. F. and Fabrizio, D. (2017) Analysis of 100,000 human cancer genomes reveals the landscape of tumor mutational burden, \emph{Genome Medicine}, \textbf{9}, 34.
 
@@ -166,7 +170,7 @@ These are interesting questions.  For your first point, the performance in the t
 
 \textbf{3. Discrepancies between WES and panel-derived TMB arise not only from gene downsampling, but also from differences in the performance of sequencing assays (sample processing, sequence coverage, artifacts, etc).}
 
-\tcnote{Thank you for this comment. Technical variation is indeed another key consideration for the accuracy of gene panel-based sequencing. We hope that our inclusion of MSK-IMPACT derived validation data in our new Section~4 demonstrates robustness to the sequencing technology employed. } \tcnote{Make sure we do this!}
+Thank you for this comment. Technical variation is indeed another key consideration for the accuracy of gene panel-based sequencing. We hope that our inclusion of external test data (see the new Sections 3.3 and 4) demonstrates robustness to study effects.   
 
 \textbf{4. Similarly, the authors apply their model to a specific TMB cut-off; many previously selected TMB cut-offs are around the 50th percentile; how robust is the classifier to different TMB thresholds?}
 
@@ -200,15 +204,26 @@ validate their results on public cancer sequencing datasets and simulate their p
 Thank you for your detailed discussion of our work.  
 
 \textbf{Although the question asked and the methodology used are of interest, there are some fundamental flaws with the underlying logic of the study that undermines its actual utility in 2021. The final purpose of any TMB quantification is to identify patients at high likelihood of responding to immune checkpoint inhibitors, with the underlying assumption that high TMB is a good proxy for neoantigens, and the further assumption that high neoantigen load drives high responses. Since none of these are actual equivalences but only partial correlations, it is not surprising that several recent analyses (e.g.~\citet{litchfield2021meta}) highlighted that TMB alone is a poor predictor of immunotherapy response: additional factors, themselves partially co-varying with TMB (and thus confounding) play a role and cannot be left out: without considering gene expression-based phenotypes, these factors include mutation type (partially addressed in the paper, through the separate discussion on indel
-burden), identity of the mutated genes, aneuploidy and, most importantly, tumor histology. This is a particularly weak point for the study, since the validations are only conducted on NSCLC genomes coming from early studies, which have mutational landscapes that are intrinsically different from other tumor types in which TMB identification is clinically relevant (e.g. melanoma, urothelial); in other words, the model may be overfit for the NSCLC landscape, while it purports to be applied across all histologies (if it was not histology-agnostic and admittedly restricted to NSCLC, it would fail its scope, since TMB as a criterium for immunotherapy prescription is FDA approved in histology-agnostic fashion).}
+burden), identity of the mutated genes, aneuploidy and, most importantly, tumor histology.}
+
+Thank you for these points, we're glad to hear that you found our proposed methodology interesting.  The main goal of our work is to develop a framework for the data-driven selection of gene panels which then allow for accurate prediction of exome-wide biomarkers such as TMB and TIB.  As you point out the main use of TMB is to identify patients that are more likely to respond to immunotherapy (indeed in \citet{litchfield2021meta} TMB was found to be among the best single predictors of checkpoint immunotherapy response, TIB was also identified as a significant single predictor).  Of course, if the goal is to predict response to immunotherapy, then one would attempt to identify a number of factors that may be used to train a classifier; as you suggest these may include cancer type (including subtype),  the presence of mutations in particular genes, aneuploidy and tumor histology. One would also consider a range of other variables, such as gender, age and exogenous factors. Nevertheless, one would certainly like to include TMB as a factor in any classifier, both due to its widely acknowledged use as a predictive biomarker and its clear interpretation from a clinical perspective.  It is very appealing therefore to obtain accurate and cost effective estimators of TMB (and other biomarkers such as TIB).  
+
+The main goal of this work is to predict exome-wide biomakers using a data-driven gene panels, we have therefore opted against fully developing a classifier of response to immunotherapy as we feel this is outside the scope of our work.  Nevertheless we now demonstrate that our predictions of TMB may be used in place of the true TMB when classifying response to immunotherapy -- see the new Section 3.3 and our response to your third point below. 
+
+We now also discuss the utility of our predictions of TMB and TIB in Section 5, where we now write:
+\begin{quotation}
+The main use of TMB is often to help identify patients that are more likely to respond to immunotherapy. While TMB is a good single predictor of response \citep{cao_high_2019, zhu_association_2019}, it is of course desirable to improve the predictive performance by including other factors, these may include  cancer type (and subtype), specific mutational signatures, aneuploidy and tumor histology, as well as other variables, such as gender, age and exogenous factors. Indeed, \citet{litchfield2021meta} show that, by including markers of T-cell infiltration and other factors, a multivariate predictor of response to immunotherapy significantly improves the classification performance in comparison to using TMB alone.  Nevertheless, one would certainly like to include TMB (or a closely related measure) as a factor in any classifier of response.
+\end{quotation}
+
+
+\textbf{This is a particularly weak point for the study, since the validations are only conducted on NSCLC genomes coming from early studies, which have mutational landscapes that are intrinsically different from other tumor types in which TMB identification is clinically relevant (e.g. melanoma, urothelial); in other words, the model may be overfit for the NSCLC landscape, while it purports to be applied across all histologies (if it was not histology-agnostic and admittedly restricted to NSCLC, it would fail its scope, since TMB as a criterium for immunotherapy prescription is FDA approved in histology-agnostic fashion).}
+
 
 \tcnote{I think we will be able to give a strong response to this after we have included other cancer types.} 
 
-\tcnote{We can also cite the Litchfield paper in a discussion on TMB estimation vs. immunotherapy response classification} 
-
 \textbf{Additionally, no attempt is made to validate the method on datasets in which response to immunotherapy is available, so it is not possible to estimate if the TMB prediction converts into adequate clinical prediction.}
 
-\tcnote{I think we can do something here} 
+Many thanks for this constructive comment. In the new Section 3.3 of our revision we have included the results of applying our method trained on the NSCLC dataset of \citet{campbell_distinct_2016} to an external NSCLC test dataset from \citet{hellmann_genomic_2018}.  This latter dataset includes data on response to immunotherapy: patients were labelled as having either ``durable clinical benefit" or ``no benefit".  We compare the performance of two classifiers of response to immunotherapy, one based on the true TMB values and the other based on our predicted values of TMB (using the model trained on the \citet{campbell_distinct_2016} dataset).  The ROC curves are given in the new Figure 10, and we see that the performance using our predicted values of TMB is similar to using the true TMB values. These results demonstrate that our TMB estimator is clinically useful relative to the use of the true TMB value. As we discussed above, more accurate classifiers are likely available if additional factors are taken into account. 
 
 \textbf{Finally, regarding the comparison with existing panels: 
 i) it is of little real use to compare equally-sized panels as attempted in figure 7, since of course the information gained from MSKI or TST170 is very specific in nature (genes are preselected for clinical value) and cannot be simply traded for higher (though still far from perfect, at $R^2=0.85$) TMB performance;}
@@ -230,8 +245,20 @@ For instance, in comparison to predictions based on the TST-170~panel, our proce
 
 Thank you for pointing this out -- the references are now correctly formatted. 
 
+
+
+
+
 \begin{thebibliography}{75}
+\bibitem[Campbell et al.(2016)]{campbell_distinct_2016} Campbell, Joshua D. and Alexandrov, Anton and Kim, Jaegil and Wala, Jeremiah and Berger, Alice H. and Pedamallu, Chandra Sekhar and Shukla, Sachet A. and Guo, Guangwu and Brooks, Angela N. and Murray, Bradley A. and Imielinski, Marcin and Hu, Xin and Ling, Shiyun and Akbani, Rehan and Rosenberg, Mara and Cibulskis, Carrie and Ramachandran, Aruna and Collisson, Eric A. and Kwiatkowski, David J. and Lawrence, Michael S. and Weinstein, John N. and Verhaak, Roel G. W. and Wu, Catherine J. and Hammerman, Peter S. and Cherniack, Andrew D. and Getz, Gad and {Cancer Genome Atlas Research Network} and Artyomov, Maxim N. and Schreiber, Robert and Govindan, Ramaswamy and Meyerson, Matthew (2016) Distinct patterns of somatic genome alterations in lung adenocarcinomas and squamous cell carcinomas, \emph{Nature Genetics}, \textbf{48}, 607--616.
+
+\bibitem[Cao et al.(2019)]{cao_high_2019} Cao, Dedong and Xu, Huilin and Xu, Ximing and Guo, Tao and Ge, Wei, (2019) High tumor mutation burden predicts better efficacy of immunotherapy: a pooled analysis of 103078 cancer patients. \textit{Oncoimmunology}, \textbf{8}, e1629258. 
+\bibitem[Hellmann et al.(2018)]{hellmann_genomic_2018} Hellmann, Matthew D. and Nathanson, Tavi and Rizvi, Hira and Creelan, Benjamin C. and Sanchez-Vega, Francisco and Ahuja, Arun and Ni, Ai and Novik, Jacki B. and Mangarin, Levi M. B. and Abu-Akeel, Mohsen and Liu, Cailian and Sauter, Jennifer L. and Rekhtman, Natasha and Chang, Eliza and Callahan, Margaret K. and Chaft, Jamie E. and Voss, Martin H. and Tenet, Megan and Li, Xue-Mei and Covello, Kelly and Renninger, Andrea and Vitazka, Patrik and Geese, William J. and Borghaei, Hossein and Rudin, Charles M. and Antonia, Scott J. and Swanton, Charles and Hammerbacher, Jeff and Merghoub, Taha and McGranahan, Nicholas and Snyder, Alexandra and Wolchok, Jedd D. (2018) Genomic {Features} of {Response} to {Combination} {Immunotherapy} in {Patients} with {Advanced} {Non}-{Small}-{Cell} {Lung} {Cancer}, \textit{Cancer Cell}, \textbf{33},	843--852.
+
+
 \bibitem[Litchfield et al.(2021)]{litchfield2021meta} Litchfield K, Reading JL, Puttick C, Thakkar K, Abbosh C, Bentham R, Watkins TBK, Rosenthal R, Biswas D, Rowan A, Lim E, Al Bakir M, Turati V, Guerra-Assunção JA, Conde L, Furness AJS, Saini SK, Hadrup SR, Herrero J, Lee SH, Van Loo P, Enver T, Larkin J, Hellmann MD, Turajlic S, Quezada SA, McGranahan N, Swanton C. (2021) Meta-analysis of tumor- and T cell-intrinsic mechanisms of sensitization to checkpoint inhibition. \emph{Cell}, \textbf{184}(3), 596-614. 
+
+\bibitem[Zhu et al.(2019)]{zhu_association_2019} Zhu, Jiaxin and Zhang, Tiantian and Li, Jiahao and Lin, Junming and Liang, Wenhua and Huang, Wenjie and Wan, Ning and Jiang, Jie, (2019) Association {Between} {Tumor} {Mutation} {Burden} ({TMB}) and {Outcomes} of {Cancer} {Patients} {Treated} {With} {PD}-1/{PD}-{L1} {Inhibitions}: {A} {Meta}-{Analysis}. \textit{Frontiers in Pharmacology}, \textbf{10}, 673.
 
 \end{thebibliography}
 
