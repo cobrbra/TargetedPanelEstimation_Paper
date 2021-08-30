@@ -392,3 +392,4 @@ external_validation_fig <- bind_rows(skcm_refit_stats, skcm_refit_stats_val, coa
   scale_color_manual(name = "Dataset:", values = c("black", "blue"), labels = list("Internal Validation", "External Test"))
 
 ggsave(filename = "results/figures/external_validation_fig.png", external_validation_fig, width = 10, height = 4)
+

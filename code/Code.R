@@ -33,6 +33,7 @@ library(tibble)
 #install.packages("PRROC")
 library(PRROC)
 
+
 ## Figures path
 fig_path <- "results/figures/"
 
@@ -392,6 +393,8 @@ extreme_data_ns <- manhat_data %>%
   filter(!is.na(Chromosome)) %>%
   {.[(nrow(.) - 4):nrow(.),]}
 
+extreme_data_ns["17127", "ns_coefficient"] <- 3 # shifting the label (but not the point) upwards for readability
+
 chrom_alternate <- rep(c(0,1), 12)
 names(chrom_alternate) <- names(chromosomes)
 
@@ -400,7 +403,7 @@ fig4 <- manhat_data %>%
   mutate(full_position = cum_chrom_length + Position) %>%
   mutate(Chromosome = factor(chrom_alternate[Chromosome])) %>%
   ggplot(aes(x = full_position, y = ns_coefficient,colour = Chromosome, size = ns_coefficient)) + geom_point(alpha = 0.75) +
-  geom_text(data = extreme_data_ns, aes(x = cum_chrom_length + Position + 2.1*nchar(Hugo_Symbol)*10^7, y = ns_coefficient, label = Hugo_Symbol, colour= factor(chrom_alternate[Chromosome])), size = 3, position=position_jitter()) +
+  geom_text(data = extreme_data_ns, aes(x = cum_chrom_length + Position + 2.1*nchar(Hugo_Symbol)*10^7, y = ns_coefficient, label = Hugo_Symbol, colour= factor(chrom_alternate[Chromosome])), size = 3) +
   scale_x_continuous(label = names(chromosomes), breaks = chrom_info$cum_chrom_length + chrom_info$Chromosome_length/2 ) +
   scale_color_manual(values = rep(c("#276FBF", "#183059"), 12)) +
   scale_size_continuous(range = c(0.5,1)) +
@@ -946,22 +949,257 @@ s3.4.table <- data.frame(Model = c("Refitted T", "ecTMB", "Count", "Linear"),
 write_tsv(s3.4.table, "results/s3.4.table.tsv")
 
 ### Extra Section 3 figure
-quantile_auprc_data <- data.frame(quant = seq(0.1, 0.9, by = 0.1))
-quantile_auprc_data <- quantile_auprc_data %>% 
+library(scales)
+get_auroc <- function(predictions, biomarker_values, model = "", threshold = 300) {
+  
+  predictions$predictions <- predictions$predictions[biomarker_values$Tumor_Sample_Barcode, , drop = FALSE]
+  
+  if (length(predictions$panel_lengths) != ncol(predictions$predictions)) {
+    stop("panel_lengths doesn't match predictions")
+  }
+  
+  if (nrow(predictions$predictions) != nrow(biomarker_values)) {
+    stop("predictions doesn't match biomarker_values")
+  }
+  
+  n_panels <- length(predictions$panel_lengths)
+  biomarker <- colnames(biomarker_values)[2]
+  classes <- biomarker_values[[biomarker]] >= threshold
+  
+  auroc <- purrr::map(1:n_panels, ~ PRROC::roc.curve(scores.class0 = predictions$predictions[classes, .],
+                                                    scores.class1 = predictions$predictions[!classes, .])$auc)
+  
+  output <- data.frame(panel_length = predictions$panel_lengths,
+                       model = model, biomarker = biomarker, stat = unlist(auroc), metric = "AUROC")
+  
+  return(output)
+}
+
+quantile_data <- data.frame(quant = seq(0.1, 0.9, by = 0.05))
+quantile_data <- quantile_data %>% 
   mutate(tmb_threshold = unlist(map(quant, ~ quantile(nsclc_tmb_values$train$TMB, .)))) %>% 
   mutate(AUPRC = unlist(map(tmb_threshold, function(x) (nsclc_pred_refit_tmb %>%
                               get_predictions(new_data = nsclc_tables$test) %>%
                               get_auprc(biomarker_values = nsclc_tmb_values$test, threshold = x) %>% 
                               filter(panel_length == 591162) %>% 
-                              pull(stat)))))
+                              pull(stat))))) %>% 
+  mutate(AUROC = unlist(map(tmb_threshold, function(x) (nsclc_pred_refit_tmb %>%
+                                                          get_predictions(new_data = nsclc_tables$test) %>%
+                                                          get_auroc(biomarker_values = nsclc_tmb_values$test, threshold = x) %>% 
+                                                          filter(panel_length == 591162) %>% 
+                                                          pull(stat)))))
 
-quantile_thresholds_fig <- quantile_auprc_data %>% 
-  ggplot(aes(x = quant, y = tmb_threshold, colour = AUPRC)) + geom_point(size = 6) + 
-  theme_minimal() +
-  labs(x = "TMB Quantile", y = "Threshold Value")
-ggsave(filename = "results/figures/quantile_thresholds_fig.png", plot = quantile_thresholds_fig, width = 5, height = 5)
+quantile_thresholds_fig <- quantile_data %>% 
+  pivot_longer(cols = c("AUROC", "AUPRC"), names_to = "Metric", values_to = "Area Under Curve") %>% 
+  ggplot(aes(x = quant, colour = Metric, y = `Area Under Curve`)) + geom_line() + ylim(0.9, 1) +
+  theme_minimal() + 
+  labs(x = "TMB Threshold (Quantile)", y = "Classification Performance") + scale_x_continuous(breaks = scales::pretty_breaks(n = 10)) 
+ggsave(filename = "results/figures/quantile_thresholds_fig.png", plot = quantile_thresholds_fig, width = 7, height = 5)
 
 quantile_auprc_data %>% 
   ggplot(aes(x = tmb_threshold, y = AUPRC)) + geom_col(colour = "grey", alpha = 0.8) + 
   theme_minimal() +
   labs(x = "TMB Quantile", y = "Threshold Value")
+
+
+# Lyu-style Analysis
+gene_mutation_proportions <- nsclc_linear_tables$train$matrix %>% 
+  apply(2, function(x) {mean(x >0)})
+
+elevated_genes <- nsclc_linear_tables$train$gene_list[gene_mutation_proportions > 0.1] # first requirement for Lyu
+short_genes <- ensembl_gene_lengths[nsclc_linear_tables$train$gene_list, ] %>% # second requirement for Lyu
+  filter(max_cds < 15000) %>% 
+  pull(Hugo_Symbol)
+
+gene_wilcox <- function (mutation_vector, tmb_values) {
+  group_1 <- tmb_values[mutation_vector > 0]
+  group_0 <- tmb_values[mutation_vector == 0]
+  return(wilcox.test(group_1, group_0, alternative = "two.sided")$p.value)
+}
+
+wilcox_gene_ps <- rep(NA, length(nsclc_linear_tables$train$gene_list))
+for (i in 1:length(wilcox_gene_ps)) {
+  try(wilcox_gene_ps[i] <- gene_wilcox(nsclc_linear_tables$train$matrix[, i], nsclc_tmb_values$train$TMB))
+}
+wilcox_sig_genes <- nsclc_linear_tables$train$gene_list[p.adjust(wilcox_gene_ps, method = "bonferroni") < 0.05]
+wilcox_sig_genes <- wilcox_sig_genes[!is.na(wilcox_sig_genes)] # third requirement for Lyu
+
+lyu_gene_panel <- intersect(short_genes, intersect(elevated_genes, wilcox_sig_genes))
+
+pred_refit_panel(model = "OLM", pred_first = nsclc_pred_first_tmb, gene_lengths = ensembl_gene_lengths, genes = lyu_gene_panel, training_data = nsclc_tables$train, training_values = nsclc_tmb_values$train) %>% 
+  get_predictions(new_data = nsclc_tables$val) %>% 
+  get_stats(biomarker_values = nsclc_tmb_values$val)
+
+pred_refit_panel(model = "Count", pred_first = nsclc_pred_first_tmb, gene_lengths = ensembl_gene_lengths, genes = lyu_gene_panel, training_data = nsclc_tables$train, training_values = nsclc_tmb_values$train) %>% 
+  get_predictions(new_data = nsclc_tables$val) %>% 
+  get_stats(biomarker_values = nsclc_tmb_values$val)
+
+pred_refit_panel(model = "T", pred_first = nsclc_pred_first_tmb, gene_lengths = ensembl_gene_lengths, genes = lyu_gene_panel, training_data = nsclc_tables$train, training_values = nsclc_tmb_values$train) %>% 
+  get_predictions(new_data = nsclc_tables$val) %>% 
+  get_stats(biomarker_values = nsclc_tmb_values$val)
+
+## Extra numbers for referees
+
+smokers_sampleIDs <- nsclc_survival %>% 
+  filter(SMOKING_HISTORY == "Current Smoker") %>% 
+  pull(CASE_ID)
+smokers_mu <- nsclc_tmb_values$train %>% 
+  filter(Tumor_Sample_Barcode %in% smokers_sampleIDs) %>% 
+  pull(TMB) %>% 
+  log() 
+mean(smokers_mu)
+sd(smokers_mu)
+
+reformed_smoker_sampleIDs <- nsclc_survival %>% 
+  filter(!(SMOKING_HISTORY %in% c("Current Smoker", "Lifelong Non-Smoker"))) %>% 
+  pull(CASE_ID)
+reformed_smokers_mu <- nsclc_tmb_values$train %>% 
+  filter(Tumor_Sample_Barcode %in% reformed_smoker_sampleIDs) %>% 
+  pull(TMB) %>% 
+  log() 
+mean(reformed_smokers_mu)
+sd(reformed_smokers_mu)
+
+nonsmokers_sampleIDs <- nsclc_survival %>% 
+  filter(SMOKING_HISTORY == "Lifelong Non-Smoker") %>% 
+  pull(CASE_ID)
+nonsmokers_mu <- nsclc_tmb_values$train %>% 
+  filter(Tumor_Sample_Barcode %in% nonsmokers_sampleIDs) %>% 
+  pull(TMB) %>% 
+  log() 
+mean(nonsmokers_mu)
+sd(nonsmokers_mu)
+
+
+lung_adeno_samples <- nsclc_survival %>% 
+  filter(CANCER_TYPE_DETAILED == "Lung Adenocarcinoma",
+         CASE_ID %in% nsclc_tables$test$sample_list) %>% 
+  pull(CASE_ID)
+
+lung_squam_samples <- nsclc_survival %>% 
+  filter(CANCER_TYPE_DETAILED != "Lung Adenocarcinoma",
+         CASE_ID %in% nsclc_tables$test$sample_list) %>% 
+  pull(CASE_ID)
+  
+refit_predictions_tmb$prediction_intervals %>% 
+  filter(Tumor_Sample_Barcode %in% lung_adeno_samples) %>% 
+  {1 - sum((.$true_value-.$estimated_value)^2)/sum((.$true_value-mean(.$true_value))^2)}
+refit_predictions_tmb$prediction_intervals %>% 
+  filter(Tumor_Sample_Barcode %in% lung_squam_samples) %>% 
+  {1 - sum((.$true_value-.$estimated_value)^2)/sum((.$true_value-mean(.$true_value))^2)}
+  
+egfr_samples <- nsclc_linear_tables$test$sample_list[nsclc_linear_tables$test$matrix[, which(nsclc_linear_tables$test$col_names == "EGFR_NS")] > 0]
+non_egfr_samples <- setdiff(nsclc_linear_tables$test$sample_list, egfr_samples)
+
+refit_predictions_tmb$prediction_intervals %>% 
+  filter(Tumor_Sample_Barcode %in% egfr_samples) %>% 
+  {1 - sum((.$true_value-.$estimated_value)^2)/sum((.$true_value-mean(.$true_value))^2)}
+refit_predictions_tmb$prediction_intervals %>% 
+  filter(Tumor_Sample_Barcode %in% non_egfr_samples) %>% 
+  {1 - sum((.$true_value-.$estimated_value)^2)/sum((.$true_value-mean(.$true_value))^2)}
+
+
+refit_predictions_tmb$prediction_intervals %>% 
+  filter(Tumor_Sample_Barcode %in% nonsmoker_sampleIDs) %>% 
+  {1 - sum((.$true_value-.$estimated_value)^2)/sum((.$true_value-mean(.$true_value))^2)}
+
+#  Immunotherapy dataset
+nsclc_val_maf <- read_tsv("data/nsclc_mskcc_2018/data_mutations_extended.txt") %>% 
+  select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
+nsclc_val_tables <- get_mutation_tables(nsclc_val_maf, 
+                                        split = c(train = 0, val = 0, test = 75),
+                                        gene_list = nsclc_tables$train$gene_list,
+                                        acceptable_genes = ensembl_gene_lengths$Hugo_Symbol,
+                                        for_biomarker = "TIB",
+                                        include_synonymous = FALSE)
+nsclc_val_tmb_values <- get_biomarker_tables(nsclc_val_maf, biomarker = "TMB", split =  c(train = 0, val = 0, test = 75))
+nsclc_refit_stats_val <- nsclc_pred_refit_tmb %>%
+  get_predictions(new_data = nsclc_val_tables$test) %>%
+  get_stats(biomarker_values = nsclc_val_tmb_values$test, metrics = c("R"), model = "Refitted T", threshold = 300) %>% 
+  mutate(Dataset = "External Test", cancer_type = "Non-Small Cell Lung")
+
+nsclc_val_predictions <- nsclc_pred_refit_tmb %>%
+  get_predictions(new_data = nsclc_val_tables$test) %>%
+  pred_intervals(pred_model = nsclc_pred_refit_tmb, biomarker_values = nsclc_val_tmb_values$test,
+                 gen_model = nsclc_gen_model, training_matrix = nsclc_tables$train$matrix, marker_mut_types = c("NS"),
+                 gene_lengths = ensembl_gene_lengths, max_panel_length = 600000, biomarker = "TMB")
+
+
+nsclc_val_pred_fig <- nsclc_val_predictions$prediction_intervals %>%
+  mutate(model = "Refitted T") %>% 
+  {ggplot() + geom_point(data = ., aes(x = true_value, y = estimated_value), size = 0.5) + 
+      geom_ribbon(data = nsclc_val_predictions$confidence_region %>% mutate(model = factor(model, levels = c("Refitted T", "ecTMB", "Count", "Linear"))), 
+                  aes(x = x, ymin = y_lower, ymax = y_upper),
+                  alpha = 0.2, fill = "red")  +
+      geom_abline(colour = "blue", linetype = 2) +
+      geom_hline(yintercept = 300, alpha = 0.5, linetype = 2) +
+      geom_vline(xintercept = 300, alpha = 0.5, linetype = 2) +
+      scale_x_continuous(trans = scales::pseudo_log_trans(), breaks = c(0,10**(1:3))) +
+      scale_y_continuous(trans = scales::pseudo_log_trans(), breaks = c(0,10**(1:3)), limit = c(0,NA)) +
+      theme_minimal() + labs(x = "True TMB", y = "Predicted TMB") + facet_wrap(~model)}
+ggsave(filename = "results/figures/nsclc_val_pred.png", plot = nsclc_val_pred_fig, height = 3, width = 5)
+
+nsclc_val_predictions$prediction_intervals %>% 
+  {1 - sum((.$true_value - .$estimated_value)^2)/sum((.$true_value - mean(.$true_value))^2)}
+
+nsclc_val_predictions$prediction_intervals %>% 
+  {pr.curve(scores.class0 = nsclc_val_clinical %>% 
+              filter(NONSYNONYMOUS_MUTATION_BURDEN > 300) %>% 
+              pull(estimated_value),
+            scores.class1 = nsclc_val_clinical %>% 
+              filter(NONSYNONYMOUS_MUTATION_BURDEN <= 300) %>% 
+              pull(estimated_value),
+            curve = T)} %>% 
+  plot()
+
+nsclc_val_clinical <- read_tsv("data/nsclc_mskcc_2018/data_clinical_patient.txt", comment = "#") %>% 
+  inner_join(read_tsv("data/nsclc_mskcc_2018/data_clinical_sample.txt", comment = "#"), by = "PATIENT_ID") %>% 
+  mutate(Tumor_Sample_Barcode = SAMPLE_ID) %>% 
+  inner_join(nsclc_val_predictions$prediction_intervals, by = "Tumor_Sample_Barcode") %>% 
+  select(Tumor_Sample_Barcode, estimated_value, true_value, PFS_STATUS, PFS_MONTHS, DURABLE_CLINICAL_BENEFIT, SEX, AGE_YRS, CANCER_TYPE, NONSYNONYMOUS_MUTATION_BURDEN) 
+
+
+nsclc_val_clinical %>% 
+  pivot_longer(cols = c("NONSYNONYMOUS_MUTATION_BURDEN", "estimated_value"), names_to = "TMB_CALC_METHOD", values_to = "TMB") %>% 
+  ggplot(aes(x = DURABLE_CLINICAL_BENEFIT, y = TMB, fill = TMB_CALC_METHOD)) + geom_violin() + 
+  theme_minimal() + theme(legend.title = element_blank()) + 
+  scale_fill_manual(labels = c("Estimated", "True"), values = c("#00BFC4", "#F8766D")) + 
+  labs(x = "")
+
+wilcox.test(x = nsclc_val_clinical %>% 
+              filter(DURABLE_CLINICAL_BENEFIT == "Durable Clinical Benefit") %>% 
+              pull(NONSYNONYMOUS_MUTATION_BURDEN),
+            y = nsclc_val_clinical %>% 
+              filter(DURABLE_CLINICAL_BENEFIT == "No Durable Benefit") %>% 
+              pull(NONSYNONYMOUS_MUTATION_BURDEN),
+            alternative = "two.sided",
+            exact = FALSE)
+
+wilcox.test(x = nsclc_val_clinical %>% 
+              filter(DURABLE_CLINICAL_BENEFIT == "Durable Clinical Benefit") %>% 
+              pull(estimated_value),
+            y = nsclc_val_clinical %>% 
+              filter(DURABLE_CLINICAL_BENEFIT == "No Durable Benefit") %>% 
+              pull(estimated_value),
+            alternative = "two.sided",
+            exact = FALSE)
+
+estimated_tmb_pr <- roc.curve(scores.class0 = nsclc_val_clinical %>% 
+           filter(DURABLE_CLINICAL_BENEFIT == "Durable Clinical Benefit") %>% 
+           pull(estimated_value),
+         scores.class1 = nsclc_val_clinical %>% 
+           filter(DURABLE_CLINICAL_BENEFIT == "No Durable Benefit") %>% 
+           pull(estimated_value),
+         curve = T)
+true_tmb_pr <- roc.curve(scores.class0 = nsclc_val_clinical %>% 
+                          filter(DURABLE_CLINICAL_BENEFIT == "Durable Clinical Benefit") %>% 
+                          pull(NONSYNONYMOUS_MUTATION_BURDEN),
+                        scores.class1 = nsclc_val_clinical %>% 
+                          filter(DURABLE_CLINICAL_BENEFIT == "No Durable Benefit") %>% 
+                          pull(NONSYNONYMOUS_MUTATION_BURDEN),
+                        curve = T)
+setEPS()
+png(file = "results/figures/response_pred_roc.png", width = 600, height = 600) 
+plot(true_tmb_pr, legend = FALSE, color = "#F8766D", auc.main = FALSE, main = "Predicting response to immunotherapy", xlab = "False Positive Rate", ylab = "True Positive Rate"); plot(estimated_tmb_pr, legend = FALSE, color = "black", add = TRUE)
+dev.off()
+
