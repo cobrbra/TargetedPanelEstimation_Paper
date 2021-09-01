@@ -6,7 +6,7 @@ library(survival)
 library(survminer)
 load_all("../../ICBioMark/")
 
-### Melanoma analysis
+### Melanoma fits
 skcm_maf <- read_tsv("data/skcm_tcga_pub_2015/data_mutations_extended.txt") %>% 
   select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
 
@@ -18,17 +18,18 @@ skcm_tables <- get_mutation_tables(maf = skcm_maf,
                                    split = c(train = 250, val = 0, test = 96))
 
 message("Getting generative model")
-skcm_gen_model <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = skcm_tables$train,
-                                 progress = TRUE)
-
-skcm_pred_first_tmb <- pred_first_fit(gen_model = skcm_gen_model, 
-                                      lambda = exp(seq(-18, -26, length.out = 100)),
-                                      gene_lengths = ensembl_gene_lengths, 
-                                      training_matrix = skcm_tables$train$matrix,
-                                      marker_mut_types = c("NS"))
-
-write_rds(x = skcm_pred_first_tmb, "skcm_pred_first_tmb")
-write_rds(x = skcm_gen_model, "skcm_gen_model")
+# skcm_gen_model <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = skcm_tables$train,
+#                                  progress = TRUE)
+# 
+# skcm_pred_first_tmb <- pred_first_fit(gen_model = skcm_gen_model, 
+#                                       lambda = exp(seq(-18, -26, length.out = 100)),
+#                                       gene_lengths = ensembl_gene_lengths, 
+#                                       training_matrix = skcm_tables$train$matrix,
+#                                       marker_mut_types = c("NS"))
+# write_rds(x = skcm_gen_model, "data/temporary_storage/skcm_gen_model")
+# write_rds(x = skcm_pred_first_tmb, "data/temporary_storage/skcm_pred_first_tmb")
+skcm_gen_model <- read_rds("data/temporary_storage/skcm_gen_model")
+skcm_pred_first_tmb <- read_rds("data/temporary_storage/skcm_pred_first_tmb")
 
 skcm_pred_refit_tmb <- pred_refit_range(pred_first = skcm_pred_first_tmb, 
                                         gene_lengths = ensembl_gene_lengths,
@@ -37,52 +38,7 @@ skcm_pred_refit_tmb <- pred_refit_range(pred_first = skcm_pred_first_tmb,
 skcm_tmb_values <- get_biomarker_tables(skcm_maf, biomarker = "TMB", split =  c(train = 250, val = 0, test = 96))
 
 
-
-first_stats_tmb <- skcm_pred_first_tmb %>%
-  get_predictions(new_data = skcm_tables$test) %>%
-  get_stats(biomarker_values = skcm_tmb_values$test, model = "First-fit T", threshold = 300)
-
-refit_stats_tmb <- skcm_pred_refit_tmb %>%
-  get_predictions(new_data = skcm_tables$test) %>%
-  get_stats(biomarker_values = skcm_tmb_values$test, model = "Refitted T", threshold = 300)
-
-skcm_version_fig6 <- bind_rows(refit_stats_tmb, first_stats_tmb) %>%
-  mutate(model = factor(model, levels = c("Refitted T", "First-fit T"))) %>% 
-  mutate(type = if_else(metric == "R", "Regression ~ (R^2)", "Classification ~ (AUPRC)")) %>%
-  mutate(type = factor(type, levels = c("Regression ~ (R^2)", "Classification ~ (AUPRC)"))) %>%
-  filter(panel_length <= 2000000) %>%
-  mutate(panel_length = panel_length / 1000000) %>%
-  ggplot(aes(x = panel_length, y = stat, linetype = model)) + geom_line(size = 1) + ylim(0, 1) +
-  theme_minimal() + facet_wrap(~type, labeller = label_parsed, strip.position = "top") +
-  theme(legend.position = "bottom") + labs(x = "Panel Size (Mb)", y = "") +
-  scale_linetype(name = "Procedure:", labels = list(TeX("Refitted $\\hat{T}$"), TeX("First-Fit $\\hat{T}$")))
-ggsave(skcm_version_fig6, filename = "results/figures/skcm_version_fig8.png", width = 8, height = 4)
-
-
-skcm_refit_predictions_tmb <- skcm_pred_refit_tmb %>%
-  get_predictions(new_data = skcm_tables$test) %>%
-  pred_intervals(pred_model = skcm_pred_refit_tmb, biomarker_values = skcm_tmb_values$test,
-                 gen_model = skcm_gen_model, training_matrix = skcm_tables$train$matrix, marker_mut_types = c("NS"),
-                 gene_lengths = ensembl_gene_lengths, max_panel_length = 600000, biomarker = "TMB")
-
-skcm_r2 <- 1 - sum((skcm_refit_predictions_tmb$prediction_intervals$estimated_value - skcm_refit_predictions_tmb$prediction_intervals$true_value)^2)/
-  sum((skcm_refit_predictions_tmb$prediction_intervals$true_value - mean(skcm_refit_predictions_tmb$prediction_intervals$true_value))^2)
-
-skcm_version_fig8 <- skcm_refit_predictions_tmb$prediction_intervals %>%
-  {ggplot() + geom_point(data = ., aes(x = true_value, y = estimated_value), size = 0.5) + 
-      geom_ribbon(data = skcm_refit_predictions_tmb$confidence_region %>% mutate(model = factor(model, levels = c("Refitted T", "ecTMB", "Count", "Linear"))), 
-                  aes(x = x, ymin = y_lower, ymax = y_upper),
-                  alpha = 0.2, fill = "red")  +
-      geom_abline(colour = "blue", linetype = 2) +
-      geom_hline(yintercept = 300, alpha = 0.5, linetype = 2) +
-      geom_vline(xintercept = 300, alpha = 0.5, linetype = 2) +
-      scale_x_continuous(trans = scales::pseudo_log_trans(), breaks = c(0,10**(1:3))) +
-      scale_y_continuous(trans = scales::pseudo_log_trans(), breaks = c(0,10**(1:3)), limit = c(0,NA)) +
-      theme_minimal() + labs(x = "True TMB", y = "Predicted TMB")}
-ggsave(skcm_version_fig8, filename = "results/figures/skcm_version_fig8.png", width = 8, height = 6)
-
-
-### Colorectal analysis
+### Colorectal fits
 
 coadread_maf <- read_tsv("data/coadread_dfci_2016/data_mutations_extended.txt") %>% 
   select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
@@ -97,6 +53,8 @@ coadread_tables <- get_mutation_tables(maf = coadread_maf,
 message("Getting generative model")
 coadread_gen_model <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = coadread_tables$train,
                                 progress = TRUE)
+write_rds(coadread_gen_model, "data/temporary_storage/coadread_gen_model")
+coadread_gen_model <- read_rds("data/temporary_storage/coadread_gen_model")
 
 coadread_pred_first_tmb <- pred_first_fit(gen_model = coadread_gen_model, 
                                       lambda = exp(seq(-18, -26, length.out = 100)),
@@ -112,51 +70,7 @@ coadread_tmb_values <- get_biomarker_tables(coadread_maf, biomarker = "TMB", spl
 
 
 
-first_stats_tmb <- coadread_pred_first_tmb %>%
-  get_predictions(new_data = coadread_tables$test) %>%
-  get_stats(biomarker_values = coadread_tmb_values$test, model = "First-fit T", threshold = 300)
-
-refit_stats_tmb <- coadread_pred_refit_tmb %>%
-  get_predictions(new_data = coadread_tables$test) %>%
-  get_stats(biomarker_values = coadread_tmb_values$test, model = "Refitted T", threshold = 300)
-
-coadread_version_fig6 <- bind_rows(refit_stats_tmb, first_stats_tmb) %>%
-  mutate(model = factor(model, levels = c("Refitted T", "First-fit T"))) %>% 
-  mutate(type = if_else(metric == "R", "Regression ~ (R^2)", "Classification ~ (AUPRC)")) %>%
-  mutate(type = factor(type, levels = c("Regression ~ (R^2)", "Classification ~ (AUPRC)"))) %>%
-  filter(panel_length <= 2000000) %>%
-  mutate(panel_length = panel_length / 1000000) %>%
-  ggplot(aes(x = panel_length, y = stat, linetype = model)) + geom_line(size = 1) + ylim(0, 1) +
-  theme_minimal() + facet_wrap(~type, labeller = label_parsed, strip.position = "top") +
-  theme(legend.position = "bottom") + labs(x = "Panel Size (Mb)", y = "") +
-  scale_linetype(name = "Procedure:", labels = list(TeX("Refitted $\\hat{T}$"), TeX("First-Fit $\\hat{T}$")))
-ggsave(coadread_version_fig6, filename = "results/figures/coadread_version_fig8.png", width = 8, height = 4)
-
-
-coadread_refit_predictions_tmb <- coadread_pred_refit_tmb %>%
-  get_predictions(new_data = coadread_tables$test) %>%
-  pred_intervals(pred_model = coadread_pred_refit_tmb, biomarker_values = coadread_tmb_values$test,
-                 gen_model = coadread_gen_model, training_matrix = coadread_tables$train$matrix, marker_mut_types = c("NS"),
-                 gene_lengths = ensembl_gene_lengths, max_panel_length = 600000, biomarker = "TMB")
-
-coadread_r2 <- 1 - sum((coadread_refit_predictions_tmb$prediction_intervals$estimated_value - coadread_refit_predictions_tmb$prediction_intervals$true_value)^2)/
-  sum((coadread_refit_predictions_tmb$prediction_intervals$true_value - mean(coadread_refit_predictions_tmb$prediction_intervals$true_value))^2)
-
-coadread_version_fig8 <- coadread_refit_predictions_tmb$prediction_intervals %>%
-  {ggplot() + geom_point(data = ., aes(x = true_value, y = estimated_value), size = 0.5) + 
-      geom_ribbon(data = coadread_refit_predictions_tmb$confidence_region %>% mutate(model = factor(model, levels = c("Refitted T", "ecTMB", "Count", "Linear"))), 
-                  aes(x = x, ymin = y_lower, ymax = y_upper),
-                  alpha = 0.2, fill = "red")  +
-      geom_abline(colour = "blue", linetype = 2) +
-      geom_hline(yintercept = 300, alpha = 0.5, linetype = 2) +
-      geom_vline(xintercept = 300, alpha = 0.5, linetype = 2) +
-      scale_x_continuous(trans = scales::pseudo_log_trans(), breaks = c(0,10**(1:3))) +
-      scale_y_continuous(trans = scales::pseudo_log_trans(), breaks = c(0,10**(1:3)), limit = c(0,NA)) +
-      theme_minimal() + labs(x = "True TMB", y = "Predicted TMB")}
-
-ggsave(coadread_version_fig8, filename = "results/figures/coadread_version_fig8.png", width = 8, height = 6)
-
-### Bladder analsyis
+### Bladder fits
 
 blca_maf <- read_tsv("data/blca_tcga_pan_can_atlas_2018/data_mutations_extended.txt") %>% 
   select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
@@ -171,7 +85,8 @@ blca_tables <- get_mutation_tables(maf = blca_maf,
 message("Getting generative model")
 blca_gen_model <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = blca_tables$train,
                                     progress = TRUE)
-
+write_rds(blca_gen_model, "data/temporary_storage/blca_gen_model")
+blca_gen_model <- read_rds("data/temporary_storage/blca_gen_model")
 blca_pred_first_tmb <- pred_first_fit(gen_model = blca_gen_model, 
                                           lambda = exp(seq(-18, -26, length.out = 100)),
                                           gene_lengths = ensembl_gene_lengths, 
@@ -185,71 +100,99 @@ blca_pred_refit_tmb <- pred_refit_range(pred_first = blca_pred_first_tmb,
 blca_tmb_values <- get_biomarker_tables(blca_maf, biomarker = "TMB", split =  c(train = 300.1, val = 0, test = 109)) 
 
 
+### Renal fits
 
-first_stats_tmb <- blca_pred_first_tmb %>%
-  get_predictions(new_data = blca_tables$test) %>%
-  get_stats(biomarker_values = blca_tmb_values$test, model = "First-fit T", threshold = 300)
+kirc_maf <- read_tsv("data/kirc_tcga/data_mutations_extended.txt") %>% 
+  select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
 
-refit_stats_tmb <- blca_pred_refit_tmb %>%
-  get_predictions(new_data = blca_tables$test) %>%
-  get_stats(biomarker_values = blca_tmb_values$test, model = "Refitted T", threshold = 300)
+message("Getting tables")
+kirc_tables <- get_mutation_tables(maf = kirc_maf, 
+                                   include_synonymous = FALSE,
+                                   acceptable_genes = ensembl_gene_lengths$Hugo_Symbol,
+                                   for_biomarker = "TMB",
+                                   split = c(train = 350.1, val = 0, test = 101)) #don't ask about the .1, this needs fixing
 
-blca_version_fig6 <- bind_rows(refit_stats_tmb, first_stats_tmb) %>%
-  mutate(model = factor(model, levels = c("Refitted T", "First-fit T"))) %>% 
-  mutate(type = if_else(metric == "R", "Regression ~ (R^2)", "Classification ~ (AUPRC)")) %>%
-  mutate(type = factor(type, levels = c("Regression ~ (R^2)", "Classification ~ (AUPRC)"))) %>%
-  filter(panel_length <= 2000000) %>%
-  mutate(panel_length = panel_length / 1000000) %>%
-  ggplot(aes(x = panel_length, y = stat, linetype = model)) + geom_line(size = 1) + ylim(0, 1) +
-  theme_minimal() + facet_wrap(~type, labeller = label_parsed, strip.position = "top") +
-  theme(legend.position = "bottom") + labs(x = "Panel Size (Mb)", y = "") +
-  scale_linetype(name = "Procedure:", labels = list(TeX("Refitted $\\hat{T}$"), TeX("First-Fit $\\hat{T}$")))
-ggsave(blca_version_fig6, filename = "results/figures/blca_version_fig8.png", width = 8, height = 4)
+message("Getting generative model")
+kirc_gen_model <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = kirc_tables$train,
+                                progress = TRUE)
+write_rds(kirc_gen_model, "data/temporary_storage/kirc_gen_model")
+kirc_gen_model <- read_rds("data/temporary_storage/kirc_gen_model")
+
+kirc_pred_first_tmb <- pred_first_fit(gen_model = kirc_gen_model, 
+                                      lambda = exp(seq(-18, -26, length.out = 100)),
+                                      gene_lengths = ensembl_gene_lengths, 
+                                      training_matrix = kirc_tables$train$matrix,
+                                      marker_mut_types = c("NS"))
+
+kirc_pred_refit_tmb <- pred_refit_range(pred_first = kirc_pred_first_tmb, 
+                                        gene_lengths = ensembl_gene_lengths,
+                                        marker_mut_types = c("NS"))
+
+kirc_tmb_values <- get_biomarker_tables(kirc_maf, biomarker = "TMB", split =  c(train = 350.1, val = 0, test = 101)) 
+
+### Prostate fits
+
+prad_maf <- read_tsv("data/prad_p1000/data_mutations_extended.txt") %>% 
+  select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
+
+message("Getting tables")
+prad_tables <- get_mutation_tables(maf = prad_maf, 
+                                   include_synonymous = FALSE,
+                                   acceptable_genes = ensembl_gene_lengths$Hugo_Symbol,
+                                   for_biomarker = "TMB",
+                                   split = c(train = 700.1, val = 0, test = 312)) #don't ask about the .1, this needs fixing
+
+message("Getting generative model")
+prad_gen_model <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = prad_tables$train,
+                                progress = TRUE)
+write_rds(prad_gen_model, "data/temporary_storage/prad_gen_model")
+prad_gen_model <- read_rds("data/temporary_storage/prad_gen_model")
+
+prad_pred_first_tmb <- pred_first_fit(gen_model = prad_gen_model, 
+                                      lambda = exp(seq(-18, -26, length.out = 100)),
+                                      gene_lengths = ensembl_gene_lengths, 
+                                      training_matrix = prad_tables$train$matrix,
+                                      marker_mut_types = c("NS"))
+
+prad_pred_refit_tmb <- pred_refit_range(pred_first = prad_pred_first_tmb, 
+                                        gene_lengths = ensembl_gene_lengths,
+                                        marker_mut_types = c("NS"))
+
+prad_tmb_values <- get_biomarker_tables(prad_maf, biomarker = "TMB", split =  c(train = 700.1, val = 0, test = 312)) 
+
+### Breast fits
+
+brca_maf <- read_tsv("data/brca_tcga_pan_can_atlas_2018/data_mutations_extended.txt") %>% 
+  select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
+
+message("Getting tables")
+brca_tables <- get_mutation_tables(maf = brca_maf, 
+                                   include_synonymous = FALSE,
+                                   acceptable_genes = ensembl_gene_lengths$Hugo_Symbol,
+                                   for_biomarker = "TMB",
+                                   split = c(train = 700.1, val = 0, test = 309)) #don't ask about the .1, this needs fixing
+
+message("Getting generative model")
+brca_gen_model <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = brca_tables$train,
+                                progress = TRUE)
+write_rds(brca_gen_model, "data/temporary_storage/brca_gen_model")
+brca_gen_model <- read_rds("data/temporary_storage/brca_gen_model")
+
+brca_pred_first_tmb <- pred_first_fit(gen_model = brca_gen_model, 
+                                      lambda = exp(seq(-18, -26, length.out = 100)),
+                                      gene_lengths = ensembl_gene_lengths, 
+                                      training_matrix = brca_tables$train$matrix,
+                                      marker_mut_types = c("NS"))
+
+brca_pred_refit_tmb <- pred_refit_range(pred_first = brca_pred_first_tmb, 
+                                        gene_lengths = ensembl_gene_lengths,
+                                        marker_mut_types = c("NS"))
+
+brca_tmb_values <- get_biomarker_tables(brca_maf, biomarker = "TMB", split =  c(train = 700.1, val = 0, test = 309)) 
 
 
-blca_refit_predictions_tmb <- blca_pred_refit_tmb %>%
-  get_predictions(new_data = blca_tables$test) %>%
-  pred_intervals(pred_model = blca_pred_refit_tmb, biomarker_values = blca_tmb_values$test,
-                 gen_model = blca_gen_model, training_matrix = blca_tables$train$matrix, marker_mut_types = c("NS"),
-                 gene_lengths = ensembl_gene_lengths, max_panel_length = 600000, biomarker = "TMB")
 
-blca_r2 <- 1 - sum((blca_refit_predictions_tmb$prediction_intervals$estimated_value - blca_refit_predictions_tmb$prediction_intervals$true_value)^2)/
-  sum((blca_refit_predictions_tmb$prediction_intervals$true_value - mean(blca_refit_predictions_tmb$prediction_intervals$true_value))^2)
-
-blca_version_fig8 <- blca_refit_predictions_tmb$prediction_intervals %>%
-  {ggplot() + geom_point(data = ., aes(x = true_value, y = estimated_value), size = 0.5) + 
-      geom_ribbon(data = blca_refit_predictions_tmb$confidence_region %>% mutate(model = factor(model, levels = c("Refitted T", "ecTMB", "Count", "Linear"))), 
-                  aes(x = x, ymin = y_lower, ymax = y_upper),
-                  alpha = 0.2, fill = "red")  +
-      geom_abline(colour = "blue", 
-                  linetype = 2) +
-      geom_hline(yintercept = 300, alpha = 0.5, linetype = 2) +
-      geom_vline(xintercept = 300, alpha = 0.5, linetype = 2) +
-      scale_x_continuous(trans = scales::pseudo_log_trans(), breaks = c(0,10**(1:3))) +
-      scale_y_continuous(trans = scales::pseudo_log_trans(), breaks = c(0,10**(1:3)), limit = c(0,NA)) +
-      theme_minimal() + labs(x = "True TMB", y = "Predicted TMB")}
-
-ggsave(blca_version_fig8, filename = "results/figures/blca_version_fig8.png", width = 8, height = 6)
-
-
-#### Joint Plots
-joint_version_fig6 <- plot_grid(skcm_version_fig6 + ggtitle("Melanoma (SKCM)"),
-                                coadread_version_fig6 + ggtitle("Colorectal Cancer (COADREAD)"),
-                                blca_version_fig6 + ggtitle("Bladder Cancer (BLCA)"),
-                                nrow = 3,
-                                labels = "AUTO")
-ggsave(joint_version_fig6, filename = "results/figures/joint_version_fig6.png", height = 10, width = 5)
-
-
-joint_version_fig8 <- plot_grid(skcm_version_fig8 + ggtitle("Melanoma (SKCM)") + geom_label(data = data.frame(x = 1000, y = 10, label = round(sqrt(skcm_r2), 2)), aes(x =x, y= y, label = paste("R =", label))),
-                                coadread_version_fig8 + ggtitle("Colorectal Cancer (COADREAD)") + geom_label(data = data.frame(x = 750, y = 10, label = round(sqrt(coadread_r2), 2)), aes(x =x, y= y, label = paste("R =", label))),
-                                blca_version_fig8 + ggtitle("Bladder Cancer (BLCA)") + geom_label(data = data.frame(x = 470, y = 10, label = round(sqrt(blca_r2), 2)), aes(x =x, y= y, label = paste("R =", label))),
-                                nrow = 3,
-                                labels = "AUTO")
-ggsave(joint_version_fig8, filename = "results/figures/joint_version_fig8.png", height = 9, width = 4)
-
-
-### SKCM Immuno WES external validation
+### SKCM WES external validation
 skcm_val_maf <- read_tsv("data/skcm_yale/data_mutations_extended.txt") %>% 
   select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
 skcm_val_tables <- get_mutation_tables(skcm_val_maf, 
@@ -270,66 +213,6 @@ skcm_refit_stats_val <- skcm_pred_refit_tmb %>%
   get_stats(biomarker_values = skcm_val_tmb_values$test, metrics = c("R"), model = "Refitted T", threshold = 300) %>% 
   mutate(Dataset = "External Test", cancer_type = "Melanoma")
 
-skcm_val_predictions <- skcm_pred_refit_tmb %>%
-  get_predictions(new_data = skcm_val_tables$test) %>%
-  pred_intervals(pred_model = skcm_pred_refit_tmb, biomarker_values = skcm_val_tmb_values$test,
-                 gen_model = skcm_gen_model, training_matrix = skcm_tables$train$matrix, marker_mut_types = c("NS"),
-                 gene_lengths = ensembl_gene_lengths, max_panel_length = 600000, biomarker = "TMB")
-
-skcm_val_predictions$prediction_intervals %>%
-  {ggplot() + geom_point(data = ., aes(x = true_value, y = estimated_value), size = 0.5) + 
-      geom_ribbon(data = skcm_val_predictions$confidence_region %>% mutate(model = factor(model, levels = c("Refitted T", "ecTMB", "Count", "Linear"))), 
-                  aes(x = x, ymin = y_lower, ymax = y_upper),
-                  alpha = 0.2, fill = "red")  +
-      geom_abline(colour = "blue", linetype = 2) +
-      geom_hline(yintercept = 300, alpha = 0.5, linetype = 2) +
-      geom_vline(xintercept = 300, alpha = 0.5, linetype = 2) +
-      scale_x_continuous(trans = scales::pseudo_log_trans(), breaks = c(0,10**(1:3))) +
-      scale_y_continuous(trans = scales::pseudo_log_trans(), breaks = c(0,10**(1:3)), limit = c(0,NA)) +
-      theme_minimal() + labs(x = "True TMB", y = "Predicted TMB")}
-
-skcm_val_clinical <- read_tsv("data/skcm_mskcc_2014/data_clinical_patient.txt", comment = "#") %>% 
-  inner_join(read_tsv("data/skcm_mskcc_2014/data_clinical_sample.txt", comment = "#"), by = "PATIENT_ID") %>% 
-  mutate(Tumor_Sample_Barcode = SAMPLE_ID) %>% 
-  inner_join(skcm_val_predictions$prediction_intervals, by = "Tumor_Sample_Barcode") %>% 
-  select(Tumor_Sample_Barcode, estimated_value, OS_STATUS, OS_MONTHS, SEX, AGE, TREATMENT, CANCER_TYPE, MUTATION_LOAD) 
-  
-skcm_surv_25 <- skcm_val_clinical %>%
-  {mutate(., surv = Surv(time = .$OS_MONTHS, event = (.$OS_STATUS == "1:DECEASED")))} %>%
-  mutate("Estimated TMB" = if_else(estimated_value >= quantile(estimated_value, 0.25), "High", "Low"),
-         "Original TMB" = if_else(MUTATION_LOAD >= quantile(MUTATION_LOAD, 0.25), "High", "Low"))
-skcm_surv_50 <- skcm_val_clinical %>%
-  {mutate(., surv = Surv(time = .$OS_MONTHS, event = (.$OS_STATUS == "1:DECEASED")))} %>%
-  mutate("Estimated TMB" = if_else(estimated_value >= quantile(estimated_value, 0.5), "High", "Low"),
-         "Original TMB" = if_else(MUTATION_LOAD >= quantile(MUTATION_LOAD, 0.5), "High", "Low"))
-skcm_surv_75 <- skcm_val_clinical %>%
-  {mutate(., surv = Surv(time = .$OS_MONTHS, event = (.$OS_STATUS == "1:DECEASED")))} %>%
-  mutate("Estimated TMB" = if_else(estimated_value >= quantile(estimated_value, 0.75), "High", "Low"),
-         "Original TMB" = if_else(MUTATION_LOAD >= quantile(MUTATION_LOAD, 0.75), "High", "Low"))
-
-skcm_surv_continuous <- skcm_val_clinical %>%
-  {mutate(., surv = Surv(time = .$OS_MONTHS, event = (.$OS_STATUS == "1:DECEASED")))} %>%
-  {mutate(., "Estimated TMB" = as.vector(scale(.$estimated_value)),
-         "Original TMB" = as.vector(scale(.$MUTATION_LOAD)))}
-
-
-forest_25_est <- coxph(surv ~ `Estimated TMB`, data = skcm_surv_25) %>%
-  ggforest(cpositions = c(0.0, 0.15,0.38), main = "25% Quantile")
-forest_25_true <- coxph(surv ~ `Original TMB`, data = skcm_surv_25) %>%
-  ggforest(cpositions = c(0.0,0.15,0.38), main = "")
-forest_50_est <- coxph(surv ~ `Estimated TMB`, data = skcm_surv_50) %>%
-  ggforest(cpositions = c(0.0, 0.15,0.38), main = "50% Quantile")
-forest_50_true <- coxph(surv ~ `Original TMB`, data = skcm_surv_50) %>%
-  ggforest(cpositions = c(0.0,0.15,0.38), main = "")
-forest_75_est <- coxph(surv ~ `Estimated TMB`, data = skcm_surv_75) %>%
-  ggforest(cpositions = c(0.0, 0.15,0.38), main = "75% Quantile")
-forest_75_true <- coxph(surv ~ `Original TMB`, data = skcm_surv_75) %>%
-  ggforest(cpositions = c(0.0,0.15,0.38), main = "")
-
-forest_continuous_est <- coxph(surv ~ `Estimated TMB`, data = skcm_surv_continuous) %>%
-  ggforest(cpositions = c(0.0, 0.15,0.38), main = "Continuous (scaled)")
-forest_continuous_true <- coxph(surv ~ `Original TMB`, data = skcm_surv_continuous) %>%
-  ggforest(cpositions = c(0.0,0.15,0.38), main = "")
 
 
 ### COADREAD WES external validation
@@ -379,17 +262,91 @@ blca_refit_stats_val <- blca_pred_refit_tmb %>%
   get_stats(biomarker_values = blca_val_tmb_values$test, metrics = c("R"), model = "Refitted T", threshold = 300) %>% 
   mutate(Dataset = "External Test", cancer_type = "Bladder")
 
-external_validation_fig <- bind_rows(skcm_refit_stats, skcm_refit_stats_val, coadread_refit_stats, coadread_refit_stats_val, blca_refit_stats, blca_refit_stats_val) %>%
+
+### KIRC WES external validation
+kirc_val_maf <- read_tsv("data/kirc_bgi/data_mutations_extended.txt") %>% 
+  select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
+kirc_val_tables <- get_mutation_tables(kirc_val_maf, 
+                                       split = c(train = 0, val = 0, test = 91),
+                                       gene_list = kirc_tables$train$gene_list,
+                                       acceptable_genes = ensembl_gene_lengths$Hugo_Symbol,
+                                       for_biomarker = "TMB",
+                                       include_synonymous = FALSE)
+kirc_val_tmb_values <- get_biomarker_tables(kirc_val_maf, biomarker = "TMB", split =  c(train = 0, val = 0, test = 91))
+
+kirc_refit_stats <- kirc_pred_refit_tmb %>%
+  get_predictions(new_data = kirc_tables$test) %>%
+  get_stats(biomarker_values = kirc_tmb_values$test, metrics = c("R"), model = "Refitted T", threshold = 300) %>% 
+  mutate(Dataset = "Internal Validation", cancer_type = "Renal")
+
+kirc_refit_stats_val <- kirc_pred_refit_tmb %>%
+  get_predictions(new_data = kirc_val_tables$test) %>%
+  get_stats(biomarker_values = kirc_val_tmb_values$test, metrics = c("R"), model = "Refitted T", threshold = 300) %>% 
+  mutate(Dataset = "External Test", cancer_type = "Renal")
+
+### PRAD WES external validation
+prad_val_maf <- read_tsv("data/prad_eururol_2017/data_mutations_extended.txt") %>% 
+  select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
+prad_val_tables <- get_mutation_tables(prad_val_maf, 
+                                       split = c(train = 0, val = 0, test = 65),
+                                       gene_list = prad_tables$train$gene_list,
+                                       acceptable_genes = ensembl_gene_lengths$Hugo_Symbol,
+                                       for_biomarker = "TMB",
+                                       include_synonymous = FALSE)
+prad_val_tmb_values <- get_biomarker_tables(prad_val_maf, biomarker = "TMB", split =  c(train = 0, val = 0, test = 65))
+
+prad_refit_stats <- prad_pred_refit_tmb %>%
+  get_predictions(new_data = prad_tables$test) %>%
+  get_stats(biomarker_values = prad_tmb_values$test, metrics = c("R"), model = "Refitted T", threshold = 300) %>% 
+  mutate(Dataset = "Internal Validation", cancer_type = "Prostate")
+
+prad_refit_stats_val <- prad_pred_refit_tmb %>%
+  get_predictions(new_data = prad_val_tables$test) %>%
+  get_stats(biomarker_values = prad_val_tmb_values$test, metrics = c("R"), model = "Refitted T", threshold = 300) %>% 
+  mutate(Dataset = "External Test", cancer_type = "Prostate")
+
+
+### BRCA WES external validation
+brca_val_maf <- read_tsv("data/brca_smc_2018/data_mutations_extended.txt") %>% 
+  select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
+brca_val_tables <- get_mutation_tables(brca_val_maf, 
+                                       split = c(train = 0, val = 0, test = 185),
+                                       gene_list = brca_tables$train$gene_list,
+                                       acceptable_genes = ensembl_gene_lengths$Hugo_Symbol,
+                                       for_biomarker = "TMB",
+                                       include_synonymous = FALSE)
+brca_val_tmb_values <- get_biomarker_tables(brca_val_maf, biomarker = "TMB", split =  c(train = 0, val = 0, test = 185))
+
+brca_refit_stats <- brca_pred_refit_tmb %>%
+  get_predictions(new_data = brca_tables$test) %>%
+  get_stats(biomarker_values = brca_tmb_values$test, metrics = c("R"), model = "Refitted T", threshold = 300) %>% 
+  mutate(Dataset = "Internal Validation", cancer_type = "Breast")
+
+brca_refit_stats_val <- brca_pred_refit_tmb %>%
+  get_predictions(new_data = brca_val_tables$test) %>%
+  get_stats(biomarker_values = brca_val_tmb_values$test, metrics = c("R"), model = "Refitted T", threshold = 300) %>% 
+  mutate(Dataset = "External Test", cancer_type = "Breast")
+
+
+
+
+external_validation_fig <- bind_rows(skcm_refit_stats, skcm_refit_stats_val, 
+                                     coadread_refit_stats, coadread_refit_stats_val, 
+                                     blca_refit_stats, blca_refit_stats_val,
+                                     kirc_refit_stats, kirc_refit_stats_val,
+                                     brca_refit_stats, brca_refit_stats_val,
+                                     prad_refit_stats, prad_refit_stats_val) %>%
   mutate(Dataset = factor(Dataset, levels = c("Internal Validation", "External Test"))) %>% 
   mutate(model = factor(model, levels = c("Refitted T", "First-fit T"))) %>% 
   mutate(type = if_else(metric == "R", "Regression ~ (R^2)", "Classification ~ (AUPRC)")) %>%
   mutate(type = factor(type, levels = c("Regression ~ (R^2)", "Classification ~ (AUPRC)"))) %>%
   filter(panel_length <= 2000000) %>%
   mutate(panel_length = panel_length / 1000000) %>%
-  ggplot(aes(x = panel_length, y = stat, colour = Dataset)) + geom_line(size = 1) + ylim(0, 1) + xlim(0.2, 1.2) +
+  ggplot(aes(x = panel_length, y = stat, colour = Dataset)) + geom_line(size = 1) + ylim(0, 1) + xlim(0.2, 2) +
   theme_minimal() + facet_wrap(~cancer_type, labeller = label_parsed, strip.position = "top") +
   theme(legend.position = "bottom") + labs(x = "Panel Size (Mb)", y = TeX("$R^2$")) +
   scale_color_manual(name = "Dataset:", values = c("black", "blue"), labels = list("Internal Validation", "External Test"))
 
 ggsave(filename = "results/figures/external_validation_fig.png", external_validation_fig, width = 10, height = 4)
+
 
