@@ -21,15 +21,15 @@ message("Getting generative model")
 # skcm_gen_model <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = skcm_tables$train,
 #                                  progress = TRUE)
 # 
-# skcm_pred_first_tmb <- pred_first_fit(gen_model = skcm_gen_model, 
-#                                       lambda = exp(seq(-18, -26, length.out = 100)),
-#                                       gene_lengths = ensembl_gene_lengths, 
-#                                       training_matrix = skcm_tables$train$matrix,
-#                                       marker_mut_types = c("NS"))
 # write_rds(x = skcm_gen_model, "data/temporary_storage/skcm_gen_model")
-# write_rds(x = skcm_pred_first_tmb, "data/temporary_storage/skcm_pred_first_tmb")
 skcm_gen_model <- read_rds("data/temporary_storage/skcm_gen_model")
 skcm_pred_first_tmb <- read_rds("data/temporary_storage/skcm_pred_first_tmb")
+
+skcm_pred_first_tmb <- pred_first_fit(gen_model = skcm_gen_model,
+                                      lambda = exp(seq(-18, -30, length.out = 100)),
+                                      gene_lengths = ensembl_gene_lengths,
+                                      training_matrix = skcm_tables$train$matrix,
+                                      marker_mut_types = c("NS"))
 
 skcm_pred_refit_tmb <- pred_refit_range(pred_first = skcm_pred_first_tmb, 
                                         gene_lengths = ensembl_gene_lengths,
@@ -102,7 +102,12 @@ blca_tmb_values <- get_biomarker_tables(blca_maf, biomarker = "TMB", split =  c(
 
 ### Renal fits
 
-kirc_maf <- read_tsv("data/kirc_tcga/data_mutations_extended.txt") %>% 
+kirc_1 <- read_tsv("data/kirc_tcga_pan_can_atlas_2018/data_mutations_extended.txt") %>% 
+  select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
+kirc_2 <- read_tsv("data/kirc_tcga_pub/data_mutations_extended.txt") %>% 
+  select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
+
+kirc_maf <- read_tsv("data/kirc_tcga_pan_can_atlas_2018/data_mutations_extended.txt") %>% 
   select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
 
 message("Getting tables")
@@ -110,7 +115,7 @@ kirc_tables <- get_mutation_tables(maf = kirc_maf,
                                    include_synonymous = FALSE,
                                    acceptable_genes = ensembl_gene_lengths$Hugo_Symbol,
                                    for_biomarker = "TMB",
-                                   split = c(train = 350.1, val = 0, test = 101)) #don't ask about the .1, this needs fixing
+                                   split = c(train = 300.1, val = 0, test = 56)) #don't ask about the .1, this needs fixing
 
 message("Getting generative model")
 kirc_gen_model <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = kirc_tables$train,
@@ -119,7 +124,7 @@ write_rds(kirc_gen_model, "data/temporary_storage/kirc_gen_model")
 kirc_gen_model <- read_rds("data/temporary_storage/kirc_gen_model")
 
 kirc_pred_first_tmb <- pred_first_fit(gen_model = kirc_gen_model, 
-                                      lambda = exp(seq(-18, -26, length.out = 100)),
+                                      lambda = exp(seq(-22.85, -22.87, length.out = 200)),
                                       gene_lengths = ensembl_gene_lengths, 
                                       training_matrix = kirc_tables$train$matrix,
                                       marker_mut_types = c("NS"))
@@ -128,7 +133,7 @@ kirc_pred_refit_tmb <- pred_refit_range(pred_first = kirc_pred_first_tmb,
                                         gene_lengths = ensembl_gene_lengths,
                                         marker_mut_types = c("NS"))
 
-kirc_tmb_values <- get_biomarker_tables(kirc_maf, biomarker = "TMB", split =  c(train = 350.1, val = 0, test = 101)) 
+kirc_tmb_values <- get_biomarker_tables(kirc_maf, biomarker = "TMB", split =  c(train = 300.1, val = 0, test = 56)) 
 
 ### Prostate fits
 
@@ -285,15 +290,15 @@ kirc_refit_stats_val <- kirc_pred_refit_tmb %>%
   mutate(Dataset = "External Test", cancer_type = "Renal")
 
 ### PRAD WES external validation
-prad_val_maf <- read_tsv("data/prad_eururol_2017/data_mutations_extended.txt") %>% 
+prad_val_maf <- read_tsv("data/prad_fhcrc/data_mutations_extended.txt") %>% 
   select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
 prad_val_tables <- get_mutation_tables(prad_val_maf, 
-                                       split = c(train = 0, val = 0, test = 65),
+                                       split = c(train = 0, val = 0, test = 141),
                                        gene_list = prad_tables$train$gene_list,
                                        acceptable_genes = ensembl_gene_lengths$Hugo_Symbol,
                                        for_biomarker = "TMB",
                                        include_synonymous = FALSE)
-prad_val_tmb_values <- get_biomarker_tables(prad_val_maf, biomarker = "TMB", split =  c(train = 0, val = 0, test = 65))
+prad_val_tmb_values <- get_biomarker_tables(prad_val_maf, biomarker = "TMB", split =  c(train = 0, val = 0, test = 141))
 
 prad_refit_stats <- prad_pred_refit_tmb %>%
   get_predictions(new_data = prad_tables$test) %>%
@@ -342,11 +347,11 @@ external_validation_fig <- bind_rows(skcm_refit_stats, skcm_refit_stats_val,
   mutate(type = factor(type, levels = c("Regression ~ (R^2)", "Classification ~ (AUPRC)"))) %>%
   filter(panel_length <= 2000000) %>%
   mutate(panel_length = panel_length / 1000000) %>%
-  ggplot(aes(x = panel_length, y = stat, colour = Dataset)) + geom_line(size = 1) + ylim(0, 1) + xlim(0.2, 2) +
+  ggplot(aes(x = panel_length, y = stat, colour = Dataset)) + geom_line(size = 1) + ylim(0, 1) + xlim(0.2, 1.5) +
   theme_minimal() + facet_wrap(~cancer_type, labeller = label_parsed, strip.position = "top") +
   theme(legend.position = "bottom") + labs(x = "Panel Size (Mb)", y = TeX("$R^2$")) +
   scale_color_manual(name = "Dataset:", values = c("black", "blue"), labels = list("Internal Validation", "External Test"))
 
-ggsave(filename = "results/figures/external_validation_fig.png", external_validation_fig, width = 10, height = 4)
+ggsave(filename = "results/figures/external_validation_fig.png", external_validation_fig, width = 10, height = 6)
 
 
