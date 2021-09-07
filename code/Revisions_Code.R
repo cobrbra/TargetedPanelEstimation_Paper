@@ -101,13 +101,7 @@ blca_tmb_values <- get_biomarker_tables(blca_maf, biomarker = "TMB", split =  c(
 
 
 ### Renal fits
-
-kirc_1 <- read_tsv("data/kirc_tcga_pan_can_atlas_2018/data_mutations_extended.txt") %>% 
-  select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
-kirc_2 <- read_tsv("data/kirc_tcga_pub/data_mutations_extended.txt") %>% 
-  select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
-
-kirc_maf <- read_tsv("data/kirc_tcga_pan_can_atlas_2018/data_mutations_extended.txt") %>% 
+kirc_maf <- read_tsv("data/kirc_tcga/data_mutations_extended.txt") %>% 
   select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
 
 message("Getting tables")
@@ -115,7 +109,7 @@ kirc_tables <- get_mutation_tables(maf = kirc_maf,
                                    include_synonymous = FALSE,
                                    acceptable_genes = ensembl_gene_lengths$Hugo_Symbol,
                                    for_biomarker = "TMB",
-                                   split = c(train = 300.1, val = 0, test = 56)) #don't ask about the .1, this needs fixing
+                                   split = c(train = 350.1, val = 0, test = 101)) #don't ask about the .1, this needs fixing
 
 message("Getting generative model")
 kirc_gen_model <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = kirc_tables$train,
@@ -124,7 +118,7 @@ write_rds(kirc_gen_model, "data/temporary_storage/kirc_gen_model")
 kirc_gen_model <- read_rds("data/temporary_storage/kirc_gen_model")
 
 kirc_pred_first_tmb <- pred_first_fit(gen_model = kirc_gen_model, 
-                                      lambda = exp(seq(-22.85, -22.87, length.out = 200)),
+                                      lambda = exp(seq(-18, -26, length.out = 200)),
                                       gene_lengths = ensembl_gene_lengths, 
                                       training_matrix = kirc_tables$train$matrix,
                                       marker_mut_types = c("NS"))
@@ -133,7 +127,7 @@ kirc_pred_refit_tmb <- pred_refit_range(pred_first = kirc_pred_first_tmb,
                                         gene_lengths = ensembl_gene_lengths,
                                         marker_mut_types = c("NS"))
 
-kirc_tmb_values <- get_biomarker_tables(kirc_maf, biomarker = "TMB", split =  c(train = 300.1, val = 0, test = 56)) 
+kirc_tmb_values <- get_biomarker_tables(kirc_maf, biomarker = "TMB", split =  c(train = 350.1, val = 0, test = 101)) 
 
 ### Prostate fits
 
