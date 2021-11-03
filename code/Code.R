@@ -1174,6 +1174,9 @@ nsclc_val_hell_predictions$prediction_intervals %>%
 nsclc_val_rizvi_predictions$prediction_intervals %>% 
   {1 - sum((.$true_value - .$estimated_value)^2)/sum((.$true_value - mean(.$true_value))^2)}
 
+bind_rows(nsclc_val_rizvi_predictions$prediction_intervals, nsclc_val_hell_predictions$prediction_intervals) %>% 
+  {1 - sum((.$true_value - .$estimated_value)^2)/sum((.$true_value - mean(.$true_value))^2)}
+
 
 # Validation set immunotherapy response
 nsclc_val_hell_clinical <- read_tsv("data/nsclc_mskcc_2018/data_clinical_patient.txt", comment = "#") %>% 
@@ -1203,6 +1206,14 @@ nsclc_val_rizvi_predictions$prediction_intervals %>%
               filter(NONSYNONYMOUS_MUTATION_BURDEN > 300) %>% 
               pull(estimated_value),
             scores.class1 = nsclc_val_rizvi_clinical %>% 
+              filter(NONSYNONYMOUS_MUTATION_BURDEN <= 300) %>% 
+              pull(estimated_value))}
+
+bind_rows(nsclc_val_rizvi_predictions$prediction_intervals, nsclc_val_hell_predictions$prediction_intervals) %>% 
+  {pr.curve(scores.class0 = bind_rows(nsclc_val_rizvi_clinical, nsclc_val_hell_clinical) %>% 
+              filter(NONSYNONYMOUS_MUTATION_BURDEN > 300) %>% 
+              pull(estimated_value),
+            scores.class1 = bind_rows(nsclc_val_rizvi_clinical, nsclc_val_hell_clinical) %>% 
               filter(NONSYNONYMOUS_MUTATION_BURDEN <= 300) %>% 
               pull(estimated_value))}
 
