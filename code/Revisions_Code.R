@@ -21,9 +21,9 @@ message("Getting generative model")
 # skcm_gen_model <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = skcm_tables$train,
 #                                  progress = TRUE)
 # 
-# write_rds(x = skcm_gen_model, "data/temporary_storage/skcm_gen_model")
-skcm_gen_model <- read_rds("data/temporary_storage/skcm_gen_model")
-skcm_pred_first_tmb <- read_rds("data/temporary_storage/skcm_pred_first_tmb")
+# write_rds(x = skcm_gen_model, "data/pre_loaded/skcm_gen_model")
+skcm_gen_model <- read_rds("data/pre_loaded/skcm_gen_model")
+skcm_pred_first_tmb <- read_rds("data/pre_loaded/skcm_pred_first_tmb")
 
 skcm_pred_first_tmb <- pred_first_fit(gen_model = skcm_gen_model,
                                       lambda = exp(seq(-18, -30, length.out = 100)),
@@ -53,8 +53,8 @@ coadread_tables <- get_mutation_tables(maf = coadread_maf,
 message("Getting generative model")
 coadread_gen_model <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = coadread_tables$train,
                                 progress = TRUE)
-write_rds(coadread_gen_model, "data/temporary_storage/coadread_gen_model")
-coadread_gen_model <- read_rds("data/temporary_storage/coadread_gen_model")
+write_rds(coadread_gen_model, "data/pre_loaded/coadread_gen_model")
+coadread_gen_model <- read_rds("data/pre_loaded/coadread_gen_model")
 
 coadread_pred_first_tmb <- pred_first_fit(gen_model = coadread_gen_model, 
                                       lambda = exp(seq(-18, -26, length.out = 100)),
@@ -85,8 +85,8 @@ blca_tables <- get_mutation_tables(maf = blca_maf,
 message("Getting generative model")
 blca_gen_model <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = blca_tables$train,
                                     progress = TRUE)
-write_rds(blca_gen_model, "data/temporary_storage/blca_gen_model")
-blca_gen_model <- read_rds("data/temporary_storage/blca_gen_model")
+write_rds(blca_gen_model, "data/pre_loaded/blca_gen_model")
+blca_gen_model <- read_rds("data/pre_loaded/blca_gen_model")
 blca_pred_first_tmb <- pred_first_fit(gen_model = blca_gen_model, 
                                           lambda = exp(seq(-18, -26, length.out = 100)),
                                           gene_lengths = ensembl_gene_lengths, 
@@ -114,8 +114,8 @@ kirc_tables <- get_mutation_tables(maf = kirc_maf,
 message("Getting generative model")
 kirc_gen_model <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = kirc_tables$train,
                                 progress = TRUE)
-write_rds(kirc_gen_model, "data/temporary_storage/kirc_gen_model")
-kirc_gen_model <- read_rds("data/temporary_storage/kirc_gen_model")
+write_rds(kirc_gen_model, "data/pre_loaded/kirc_gen_model")
+kirc_gen_model <- read_rds("data/pre_loaded/kirc_gen_model")
 
 kirc_pred_first_tmb <- pred_first_fit(gen_model = kirc_gen_model, 
                                       lambda = exp(seq(-18, -26, length.out = 200)),
@@ -144,8 +144,8 @@ prad_tables <- get_mutation_tables(maf = prad_maf,
 message("Getting generative model")
 prad_gen_model <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = prad_tables$train,
                                 progress = TRUE)
-write_rds(prad_gen_model, "data/temporary_storage/prad_gen_model")
-prad_gen_model <- read_rds("data/temporary_storage/prad_gen_model")
+write_rds(prad_gen_model, "data/pre_loaded/prad_gen_model")
+prad_gen_model <- read_rds("data/pre_loaded/prad_gen_model")
 
 prad_pred_first_tmb <- pred_first_fit(gen_model = prad_gen_model, 
                                       lambda = exp(seq(-18, -26, length.out = 100)),
@@ -174,8 +174,8 @@ brca_tables <- get_mutation_tables(maf = brca_maf,
 message("Getting generative model")
 brca_gen_model <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = brca_tables$train,
                                 progress = TRUE)
-write_rds(brca_gen_model, "data/temporary_storage/brca_gen_model")
-brca_gen_model <- read_rds("data/temporary_storage/brca_gen_model")
+write_rds(brca_gen_model, "data/pre_loaded/brca_gen_model")
+brca_gen_model <- read_rds("data/pre_loaded/brca_gen_model")
 
 brca_pred_first_tmb <- pred_first_fit(gen_model = brca_gen_model, 
                                       lambda = exp(seq(-18, -26, length.out = 100)),
