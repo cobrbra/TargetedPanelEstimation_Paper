@@ -1106,32 +1106,58 @@ refit_predictions_tmb$prediction_intervals %>%
   filter(Tumor_Sample_Barcode %in% nonsmoker_sampleIDs) %>% 
   {1 - sum((.$true_value-.$estimated_value)^2)/sum((.$true_value-mean(.$true_value))^2)}
 
-#  Immunotherapy dataset
-nsclc_val_maf <- read_tsv("data/nsclc_mskcc_2018/data_mutations_extended.txt") %>% 
+#  Immunotherapy dataset (Hellman)
+nsclc_val_hell_maf <- read_tsv("data/nsclc_mskcc_2018/data_mutations_extended.txt") %>% 
   select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
-nsclc_val_tables <- get_mutation_tables(nsclc_val_maf, 
+nsclc_val_hell_tables <- get_mutation_tables(nsclc_val_hell_maf, 
                                         split = c(train = 0, val = 0, test = 75),
                                         gene_list = nsclc_tables$train$gene_list,
                                         acceptable_genes = ensembl_gene_lengths$Hugo_Symbol,
                                         for_biomarker = "TIB",
                                         include_synonymous = FALSE)
-nsclc_val_tmb_values <- get_biomarker_tables(nsclc_val_maf, biomarker = "TMB", split =  c(train = 0, val = 0, test = 75))
-nsclc_refit_stats_val <- nsclc_pred_refit_tmb %>%
-  get_predictions(new_data = nsclc_val_tables$test) %>%
-  get_stats(biomarker_values = nsclc_val_tmb_values$test, metrics = c("R"), model = "Refitted T", threshold = 300) %>% 
+nsclc_val_hell_tmb_values <- get_biomarker_tables(nsclc_val_hell_maf, biomarker = "TMB", split =  c(train = 0, val = 0, test = 75))
+nsclc_refit_stats_val_hell <- nsclc_pred_refit_tmb %>%
+  get_predictions(new_data = nsclc_val_hell_tables$test) %>%
+  get_stats(biomarker_values = nsclc_val_hell_tmb_values$test, metrics = c("R"), model = "Refitted T", threshold = 300) %>% 
   mutate(Dataset = "External Test", cancer_type = "Non-Small Cell Lung")
 
-nsclc_val_predictions <- nsclc_pred_refit_tmb %>%
-  get_predictions(new_data = nsclc_val_tables$test) %>%
-  pred_intervals(pred_model = nsclc_pred_refit_tmb, biomarker_values = nsclc_val_tmb_values$test,
+nsclc_val_hell_predictions <- nsclc_pred_refit_tmb %>%
+  get_predictions(new_data = nsclc_val_hell_tables$test) %>%
+  pred_intervals(pred_model = nsclc_pred_refit_tmb, biomarker_values = nsclc_val_hell_tmb_values$test,
                  gen_model = nsclc_gen_model, training_matrix = nsclc_tables$train$matrix, marker_mut_types = c("NS"),
-                 gene_lengths = ensembl_gene_lengths, max_panel_length = 600000, biomarker = "TMB")
+                 gene_lengths = ensembl_gene_lengths, max_panel_length = 600000, biomarker = "TMB") 
+nsclc_val_hell_predictions$prediction_intervals <- mutate(nsclc_val_hell_predictions$prediction_intervals, Dataset = "Hellman et al.")
 
 
-nsclc_val_pred_fig <- nsclc_val_predictions$prediction_intervals %>%
+#  Immunotherapy dataset (Rizvi)
+nsclc_val_rizvi_maf <- read_tsv("data/luad_mskcc_2015/data_mutations_extended.txt") %>% 
+  select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
+nsclc_val_rizvi_tables <- get_mutation_tables(nsclc_val_rizvi_maf, 
+                                             split = c(train = 0, val = 0, test = 34),
+                                             gene_list = nsclc_tables$train$gene_list,
+                                             acceptable_genes = ensembl_gene_lengths$Hugo_Symbol,
+                                             for_biomarker = "TIB",
+                                             include_synonymous = FALSE)
+nsclc_val_rizvi_tmb_values <- get_biomarker_tables(nsclc_val_rizvi_maf, biomarker = "TMB", split =  c(train = 0, val = 0, test = 34))
+nsclc_refit_stats_val_hell <- nsclc_pred_refit_tmb %>%
+  get_predictions(new_data = nsclc_val_rizvi_tables$test) %>%
+  get_stats(biomarker_values = nsclc_val_rizvi_tmb_values$test, metrics = c("R"), model = "Refitted T", threshold = 300) %>% 
+  mutate(Dataset = "External Test", cancer_type = "Non-Small Cell Lung")
+
+nsclc_val_rizvi_predictions <- nsclc_pred_refit_tmb %>%
+  get_predictions(new_data = nsclc_val_rizvi_tables$test) %>%
+  pred_intervals(pred_model = nsclc_pred_refit_tmb, biomarker_values = nsclc_val_rizvi_tmb_values$test,
+                 gen_model = nsclc_gen_model, training_matrix = nsclc_tables$train$matrix, marker_mut_types = c("NS"),
+                 gene_lengths = ensembl_gene_lengths, max_panel_length = 600000, biomarker = "TMB") 
+
+nsclc_val_rizvi_predictions$prediction_intervals <- mutate(nsclc_val_rizvi_predictions$prediction_intervals, Dataset = "Rizvi et al.")
+
+# Validation set prediction figure
+nsclc_val_pred_fig <- bind_rows(nsclc_val_hell_predictions$prediction_intervals,
+                                nsclc_val_rizvi_predictions$prediction_intervals) %>%
   mutate(model = "Refitted T") %>% 
-  {ggplot() + geom_point(data = ., aes(x = true_value, y = estimated_value), size = 0.5) + 
-      geom_ribbon(data = nsclc_val_predictions$confidence_region %>% mutate(model = factor(model, levels = c("Refitted T", "ecTMB", "Count", "Linear"))), 
+  {ggplot() + geom_point(data = ., aes(x = true_value, y = estimated_value, shape = Dataset), size = 1) + 
+      geom_ribbon(data = nsclc_val_hell_predictions$confidence_region %>% mutate(model = factor(model, levels = c("Refitted T", "ecTMB", "Count", "Linear"))), 
                   aes(x = x, ymin = y_lower, ymax = y_upper),
                   alpha = 0.2, fill = "red")  +
       geom_abline(colour = "blue", linetype = 2) +
@@ -1142,43 +1168,83 @@ nsclc_val_pred_fig <- nsclc_val_predictions$prediction_intervals %>%
       theme_minimal() + labs(x = "True TMB", y = "Predicted TMB") + facet_wrap(~model)}
 ggsave(filename = "results/figures/nsclc_val_pred.png", plot = nsclc_val_pred_fig, height = 3, width = 5)
 
-nsclc_val_predictions$prediction_intervals %>% 
+nsclc_val_hell_predictions$prediction_intervals %>% 
   {1 - sum((.$true_value - .$estimated_value)^2)/sum((.$true_value - mean(.$true_value))^2)}
 
-nsclc_val_clinical <- read_tsv("data/nsclc_mskcc_2018/data_clinical_patient.txt", comment = "#") %>% 
+nsclc_val_rizvi_predictions$prediction_intervals %>% 
+  {1 - sum((.$true_value - .$estimated_value)^2)/sum((.$true_value - mean(.$true_value))^2)}
+
+
+# Validation set immunotherapy response
+nsclc_val_hell_clinical <- read_tsv("data/nsclc_mskcc_2018/data_clinical_patient.txt", comment = "#") %>% 
   inner_join(read_tsv("data/nsclc_mskcc_2018/data_clinical_sample.txt", comment = "#"), by = "PATIENT_ID") %>% 
   mutate(Tumor_Sample_Barcode = SAMPLE_ID) %>% 
-  inner_join(nsclc_val_predictions$prediction_intervals, by = "Tumor_Sample_Barcode") %>% 
+  inner_join(nsclc_val_hell_predictions$prediction_intervals, by = "Tumor_Sample_Barcode") %>% 
   select(Tumor_Sample_Barcode, estimated_value, true_value, PFS_STATUS, PFS_MONTHS, DURABLE_CLINICAL_BENEFIT, SEX, AGE_YRS, CANCER_TYPE, NONSYNONYMOUS_MUTATION_BURDEN) 
 
+nsclc_val_rizvi_clinical <- read_tsv("data/luad_mskcc_2015/data_clinical_patient.txt", comment = "#") %>% 
+  inner_join(read_tsv("data/luad_mskcc_2015/data_clinical_sample.txt", comment = "#"), by = "PATIENT_ID") %>% 
+  mutate(Tumor_Sample_Barcode = SAMPLE_ID) %>% 
+  inner_join(nsclc_val_rizvi_predictions$prediction_intervals, by = "Tumor_Sample_Barcode") %>% 
+  select(Tumor_Sample_Barcode, estimated_value, true_value, EVENT_TYPE, PFS_MONTHS, DURABLE_CLINICAL_BENEFIT, SEX, AGE, CANCER_TYPE, NONSYNONYMOUS_MUTATION_BURDEN) 
 
-nsclc_val_predictions$prediction_intervals %>% 
-  {pr.curve(scores.class0 = nsclc_val_clinical %>% 
+
+nsclc_val_hell_predictions$prediction_intervals %>% 
+  {pr.curve(scores.class0 = nsclc_val_hell_clinical %>% 
               filter(NONSYNONYMOUS_MUTATION_BURDEN > 300) %>% 
               pull(estimated_value),
-            scores.class1 = nsclc_val_clinical %>% 
+            scores.class1 = nsclc_val_hell_clinical %>% 
               filter(NONSYNONYMOUS_MUTATION_BURDEN <= 300) %>% 
               pull(estimated_value))}
 
 
-estimated_tmb_pr <- roc.curve(scores.class0 = nsclc_val_clinical %>% 
-           filter(DURABLE_CLINICAL_BENEFIT == "Durable Clinical Benefit") %>% 
-           pull(estimated_value),
-         scores.class1 = nsclc_val_clinical %>% 
-           filter(DURABLE_CLINICAL_BENEFIT == "No Durable Benefit") %>% 
-           pull(estimated_value),
-         curve = T)
-true_tmb_pr <- roc.curve(scores.class0 = nsclc_val_clinical %>% 
-                          filter(DURABLE_CLINICAL_BENEFIT == "Durable Clinical Benefit") %>% 
-                          pull(NONSYNONYMOUS_MUTATION_BURDEN),
-                        scores.class1 = nsclc_val_clinical %>% 
-                          filter(DURABLE_CLINICAL_BENEFIT == "No Durable Benefit") %>% 
-                          pull(NONSYNONYMOUS_MUTATION_BURDEN),
-                        curve = T)
+nsclc_val_rizvi_predictions$prediction_intervals %>% 
+  {pr.curve(scores.class0 = nsclc_val_rizvi_clinical %>% 
+              filter(NONSYNONYMOUS_MUTATION_BURDEN > 300) %>% 
+              pull(estimated_value),
+            scores.class1 = nsclc_val_rizvi_clinical %>% 
+              filter(NONSYNONYMOUS_MUTATION_BURDEN <= 300) %>% 
+              pull(estimated_value))}
+
+
+estimated_tmb_pr_hell <- roc.curve(scores.class0 = nsclc_val_hell_clinical %>% 
+                                     filter(DURABLE_CLINICAL_BENEFIT == "Durable Clinical Benefit") %>% 
+                                     pull(estimated_value),
+                                   scores.class1 = nsclc_val_hell_clinical %>% 
+                                     filter(DURABLE_CLINICAL_BENEFIT == "No Durable Benefit") %>% 
+                                     pull(estimated_value),
+                                   curve = T)
+
+true_tmb_pr_hell <- roc.curve(scores.class0 = nsclc_val_hell_clinical %>% 
+                                filter(DURABLE_CLINICAL_BENEFIT == "Durable Clinical Benefit") %>% 
+                                pull(NONSYNONYMOUS_MUTATION_BURDEN),
+                              scores.class1 = nsclc_val_hell_clinical %>% 
+                                filter(DURABLE_CLINICAL_BENEFIT == "No Durable Benefit") %>% 
+                                pull(NONSYNONYMOUS_MUTATION_BURDEN),
+                              curve = T)
+
+estimated_tmb_pr_rizvi <- roc.curve(scores.class0 = nsclc_val_rizvi_clinical %>% 
+                                     filter(DURABLE_CLINICAL_BENEFIT == "Durable clinical benefit beyond 6 months") %>% 
+                                     pull(estimated_value),
+                                   scores.class1 = nsclc_val_rizvi_clinical %>% 
+                                     filter(DURABLE_CLINICAL_BENEFIT != "Durable clinical benefit beyond 6 months") %>% 
+                                     pull(estimated_value),
+                                   curve = T)
+
+true_tmb_pr_rizvi <- roc.curve(scores.class0 = nsclc_val_rizvi_clinical %>% 
+                                filter(DURABLE_CLINICAL_BENEFIT == "Durable clinical benefit beyond 6 months") %>% 
+                                pull(NONSYNONYMOUS_MUTATION_BURDEN),
+                              scores.class1 = nsclc_val_rizvi_clinical %>% 
+                                filter(DURABLE_CLINICAL_BENEFIT != "Durable clinical benefit beyond 6 months") %>% 
+                                pull(NONSYNONYMOUS_MUTATION_BURDEN),
+                              curve = T)
+
 setEPS()
 png(file = "results/figures/response_pred_roc.png", width = 600, height = 600) 
-plot(true_tmb_pr, legend = FALSE, color = "#F8766D", auc.main = FALSE, main = "Predicting response to immunotherapy", xlab = "False Positive Rate", ylab = "True Positive Rate")
-plot(estimated_tmb_pr, legend = FALSE, color = "black", add = TRUE)
+plot(true_tmb_pr_hell, legend = FALSE, color = "black", auc.main = FALSE, main = "Predicting response to immunotherapy", xlab = "False Positive Rate", ylab = "True Positive Rate")
+plot(estimated_tmb_pr_hell, legend = FALSE, color = "black", lty = 2, add = TRUE)
+plot(true_tmb_pr_rizvi, legend = FALSE, color = "#F8766D", add = TRUE)
+plot(estimated_tmb_pr_rizvi, legend = FALSE, color = "#F8766D", lty = 2, add = TRUE)
 lines(seq(0,1,0.1), seq(0,1,0.1), lty = 3)
 dev.off()
 
