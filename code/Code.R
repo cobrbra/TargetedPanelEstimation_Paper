@@ -1259,3 +1259,106 @@ plot(estimated_tmb_pr_rizvi, legend = FALSE, color = "#F8766D", lty = 2, add = T
 lines(seq(0,1,0.1), seq(0,1,0.1), lty = 3)
 dev.off()
 
+# Robustness analysis
+
+# nsclc_train_subset_1 <- nsclc_tables$train
+# nsclc_train_subset_1$matrix <- nsclc_train_subset_1$matrix[-(1:200), ]
+# nsclc_train_subset_1$sample_list <- nsclc_train_subset_1$sample_list[-(1:200)]
+# nsclc_gen_model_subset_1 <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = nsclc_train_subset_1,
+#                                           progress = TRUE)
+# nsclc_pred_first_subset_1 <- pred_first_fit(gen_model = nsclc_gen_model_subset_1, lambda = exp(seq(-18, -26, length.out = 100)),
+#                                        gene_lengths = ensembl_gene_lengths, training_matrix = nsclc_train_subset_1$matrix)
+# write_rds(nsclc_pred_first_subset_1, "data/pre_loaded/nsclc_pred_first_subset_1")
+nsclc_pred_first_subset_1 <- read_rds("data/pre_loaded/nsclc_pred_first_subset_1")
+nsclc_pred_refit_subset_1 <- pred_refit_range(pred_first = nsclc_pred_first_subset_1, gene_lengths = ensembl_gene_lengths)
+
+# nsclc_train_subset_2 <- nsclc_tables$train
+# nsclc_train_subset_2$matrix <- nsclc_train_subset_2$matrix[-(201:400), ]
+# nsclc_train_subset_2$sample_list <- nsclc_train_subset_2$sample_list[-(201:400)]
+# 
+# nsclc_gen_model_subset_2 <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = nsclc_train_subset_2,
+#                                           progress = TRUE)
+# nsclc_pred_first_subset_2 <- pred_first_fit(gen_model = nsclc_gen_model_subset_2, lambda = exp(seq(-18, -26, length.out = 100)),
+#                                             gene_lengths = ensembl_gene_lengths, training_matrix = nsclc_train_subset_2$matrix)
+# write_rds(nsclc_pred_first_subset_2, "data/pre_loaded/nsclc_pred_first_subset_2")
+nsclc_pred_first_subset_2 <- read_rds("data/pre_loaded/nsclc_pred_first_subset_2")
+nsclc_pred_refit_subset_2 <- pred_refit_range(pred_first = nsclc_pred_first_subset_2, gene_lengths = ensembl_gene_lengths)
+
+# nsclc_train_subset_3 <- nsclc_tables$train
+# nsclc_train_subset_3$matrix <- nsclc_train_subset_3$matrix[-(401:600), ]
+# nsclc_train_subset_3$sample_list <- nsclc_train_subset_3$sample_list[-(401:600)]
+# 
+# nsclc_gen_model_subset_3 <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = nsclc_train_subset_3, 
+#                                           progress = TRUE)
+# nsclc_pred_first_subset_3 <- pred_first_fit(gen_model = nsclc_gen_model_subset_3, lambda = exp(seq(-18, -26, length.out = 100)),
+#                                             gene_lengths = ensembl_gene_lengths, training_matrix = nsclc_train_subset_3$matrix)
+# write_rds(nsclc_pred_first_subset_3, "data/pre_loaded/nsclc_pred_first_subset_3")
+nsclc_pred_first_subset_3 <- read_rds("data/pre_loaded/nsclc_pred_first_subset_3")
+nsclc_pred_refit_subset_3 <- pred_refit_range(pred_first = nsclc_pred_first_subset_3, gene_lengths = ensembl_gene_lengths)
+
+# nsclc_train_subset_4 <- nsclc_tables$train
+# nsclc_train_subset_4$matrix <- nsclc_train_subset_4$matrix[-(601:800), ]
+# nsclc_train_subset_4$sample_list <- nsclc_train_subset_4$sample_list[-(601:800)]
+# 
+# nsclc_gen_model_subset_4 <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = nsclc_train_subset_4, 
+#                                           progress = TRUE)
+# nsclc_pred_first_subset_4 <- pred_first_fit(gen_model = nsclc_gen_model_subset_4, lambda = exp(seq(-18, -26, length.out = 100)),
+#                                             gene_lengths = ensembl_gene_lengths, training_matrix = nsclc_train_subset_4$matrix)
+# write_rds(nsclc_pred_first_subset_4, "data/pre_loaded/nsclc_pred_first_subset_4")
+nsclc_pred_first_subset_4 <- read_rds("data/pre_loaded/nsclc_pred_first_subset_4")
+nsclc_pred_refit_subset_4 <- pred_refit_range(pred_first = nsclc_pred_first_subset_4, gene_lengths = ensembl_gene_lengths)
+
+robust_fig <- bind_rows(nsclc_pred_first_tmb %>% 
+            get_predictions(new_data = nsclc_tables$val) %>%
+            get_stats(biomarker_values = nsclc_tmb_values$val, model = "First-fit T", threshold = 300) %>% 
+            mutate(subset = 1, Data = "Training (Full)"),
+          nsclc_pred_refit_tmb %>% 
+            get_predictions(new_data = nsclc_tables$val) %>%
+            get_stats(biomarker_values = nsclc_tmb_values$val, model = "Refitted T", threshold = 300) %>% 
+            mutate(subset = 1, Data = "Training (Full)"),
+          nsclc_pred_first_subset_1 %>%
+            get_predictions(new_data = nsclc_tables$val) %>%
+            get_stats(biomarker_values = nsclc_tmb_values$val, model = "First-fit T", threshold = 300) %>%
+            mutate(subset = 1, Data = "Training (Subset)"),
+          nsclc_pred_refit_subset_1 %>%
+            get_predictions(new_data = nsclc_tables$val) %>%
+            get_stats(biomarker_values = nsclc_tmb_values$val, model = "Refitted T", threshold = 300) %>%
+            mutate(subset = 1, Data = "Training (Subset)"),
+          nsclc_pred_first_subset_2 %>%
+            get_predictions(new_data = nsclc_tables$val) %>%
+            get_stats(biomarker_values = nsclc_tmb_values$val, model = "First-fit T", threshold = 300) %>%
+            mutate(subset = 2, Data = "Training (Subset)"),
+          nsclc_pred_refit_subset_2 %>%
+            get_predictions(new_data = nsclc_tables$val) %>%
+            get_stats(biomarker_values = nsclc_tmb_values$val, model = "Refitted T", threshold = 300) %>%
+            mutate(subset = 2, Data = "Training (Subset)"),
+          nsclc_pred_first_subset_3 %>%
+            get_predictions(new_data = nsclc_tables$val) %>%
+            get_stats(biomarker_values = nsclc_tmb_values$val, model = "First-fit T", threshold = 300) %>%
+            mutate(subset = 3, Data = "Training (Subset)"),
+          nsclc_pred_refit_subset_3 %>%
+            get_predictions(new_data = nsclc_tables$val) %>%
+            get_stats(biomarker_values = nsclc_tmb_values$val, model = "Refitted T", threshold = 300) %>%
+            mutate(subset = 3, Data = "Training (Subset)"),
+          nsclc_pred_first_subset_4 %>%
+            get_predictions(new_data = nsclc_tables$val) %>%
+            get_stats(biomarker_values = nsclc_tmb_values$val, model = "First-fit T", threshold = 300) %>%
+            mutate(subset = 4, Data = "Training (Subset)"),
+          nsclc_pred_refit_subset_4 %>%
+            get_predictions(new_data = nsclc_tables$val) %>%
+            get_stats(biomarker_values = nsclc_tmb_values$val, model = "Refitted T", threshold = 300) %>%
+            mutate(subset = 4, Data = "Training (Subset)")) %>%
+  mutate(model = factor(model, levels = c("Refitted T", "First-fit T"))) %>% 
+  mutate(type = if_else(metric == "R", "Regression ~ (R^2)", "Classification ~ (AUPRC)")) %>%
+  mutate(type = factor(type, levels = c("Regression ~ (R^2)", "Classification ~ (AUPRC)"))) %>%
+  filter(panel_length <= 2000000) %>%
+  mutate(panel_length = panel_length / 1000000) %>%
+  ggplot(aes(x = panel_length, y = stat, linetype = model, alpha = Data, group = interaction(factor(subset), model, Data))) + geom_line(size = 1) + 
+  facet_wrap(~type, labeller = label_parsed, strip.position = "top") + ylim(0.75, 0.98) +
+  theme_minimal() +
+  theme(legend.position = "bottom") + labs(x = "Panel Size (Mb)", y = "") +
+  scale_linetype(name = "Procedure:", labels = list(TeX("Refitted $\\hat{T}$"), TeX("First-Fit $\\hat{T}$"))) + 
+  scale_alpha_manual(values = c(1, 0.3))
+
+ggsave(filename = "results/figures/robust_fig.png", plot = robust_fig, height = 4, width = 8)
+  
