@@ -142,9 +142,9 @@ prad_tables <- get_mutation_tables(maf = prad_maf,
                                    split = c(train = 700.1, val = 0, test = 312)) #don't ask about the .1, this needs fixing
 
 message("Getting generative model")
-prad_gen_model <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = prad_tables$train,
-                                progress = TRUE)
-write_rds(prad_gen_model, "data/pre_loaded/prad_gen_model")
+# prad_gen_model <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = prad_tables$train,
+#                                 progress = TRUE)
+# write_rds(prad_gen_model, "data/pre_loaded/prad_gen_model")
 prad_gen_model <- read_rds("data/pre_loaded/prad_gen_model")
 
 prad_pred_first_tmb <- pred_first_fit(gen_model = prad_gen_model, 
@@ -348,4 +348,42 @@ external_validation_fig <- bind_rows(skcm_refit_stats, skcm_refit_stats_val,
 
 ggsave(filename = "results/figures/external_validation_fig.png", external_validation_fig, width = 10, height = 6)
 
+
+# Exploration of prostrate cancer TMB values between internal and external datasets
+prad_val_internal_predictions <- prad_pred_refit_tmb %>%
+  get_predictions(new_data = prad_tables$test) %>%
+  pred_intervals(pred_model = prad_pred_refit_tmb, biomarker_values = prad_tmb_values$test,
+                 gen_model = prad_gen_model, training_matrix = prad_tables$train$matrix,
+                 gene_lengths = ensembl_gene_lengths, max_panel_length = 1000000, marker_mut_types = c("NS")) 
+prad_val_internal_predictions$prediction_intervals <- mutate(prad_val_internal_predictions$prediction_intervals, Dataset = "Internal (Armenia et al, 2018)")
+
+prad_val_external_predictions <- prad_pred_refit_tmb %>%
+    get_predictions(new_data = prad_val_tables$test) %>%
+  pred_intervals(pred_model = prad_pred_refit_tmb, biomarker_values = prad_val_tmb_values$test,
+                 gen_model = prad_gen_model, training_matrix = prad_tables$train$matrix,
+                 gene_lengths = ensembl_gene_lengths, max_panel_length = 1000000, marker_mut_types = c("NS")) 
+prad_val_external_predictions$prediction_intervals <- mutate(prad_val_external_predictions$prediction_intervals, Dataset = "External (Kumar et al, 2016)")
+
+library(ggExtra)
+p <- bind_rows(prad_val_internal_predictions$prediction_intervals,
+               prad_val_external_predictions$prediction_intervals) %>%
+  {ggplot(., aes(x = true_value, y = estimated_value, colour = Dataset)) + geom_point()  + theme_minimal() +
+      scale_x_continuous(trans = scales::pseudo_log_trans(), breaks = c(0,10**(1:3))) +
+      scale_y_continuous(trans = scales::pseudo_log_trans(), breaks = c(0,10**(1:3)), limit = c(0,NA)) +
+      geom_abline(colour = "grey", linetype = 2) + labs(x = "True Value", y = "Estimated Value")}
+
+prad_int_ext_val_fig <- ggMarginal(p, margins = "x", groupFill = TRUE)
+
+
+ggsave(filename = "results/figures/prad_int_ext_val.png", plot = prad_int_ext_val_fig, width = 8, height = 4)
+
+prad_val_internal_predictions$prediction_intervals %>% 
+  {1 - sum((.$true_value - .$estimated_value)^2)/sum((.$true_value - mean(.$true_value))^2)}
+
+prad_val_external_predictions$prediction_intervals %>% 
+  {1 - sum((.$true_value - .$estimated_value)^2)/sum((.$true_value - mean(.$true_value))^2)}
+
+
+
+                
 
