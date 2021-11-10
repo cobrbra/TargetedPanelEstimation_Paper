@@ -1124,7 +1124,7 @@ nsclc_refit_stats_val_hell <- nsclc_pred_refit_tmb %>%
 nsclc_val_hell_predictions <- nsclc_pred_refit_tmb %>%
   get_predictions(new_data = nsclc_val_hell_tables$test) %>%
   pred_intervals(pred_model = nsclc_pred_refit_tmb, biomarker_values = nsclc_val_hell_tmb_values$test,
-                 gen_model = nsclc_gen_model, training_matrix = nsclc_tables$train$matrix, marker_mut_types = c("NS"),
+                 gen_model = nsclc_gen_model, training_matrix = nsclc_tables$train$matrix,
                  gene_lengths = ensembl_gene_lengths, max_panel_length = 600000, biomarker = "TMB") 
 nsclc_val_hell_predictions$prediction_intervals <- mutate(nsclc_val_hell_predictions$prediction_intervals, Dataset = "Hellman et al.")
 
@@ -1147,12 +1147,12 @@ nsclc_refit_stats_val_hell <- nsclc_pred_refit_tmb %>%
 nsclc_val_rizvi_predictions <- nsclc_pred_refit_tmb %>%
   get_predictions(new_data = nsclc_val_rizvi_tables$test) %>%
   pred_intervals(pred_model = nsclc_pred_refit_tmb, biomarker_values = nsclc_val_rizvi_tmb_values$test,
-                 gen_model = nsclc_gen_model, training_matrix = nsclc_tables$train$matrix, marker_mut_types = c("NS"),
+                 gen_model = nsclc_gen_model, training_matrix = nsclc_tables$train$matrix,
                  gene_lengths = ensembl_gene_lengths, max_panel_length = 600000, biomarker = "TMB") 
 
 nsclc_val_rizvi_predictions$prediction_intervals <- mutate(nsclc_val_rizvi_predictions$prediction_intervals, Dataset = "Rizvi et al.")
 
-# Validation set prediction figure
+# Validation sets prediction figure
 nsclc_val_pred_fig <- bind_rows(nsclc_val_hell_predictions$prediction_intervals,
                                 nsclc_val_rizvi_predictions$prediction_intervals) %>%
   mutate(model = "Refitted T") %>% 
@@ -1352,13 +1352,17 @@ robust_fig <- bind_rows(nsclc_pred_first_tmb %>%
   mutate(type = if_else(metric == "R", "Regression ~ (R^2)", "Classification ~ (AUPRC)")) %>%
   mutate(type = factor(type, levels = c("Regression ~ (R^2)", "Classification ~ (AUPRC)"))) %>%
   filter(panel_length <= 2000000) %>%
+  filter(type == "Regression ~ (R^2)", model == "Refitted T", Data == "Training (Subset)") %>%
   mutate(panel_length = panel_length / 1000000) %>%
-  ggplot(aes(x = panel_length, y = stat, linetype = model, alpha = Data, group = interaction(factor(subset), model, Data))) + geom_line(size = 1) + 
-  facet_wrap(~type, labeller = label_parsed, strip.position = "top") + ylim(0.75, 0.98) +
+  ggplot(aes(x = panel_length, y = stat, colour = factor(subset))) + geom_line(size = 1) + xlim(0.2, 1.5) +  ylim(0.75, 0.92) +
   theme_minimal() +
-  theme(legend.position = "bottom") + labs(x = "Panel Size (Mb)", y = "") +
+  theme(legend.position = "bottom") + labs(x = "Panel Size (Mb)", y = TeX("Regression ($R^2$)")) +
   scale_linetype(name = "Procedure:", labels = list(TeX("Refitted $\\hat{T}$"), TeX("First-Fit $\\hat{T}$"))) + 
-  scale_alpha_manual(values = c(1, 0.3))
+  scale_alpha_manual(values = c(0.3, 1)) + 
+  scale_colour_discrete(name = "Training Subset:")
 
-ggsave(filename = "results/figures/robust_fig.png", plot = robust_fig, height = 4, width = 8)
+ggsave(filename = "results/figures/robust.png", plot = robust_fig, height = 4, width = 4)
+
+
+
   
