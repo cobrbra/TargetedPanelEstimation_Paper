@@ -113,9 +113,9 @@ nsclc_pred_linear_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gen
 #   readData(exomef = exomef, covarf = covarf, mutContextf = mutContextf, ref = ref)
 # write_rds(x = trainset, file = "data/temporary_storage/trainset")
 #
-trainset <- read_rds("data/temporary_storage/trainset")
+# trainset <- read_rds("data/temporary_storage/trainset")
 #
-MRtriProb = getBgMRtri(trainset)
+# MRtriProb = getBgMRtri(trainset)
 
 # trainedModel = fit_model(trainset, MRtriProb, cores = 1)
 # write_rds(trainedModel, "data/temporary_storage/trainedModel")
@@ -490,7 +490,7 @@ print(paste0("Indel sparsity: ", signif(100*i_sparsity,3), "%"))
 s3.1.stats <- data.frame(ns_sparsity = ns_sparsity,
                          i_sparsity = i_sparsity)
 write_tsv(x = s3.1.stats, file = "results/s3.1.stats.tsv")
-
+rm(nsclc_gen_model_uninteract); rm(nsclc_gen_model_unisamp)
 
 
 ### Figure 6
@@ -998,11 +998,6 @@ quantile_thresholds_fig <- quantile_data %>%
   theme_minimal() + 
   labs(x = "TMB Threshold (Quantile)", y = "Classification Performance") + scale_x_continuous(breaks = scales::pretty_breaks(n = 10)) 
 ggsave(filename = "results/figures/quantile_thresholds_fig.png", plot = quantile_thresholds_fig, width = 7, height = 5)
-
-quantile_auprc_data %>% 
-  ggplot(aes(x = tmb_threshold, y = AUPRC)) + geom_col(colour = "grey", alpha = 0.8) + 
-  theme_minimal() +
-  labs(x = "TMB Quantile", y = "Threshold Value")
 
 
 # Lyu-style Analysis
