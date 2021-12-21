@@ -1,0 +1,1634 @@
+## devtools Package
+#install.packages("devtools")
+library(devtools)
+
+## ICBioMark Package
+# install.packages("ICBioMark")
+library(ICBioMark)
+
+## ecTMB Package
+
+# devtools::install_github("bioinform/ecTMB")
+# library(ecTMB)
+
+## Other R packages needed
+#install.packages("cowplot")
+library(cowplot)
+#install.packages("magrittr")
+library(magrittr)
+#install.packages("ggplot2")
+library(ggplot2)
+#install.packages("dplyr")
+library(dplyr)
+#install.packages("readr")
+library(readr)
+#install.packages("tidyr")
+library(tidyr)
+#install.package("latex2exp")
+library(latex2exp)
+#install.packages("purrr")
+library(purrr)
+#install.packages("tibble")
+library(tibble)
+#install.packages("PRROC")
+library(PRROC)
+
+
+## Figures path
+fig_path <- "results/figures/"
+
+
+
+### Main workflow
+message("Getting tables")
+nsclc_tables <- get_mutation_tables(maf = nsclc_maf, include_synonymous = FALSE,
+                                    acceptable_genes = ensembl_gene_lengths$Hugo_Symbol)
+
+message("Getting generative model")
+# nsclc_gen_model <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = nsclc_tables$train,
+#                                  progress = TRUE)
+# write_rds(x = nsclc_gen_model, file = "data/pre_loaded/nsclc_gen_model")
+
+nsclc_gen_model <- read_rds("data/pre_loaded/nsclc_gen_model")
+
+message("Getting first-fit")
+# nsclc_pred_first_tmb <- pred_first_fit(gen_model = nsclc_gen_model, lambda = exp(seq(-18, -26, length.out = 100)),
+                                         # gene_lengths = ensembl_gene_lengths, training_matrix = nsclc_tables$train$matrix)
+# write_rds(x = nsclc_pred_first_tmb, file = "data/pre_loaded/nsclc_pred_first_tmb")
+
+nsclc_pred_first_tmb <- read_rds("data/pre_loaded/nsclc_pred_first_tmb")
+
+message("Getting refit")
+nsclc_pred_refit_tmb <- pred_refit_range(pred_first = nsclc_pred_first_tmb, gene_lengths = ensembl_gene_lengths)
+
+nsclc_tmb_values <- get_biomarker_tables(nsclc_maf, biomarker = "TMB")
+
+# nsclc_pred_first_tib <- pred_first_fit(gen_model = nsclc_gen_model, lambda = exp(seq(-18, -30, length.out = 100)),
+#                                        gene_lengths = ensembl_gene_lengths, training_matrix = nsclc_tables$train$matrix,
+#                                        biomarker = "TIB")
+# write_rds(x = nsclc_pred_first_tib, file = "data/pre_loaded/nsclc_pred_first_tib")
+
+nsclc_pred_first_tib <- read_rds("data/pre_loaded/nsclc_pred_first_tib")
+nsclc_pred_refit_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gene_lengths = ensembl_gene_lengths,
+                                         biomarker = "TIB")
+nsclc_tib_values <- get_biomarker_tables(nsclc_maf, biomarker = "TIB")
+
+message("Getting count estimators")
+nsclc_pred_count_tmb <- pred_refit_range(pred_first = nsclc_pred_first_tmb, gene_lengths = ensembl_gene_lengths, model = "Count", biomarker = "TMB", training_data = nsclc_tables$train, training_values = nsclc_tmb_values$train)
+nsclc_pred_count_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gene_lengths = ensembl_gene_lengths, model = "Count", biomarker = "TIB", training_data = nsclc_tables$train, training_values = nsclc_tib_values$train)
+
+message("Getting OLM estimators")
+# To give linear estimators a fighting chance, we train them on data than isn't
+# separated into indel/non-indel (this helps with overfitting).
+
+nsclc_linear_tables <- get_mutation_tables(maf = nsclc_maf, acceptable_genes = ensembl_gene_lengths$Hugo_Symbol, for_biomarker = "TMB", include_synonymous = FALSE)
+
+nsclc_pred_linear_tmb <- pred_refit_range(pred_first = nsclc_pred_first_tmb, gene_lengths = ensembl_gene_lengths,
+                                          model = "OLM", biomarker = "TMB", training_data = nsclc_linear_tables$train, training_values = nsclc_tmb_values$train, max_panel_length = 1000000)
+nsclc_pred_linear_tib <- pred_refit_range(pred_first = nsclc_pred_first_tib, gene_lengths = ensembl_gene_lengths,
+                                          model = "OLM", biomarker = "TIB", training_data = nsclc_linear_tables$train, training_values = nsclc_tib_values$train, max_panel_length = 1000000)
+
+
+
+### ecTMB Workflow
+# extdataDir = "data/ecTMB_data/references"
+# exomef                 = file.path(extdataDir, "exome_hg38_vep.Rdata" )  #### hg38 exome file
+# covarf                 = file.path(extdataDir,"gene.covar.txt")   ### gene properties
+# mutContextf            = file.path(extdataDir,"mutation_context_96.txt" )  ### 96 mutation contexts
+# ref                    = file.path(extdataDir,"GRCh38.d1.vd1.fa" )
+# 
+# nsclc_maf_grch38 <- read_tsv("data/nsclc_maf_grch38.tsv", comment = "#")
+
+# URL = "https://github.com/bioinform/ecTMB/releases/download/v0.1.0/ecTMB_data.tar.gz"
+# download.file(URL,destfile = "data/ecTMB.example.tar.gz")
+# untar("data/ecTMB.example.tar.gz")
+
+# URL_ref = "https://api.gdc.cancer.gov/data/254f697d-310d-4d7d-a27b-27fbf767a834"
+# download.file(URL_ref,destfile = "data/ecTMB_data/GRCh38.d1.vd1.fa.tar.gz")
+# untar("data/ecTMB_data/GRCh38.d1.vd1.fa.tar.gz")
+
+# trainset = nsclc_maf_grch38 %>%
+#   filter(Tumor_Sample_Barcode %in% nsclc_tables$train$sample_list) %>%
+#   filter(!(Tumor_Sample_Barcode %in% "TCGA-86-A4P8-01")) %>% #hacky solution: There were no non-silent mutations in this observation, which was breaking ecTMB
+#   readData(exomef = exomef, covarf = covarf, mutContextf = mutContextf, ref = ref)
+# write_rds(x = trainset, file = "data/temporary_storage/trainset")
+#
+# trainset <- read_rds("data/temporary_storage/trainset")
+#
+# MRtriProb = getBgMRtri(trainset)
+
+# trainedModel = fit_model(trainset, MRtriProb, cores = 1)
+# write_rds(trainedModel, "data/temporary_storage/trainedModel")
+#
+# trainedModel = read_rds("data/temporary_storage/trainedModel")
+#
+# F1_panel <- "data/foundation_bed.bed"
+# MSK_panel <- "data/msk_impact_bed.bed"
+# TST_170_panel <- "data/tst_170_bed.bed"
+# lyu_panel <- "data/lyu_bed.bed"
+
+# valset_WES <- nsclc_maf_grch38 %>%
+#   filter(Tumor_Sample_Barcode %in% nsclc_tables$val$sample_list) %>%
+#   readData(exomef, covarf, mutContextf, ref)
+# write_rds(valset_WES, "data/temporary_storage/valset_WES")
+# valset_WES <- read_rds("data/temporary_storage/valset_WES")
+
+
+# testset_WES <- nsclc_maf_grch38 %>%
+#   filter(Tumor_Sample_Barcode %in% nsclc_tables$test$sample_list) %>%
+#   readData(exomef, covarf, mutContextf, ref)
+# write_rds(testset_WES, "data/temporary_storage/testset_WES")
+# testset_WES <- read_rds("data/temporary_storage/testset_WES")
+
+## TST-170 Panel
+# sample_tst_170_val = data.frame(SampleID = nsclc_tables$val$sample_list, BED = TST_170_panel, stringsAsFactors = FALSE)
+# 
+# valset_tst_170 <- nsclc_maf_grch38 %>%
+#   filter(Tumor_Sample_Barcode %in% nsclc_tables$val$sample_list) %>%
+#   readData(exomef, covarf, mutContextf, ref, samplef = sample_tst_170_val)
+# write_rds(valset_tst_170, "data/temporary_storage/valset_tst_170")
+# valset_tst_170 <- read_rds("data/temporary_storage/valset_tst_170")
+#
+# val_pred_tst_170 <- pred_TMB(valset_tst_170, WES = valset_WES, cores = 1, params = trainedModel, mut.nonsil = T,
+#                              gid_nonsil_p = trainset$get_nonsil_passengers(0.95)) %>%
+#   mutate(estimated_values = mean(nsclc_tmb_values$val$TMB) *ecTMB_panel_TMB/ mean(WES_TMB),
+#          true_values = mean(nsclc_tmb_values$val$TMB)*WES_TMB / mean(WES_TMB),
+#          Tumor_Sample_Barcode = sample) %>%
+#   select(Tumor_Sample_Barcode, estimated_values, true_values) %>%
+#   mutate(panel = "TST-170")
+#
+# write_tsv(val_pred_tst_170, "data/pre_loaded/val_pred_tst_170.tsv")
+#
+# ## Foundation One Panel
+# sample_f1_val = data.frame(SampleID = nsclc_tables$val$sample_list, BED = F1_panel, stringsAsFactors = FALSE)
+#
+# valset_f1 <- nsclc_maf_grch38 %>%
+#   filter(Tumor_Sample_Barcode %in% nsclc_tables$val$sample_list) %>%
+#   readData(exomef, covarf, mutContextf, ref, samplef = sample_f1_val)
+# write_rds(valset_f1, "data/temporary_storage/valset_f1")
+# valset_f1 <- read_rds("data/temporary_storage/valset_f1")
+#
+# val_pred_f1 <- pred_TMB(valset_f1, WES = valset_WES, cores = 1, params = trainedModel, mut.nonsil = T,
+#                              gid_nonsil_p = trainset$get_nonsil_passengers(0.95)) %>%
+#   mutate(estimated_values = mean(nsclc_tmb_values$val$TMB) *ecTMB_panel_TMB/ mean(WES_TMB),
+#          true_values = mean(nsclc_tmb_values$val$TMB)*WES_TMB / mean(WES_TMB),
+#          Tumor_Sample_Barcode = sample) %>%
+#   select(Tumor_Sample_Barcode, estimated_values, true_values) %>%
+#   mutate(panel = "F1")
+#
+# write_tsv(val_pred_f1, "data/pre_loaded/val_pred_f1.tsv")
+#
+#
+# ## MSK-IMPACT Panel
+# sample_msk_val = data.frame(SampleID = nsclc_tables$val$sample_list, BED = MSK_panel, stringsAsFactors = FALSE)
+#
+# valset_msk <- nsclc_maf_grch38 %>%
+#   filter(Tumor_Sample_Barcode %in% nsclc_tables$val$sample_list) %>%
+#   readData(exomef, covarf, mutContextf, ref, samplef = sample_msk_val)
+# write_rds(valset_msk, "data/temporary_storage/valset_msk")
+#
+# val_pred_msk <- pred_TMB(valset_msk, WES = valset_WES, cores = 1, params = trainedModel, mut.nonsil = T,
+#                              gid_nonsil_p = trainset$get_nonsil_passengers(0.95)) %>%
+#   mutate(estimated_values = mean(nsclc_tmb_values$val$TMB) *ecTMB_panel_TMB/ mean(WES_TMB),
+#          true_values = mean(nsclc_tmb_values$val$TMB)*WES_TMB / mean(WES_TMB),
+#          Tumor_Sample_Barcode = sample) %>%
+#   select(Tumor_Sample_Barcode, estimated_values, true_values) %>%
+#   mutate(panel = "MSK-I")
+#
+# write_tsv(val_pred_msk, "data/pre_loaded/val_pred_msk.tsv")
+#
+#
+# ## Lyu Panel
+# sample_lyu_val = data.frame(SampleID = nsclc_tables$val$sample_list, BED = lyu_panel, stringsAsFactors = FALSE)
+# 
+# valset_lyu <- nsclc_maf_grch38 %>%
+#   filter(Tumor_Sample_Barcode %in% nsclc_tables$val$sample_list) %>%
+#   readData(exomef, covarf, mutContextf, ref, samplef = sample_lyu_val)
+# write_rds(valset_lyu, "data/temporary_storage/valset_lyu")
+# 
+# val_pred_lyu <- pred_TMB(valset_lyu, WES = valset_WES, cores = 1, params = trainedModel, mut.nonsil = T,
+#                              gid_nonsil_p = trainset$get_nonsil_passengers(0.95)) %>%
+#   mutate(estimated_values = mean(nsclc_tmb_values$val$TMB) *ecTMB_panel_TMB/ mean(WES_TMB),
+#          true_values = mean(nsclc_tmb_values$val$TMB)*WES_TMB / mean(WES_TMB),
+#          Tumor_Sample_Barcode = sample) %>%
+#   select(Tumor_Sample_Barcode, estimated_values, true_values) %>%
+#   mutate(panel = "Lyu")
+# 
+# write_tsv(val_pred_lyu, "data/pre_loaded/val_pred_lyu.tsv")
+
+
+
+
+### Figure 1
+message("Creating Figure 1")
+
+
+
+## Subfigure 1
+fig1p1 <- nsclc_survival %>%
+  add_count(SEX, name = "n_sex") %>%
+  mutate(Sex = SEX, Age = as.numeric(AGE)) %>%
+  filter(Sex %in% c("Male", "Female")) %>%
+  ggplot(aes(x = Sex, y = Age)) + geom_violin(fill = "black", alpha = 0.5, colour = "black") +
+  geom_text(aes(x = Sex, y = 67, label = paste("n = ", n_sex))) + theme_minimal() +
+  theme(axis.title.x=element_blank())
+
+stage_groups <- c("I", "I", "I", "II", "II", "II", "III", "III", "III", "IV")
+names(stage_groups) <- c("I", "IA", "IB", "II", "IIA", "IIB", "III", "IIIA", "IIIB", "IV")
+
+smoking_groups <- c("Lifelong Non-Smoker", "Current Reformed \n Smoker (>15 Years)",
+                    "Current Reformed \n Smoker (<= 15 Years)", "Current Reformed \n Smoker (Duration UnSpecified)",
+                    "Current Smoker")
+names(smoking_groups) <- c("Lifelong Non-Smoker", "Current Reformed Smoker For > 15 Years",
+                           "Current Reformed Smoker For < Or = 15 Years", "Current Reformed Smoker, Duration Not Specified",
+                           "Current Smoker")
+
+fig1p2 <- nsclc_survival %>%
+  group_by(SMOKING_HISTORY, STAGE) %>%
+  count() %>%
+  ungroup() %>%
+  mutate(Stage = stage_groups[STAGE]) %>%
+  filter(!is.na(Stage)) %>%
+  mutate(Stage = factor(Stage, levels = c("IV","III","II","I"))) %>%
+  mutate(Smoking_History = smoking_groups[SMOKING_HISTORY])  %>%
+  filter(!is.na(Smoking_History)) %>%
+  select(Stage, Smoking_History, n) %>%
+  group_by(Stage, Smoking_History) %>%
+  mutate(n = sum(n)) %>%
+  distinct() %>%
+  ggplot(aes(x = Smoking_History, y = n, fill = Stage, order = Stage)) +
+  geom_col(position = position_stack(), alpha = 0.8, colour = "black") + scale_fill_brewer(palette = "Greys") +
+  theme_minimal() + theme(axis.text.x = element_text(angle = 45, vjust = 0.7)) +
+  labs(y = "Frequency") + theme(axis.title.x=element_blank())
+
+
+fig1 <- plot_grid(fig1p1, fig1p2, labels = "AUTO", align = "h")
+ggsave(paste0(fig_path, "fig1.png"), fig1, width = 10, height = 4)
+
+
+
+### Figure 2
+message("Creating Figure 2")
+
+
+
+tmb_tib_train <- inner_join(get_biomarker_tables(maf = nsclc_maf, biomarker = "TMB")$train, get_biomarker_tables(maf = nsclc_maf, biomarker = "TIB")$train, by = "Tumor_Sample_Barcode")
+
+## Subfigure 1
+fig2p1 <- tmb_tib_train %>%
+  gather(key = "Biomarker", value = "Count", -Tumor_Sample_Barcode) %>%
+  mutate(Biomarker = factor(Biomarker, levels = c("TMB", "TIB"))) %>%
+  ggplot(aes(x = Biomarker, y = Count)) +
+  geom_violin(fill = "black", alpha = 0.5, colour = "black") +
+  scale_y_log10() +
+  theme_minimal() +
+  labs(y = "Mutation Count") + theme(axis.title.x = element_blank())
+
+
+## Subfigure 2
+variant_names <- c("Missense", "Nonsense", "Splice site", "Translation start",
+                   "Nonstop", "In-frame indel", "In-frame indel", "Frame-shift indel",
+                   "Frame-shift indel")
+names(variant_names) <- names(get_mutation_dictionary(include_synonymous = FALSE))
+
+fig2p2 <- nsclc_maf %>%
+  filter(Tumor_Sample_Barcode %in% nsclc_tables$train$sample_list) %>%
+  filter(Variant_Classification %in% names(variant_names)) %>%
+  mutate(Variant_Classification = variant_names[Variant_Classification]) %>%
+  group_by(Variant_Classification) %>%
+  count() %>%
+  ungroup() %>%
+  mutate(n = n/sum(n)) %>%
+  ggplot(aes(x = reorder(Variant_Classification, - n), y = n)) +
+  geom_col(fill = "black", alpha = 0.5, colour = "black") + labs(y = "Proportion of NS Mutations") +
+  theme_minimal() + theme(axis.text.x = element_text(angle = 45, vjust = 0.8)) +
+  theme(axis.title.x=element_blank())
+
+
+fig2 <- plot_grid(fig2p1, fig2p2, labels = "AUTO", align = "h")
+ggsave(paste0(fig_path, "fig2.png"), fig2, width = 10, height = 4)
+
+combined_pop <- plot_grid(fig1p1, fig1p2, fig2p1, fig2p2, labels = "AUTO", nrow = 2, align = "h")
+
+ggsave(paste0(fig_path, "combined_pop_figs.png"), combined_pop, width = 10, height = 9)
+
+### Section 3 Intro Stats
+n_train_samples <- length(nsclc_tables$train$sample_list)
+n_val_samples <- length(nsclc_tables$va$sample_list)
+n_test_samples <- length(nsclc_tables$test$sample_list)
+print(paste("Training Samples:", n_train_samples))
+print(paste("Validation Samples:", n_val_samples))
+print(paste("Test Samples:", n_test_samples))
+
+n_genes <- length(unique(nsclc_maf$Hugo_Symbol))
+print(paste("Genes Analysed:", n_genes))
+
+tmb_mean <- mean(tmb_tib_train$TMB)
+tib_mean <- mean(tmb_tib_train$TIB)
+print(paste("TMB Mean:", signif(tmb_mean, 3)))
+print(paste("TIB Mean:", signif(tib_mean, 3)))
+
+s3.intro.stats <- data.frame(n_train_samples = n_train_samples,
+                              n_val_samples = n_val_samples,
+                              n_test_samples = n_test_samples,
+                              n_genes = n_genes,
+                              tmb_mean = tmb_mean,
+                              tib_mean = tib_mean)
+write_tsv(x = s3.intro.stats, file = 'results/s3.intro.stats.tsv')
+
+
+### Figure 3
+message("Creating Figure 3")
+
+
+
+fig3 <- vis_model_fit(nsclc_gen_model)
+ggsave(paste0(fig_path, "fig3.png"), fig3, width = 8, height = 4)
+ggsave(paste0(fig_path, "genmodel_fit.png"), fig3, width = 8, height = 4)
+
+
+
+### Figure 4
+message("Creating Figure 4")
+
+
+
+gene_locations <- nsclc_maf %>%
+  mutate(Chromosome = if_else(Chromosome == "23", "X", Chromosome)) %>%
+  mutate(Chromosome = if_else(Chromosome == "24", "Y", Chromosome)) %>%
+  mutate(Start_Position = as.numeric(Start_Position)) %>%
+  filter(Hugo_Symbol %in% nsclc_gen_model$names$gene_list) %>%
+  select(Hugo_Symbol, Chromosome, Start_Position) %>%
+  distinct() %>%
+  group_by(Hugo_Symbol) %>%
+  mutate(Position = mean(Start_Position)) %>%
+  ungroup() %>%
+  select(Hugo_Symbol, Chromosome, Position) %>%
+  distinct() %>%
+  arrange(Hugo_Symbol) %>%
+  filter(Hugo_Symbol != lead(Hugo_Symbol))
+
+gene_locations_and_coefficients <- data.frame(Hugo_Symbol = nsclc_gen_model$names$gene_list,
+                                              ns_coefficient = as.vector(nsclc_gen_model$fit$beta[seq(1,length(nsclc_gen_model$names$col_names), 2), nsclc_gen_model$s_min]),
+                                              i_coefficient = as.vector(nsclc_gen_model$fit$beta[seq(2,length(nsclc_gen_model$names$col_names), 2), nsclc_gen_model$s_min])) %>%
+  inner_join(gene_locations, by = "Hugo_Symbol")
+
+chromosomes <- c(1:22, "Y","X")
+chromosomes <- factor(chromosomes, chromosomes)
+names(chromosomes) <- chromosomes
+chrom_info <- gene_locations_and_coefficients %>%
+  group_by(Chromosome) %>%
+  mutate(Chromosome_length = max(Position)) %>%
+  select(Chromosome, Chromosome_length) %>%
+  distinct() %>%
+  mutate(Chromosome = chromosomes[Chromosome]) %>%
+  arrange(Chromosome) %>%
+  filter(!is.na(Chromosome)) %>%
+  ungroup()
+
+chrom_info[23,'Chromosome_length'] <- chrom_info[24, 'Chromosome_length']
+
+chrom_info  <- chrom_info %>%
+  mutate(cum_chrom_length = cumsum(Chromosome_length))
+
+manhat_data <- gene_locations_and_coefficients %>%
+  full_join(chrom_info, by = "Chromosome")
+
+extreme_data_ns <- manhat_data %>%
+  arrange(ns_coefficient) %>%
+  filter(!is.na(Chromosome)) %>%
+  {.[(nrow(.) - 4):nrow(.),]}
+
+extreme_data_ns["17127", "ns_coefficient"] <- 3 # shifting the label (but not the point) upwards for readability
+
+chrom_alternate <- rep(c(0,1), 12)
+names(chrom_alternate) <- names(chromosomes)
+
+fig4 <- manhat_data %>%
+  filter(!is.na(Chromosome)) %>%
+  mutate(full_position = cum_chrom_length + Position) %>%
+  mutate(Chromosome = factor(chrom_alternate[Chromosome])) %>%
+  ggplot(aes(x = full_position, y = ns_coefficient,colour = Chromosome, size = ns_coefficient)) + geom_point(alpha = 0.75) +
+  geom_text(data = extreme_data_ns, aes(x = cum_chrom_length + Position + 2.1*nchar(Hugo_Symbol)*10^7, y = ns_coefficient, label = Hugo_Symbol, colour= factor(chrom_alternate[Chromosome])), size = 3) +
+  scale_x_continuous(label = names(chromosomes), breaks = chrom_info$cum_chrom_length + chrom_info$Chromosome_length/2 ) +
+  scale_color_manual(values = rep(c("#276FBF", "#183059"), 12)) +
+  scale_size_continuous(range = c(0.5,1)) +
+  labs(x = NULL,
+       y = TeX("$\\hat{\\lambda}_g$")) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    panel.border = element_blank(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    axis.text.x = element_text(angle = 90, size = 8, vjust = 0.5)
+  )
+ggsave(filename = "results/figures/fig4.png", plot = fig4, width = 8, height = 4)
+
+
+
+### Figure 5
+message("Creating Figure 5")
+
+
+extreme_data_i <- manhat_data %>%
+  arrange(i_coefficient) %>%
+  filter(!is.na(Chromosome)) %>%
+  {.[c(1:5, (nrow(.) - 4):nrow(.)),]}
+
+fig5 <- manhat_data %>%
+  filter(!is.na(Chromosome)) %>%
+  mutate(full_position = cum_chrom_length + Position) %>%
+  mutate(Chromosome = factor(chrom_alternate[Chromosome])) %>%
+  ggplot(aes(x = full_position, y = i_coefficient,colour = Chromosome, size = i_coefficient)) + geom_point(alpha = 0.75) +
+  geom_text(data = extreme_data_i, aes(x = cum_chrom_length + Position + 2.1*nchar(Hugo_Symbol)*10^7, y = i_coefficient, label = Hugo_Symbol, colour= factor(chrom_alternate[Chromosome])), size = 3) +
+  scale_x_continuous(label = names(chromosomes), breaks = chrom_info$cum_chrom_length + chrom_info$Chromosome_length/2 ) +
+  scale_color_manual(values = rep(c("#276FBF", "#183059"), 12)) +
+  scale_size_continuous(range = c(0.5,1)) +
+  labs(x = NULL,
+       y = TeX("$\\hat{\\eta}_{g, indel$")) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    panel.border = element_blank(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    axis.text.x = element_text(angle = 90, size = 8, vjust = 0.5)
+  )
+ggsave(filename = "results/figures/fig5.png", plot = fig5, width = 8, height = 4)
+
+combined_manhat_plots <- plot_grid(fig4, fig5, labels = "AUTO", nrow = 2)
+ggsave(filename = paste0(fig_path, "combined_manhat_plots.png"), plot = combined_manhat_plots, width = 10, height = 9)
+
+### Section 3.1 Stats
+
+# nsclc_gen_model_unisamp <- fit_gen_model_unisamp(gene_lengths = ensembl_gene_lengths, table = nsclc_tables$train,
+#                                  nlambda = 30, progress = TRUE)
+# write_rds(nsclc_gen_model_unisamp, "data/pre_loaded/nsclc_gen_model_unisamp")
+
+# nsclc_gen_model_uninteract <- fit_gen_model_uninteract(gene_lengths = ensembl_gene_lengths, table = nsclc_tables$train,
+#                                                         nlambda = 30, progress = TRUE)
+# write_rds(nsclc_gen_model_uninteract, "data/pre_loaded/nsclc_gen_model_uninteract")
+
+nsclc_gen_model_unisamp <- read_rds("data/pre_loaded/nsclc_gen_model_unisamp")
+nsclc_gen_model_uninteract <- read_rds("data/pre_loaded/nsclc_gen_model_uninteract")
+
+devs_sat <- get_gen_estimates(nsclc_tables$train, gen_model = nsclc_gen_model, alt_model_type = "S", gene_lengths = ensembl_gene_lengths, calculate_deviance = TRUE)
+devs_unigene <- get_gen_estimates(nsclc_tables$train, gen_model = nsclc_gen_model, alt_model_type = "UG", gene_lengths = ensembl_gene_lengths, calculate_deviance = TRUE)
+devs_unisamp <- get_gen_estimates(nsclc_tables$train, gen_model = nsclc_gen_model, alt_gen_model = nsclc_gen_model_unisamp, alt_model_type = "US", gene_lengths = ensembl_gene_lengths, calculate_deviance = TRUE)
+devs_uninteract <- get_gen_estimates(nsclc_tables$train, gen_model = nsclc_gen_model, alt_gen_model = nsclc_gen_model_uninteract, alt_model_type = "UI", gene_lengths = ensembl_gene_lengths, calculate_deviance = TRUE)
+
+s3.1.table <- data.frame(dev = c(devs_sat$deviance, devs_unisamp$deviance, devs_unigene$deviance, devs_uninteract$deviance),
+                         df = c(devs_sat$df, devs_unisamp$df, devs_unigene$df, devs_uninteract$df),
+                         ratio = c(devs_sat$deviance/devs_sat$df, devs_unisamp$deviance/devs_unisamp$df,
+                                   devs_unigene$deviance/devs_unigene$df, devs_uninteract$deviance/devs_uninteract$df),
+                         p = 1 - c(pchisq(devs_sat$deviance, devs_sat$df), pchisq(devs_unisamp$deviance, devs_unisamp$df), pchisq(devs_unigene$deviance, devs_unigene$df), pchisq(devs_uninteract$deviance, devs_uninteract$df)))
+
+write_tsv(s3.1.table, "results/s3.1.table.tsv")
+
+ns_sparsity = 1 - mean(manhat_data$ns_coefficient != 0)
+i_sparsity = 1 - mean(manhat_data$i_coefficient != 0)
+print(paste0("Non-synonymous sparsity:", signif(100*ns_sparsity, 3), "%"))
+print(paste0("Indel sparsity: ", signif(100*i_sparsity,3), "%"))
+
+s3.1.stats <- data.frame(ns_sparsity = ns_sparsity,
+                         i_sparsity = i_sparsity)
+write_tsv(x = s3.1.stats, file = "results/s3.1.stats.tsv")
+rm(nsclc_gen_model_uninteract); rm(nsclc_gen_model_unisamp)
+
+
+### Figure 6
+message("Creating Figure 6")
+
+first_stats_tmb <- nsclc_pred_first_tmb %>%
+  get_predictions(new_data = nsclc_tables$val) %>%
+  get_stats(biomarker_values = nsclc_tmb_values$val, model = "First-fit T", threshold = 300)
+
+refit_stats_tmb <- nsclc_pred_refit_tmb %>%
+  get_predictions(new_data = nsclc_tables$val) %>%
+  get_stats(biomarker_values = nsclc_tmb_values$val, model = "Refitted T", threshold = 300)
+
+combined_stats_tmb <- bind_rows(refit_stats_tmb, first_stats_tmb) %>%
+  mutate(model = factor(model, levels = c("Refitted T", "First-fit T"))) %>% 
+  mutate(type = if_else(metric == "R", "Regression ~ (R^2)", "Classification ~ (AUPRC)")) %>%
+  mutate(type = factor(type, levels = c("Regression ~ (R^2)", "Classification ~ (AUPRC)"))) %>%
+  filter(panel_length <= 2000000) %>%
+  mutate(panel_length = panel_length / 1000000) %>%
+  ggplot(aes(x = panel_length, y = stat, linetype = model)) + geom_line(size = 1) + ylim(0, 1) +
+  theme_minimal() + facet_wrap(~type, labeller = label_parsed, strip.position = "top") +
+  theme(legend.position = "bottom") + labs(x = "Panel Size (Mb)", y = "") +
+  scale_linetype(name = "Procedure:", labels = list(TeX("Refitted $\\hat{T}$"), TeX("First-Fit $\\hat{T}$"))) 
+
+ggsave(filename = "results/figures/combined_stats_tmb_fig.png", plot = combined_stats_tmb, height = 4, width = 8)
+
+
+
+### Figure 7
+message("Creating Figure 7")
+
+
+
+panels <- list("TST-170" = read_tsv("data/tst_170_genes.tsv")$Hugo_Symbol,
+               "F1" = read_tsv("data/foundation_genes.tsv")$Hugo_Symbol,
+               "Lyu" = read_tsv("data/lyu_genes.tsv")$Hugo_Symbol,
+               "MSK-I" = read_tsv("data/msk_impact_genes.tsv")$Hugo_Symbol)
+models <- c("T", "Count", "OLM")
+
+datasets <- list(nsclc_tables, nsclc_tables, nsclc_tables)
+names(datasets) <- models
+
+
+non_ectmb_model_stats <- panels %>%
+  purrr::map(function(panel) purrr::map(models, function(model) pred_refit_panel(model = model, pred_first = nsclc_pred_first_tmb, gene_lengths = ensembl_gene_lengths,
+                                                                  genes = panel, training_data = datasets[[model]]$train,
+                                                                  training_values = nsclc_tmb_values$train) %>%
+                                          get_predictions(new_data = datasets[[model]]$val) %>%
+                                          get_stats(biomarker_values = nsclc_tmb_values$val)) %>%
+    bind_rows() %>%
+    mutate(model = rep(models, each = 2))) %>%
+    bind_rows() %>%
+    mutate(panel = rep(names(panels), each = 6))
+
+rm(datasets)
+
+ectmb_preds <- list("TST-170" = read_tsv("data/pre_loaded/val_pred_tst_170.tsv"),
+                    "F1" = read_tsv("data/pre_loaded/val_pred_f1.tsv"),
+                    "Lyu" = read_tsv("data/pre_loaded/val_pred_lyu.tsv"),
+                    "MSK-I" = read_tsv("data/pre_loaded/val_pred_msk.tsv"))
+ectmb_model_stats <- purrr::map(ectmb_preds, ~ list(predictions = select(column_to_rownames(., "Tumor_Sample_Barcode"), estimated_values),
+                                                    panel_lengths = c(0))) %>%
+  purrr::map(~ get_stats(., biomarker_values = nsclc_tmb_values$val, model = "ecTMB")) %>%
+  bind_rows() %>%
+  mutate(panel = rep(names(ectmb_preds), each = 2))
+
+model_stats <- bind_rows(non_ectmb_model_stats, ectmb_model_stats) %>%
+  group_by(panel) %>%
+  mutate(panel_length = median(panel_length)) %>%
+  ungroup() %>%
+  mutate(metric = if_else(metric == "R", "Regression ~ (R^2)", "Classification ~ (AUPRC)")) %>%
+  mutate(metric = factor(metric, levels = c("Regression ~ (R^2)", "Classification ~ (AUPRC)"))) %>%
+  mutate(panel = factor(panel, levels = c("Our Procedure", "TST-170", "Lyu", "F1", "MSK-I"))) %>%
+  mutate(model = factor(model, c("T", "ecTMB", "Count", "OLM"))) %>%
+  mutate(panel_length = panel_length / 1000000)
+
+commercial_panels_stats <- bind_rows(refit_stats_tmb, first_stats_tmb) %>%
+  mutate(model = factor(model, levels = c("Refitted T", "First-fit T"))) %>% 
+  mutate(metric = if_else(metric == "R", "Regression ~ (R^2)", "Classification ~ (AUPRC)")) %>%
+  mutate(metric = factor(metric, levels = c("Regression ~ (R^2)", "Classification ~ (AUPRC)"))) %>%
+  mutate(panel = factor("Our Procedure", levels = c("Our Procedure", "TST-170", "Lyu", "F1", "MSK-I"))) %>% 
+  mutate(panel_length = panel_length / 1000000) %>%
+  ggplot(aes(x = panel_length, y = stat, colour = panel)) +
+  geom_point(data = model_stats, aes(pch = model), size = 3, stroke = 1) +
+  geom_line(aes(linetype = model), colour = "black", size = 1) +
+  facet_wrap(~metric, labeller = label_parsed) +
+  labs(x = "Panel Size (Mb)", y = "") +
+  theme_minimal() + ylim(0.6,1) +
+  scale_shape_discrete(solid = FALSE, name = "Models:", labels = list(TeX("$\\hat{T}$"), "ecTMB", "Count", "Linear")) +
+  scale_linetype_discrete(name = TeX("Procedure:"), labels = list(TeX("Refitted $\\hat{T}$"), TeX("First-fit $\\hat{T}$"))) +
+  scale_colour_discrete(name = "Panels (left to right):") +
+  theme(legend.position="bottom", legend.box = "horizontal") +
+  guides(shape = guide_legend(label.position = "top"), colour = guide_legend(label.position = "top"), linetype = guide_legend(label.position = "top")) +
+  scale_x_continuous(limits = c(0.2,1.5), breaks = c(0.4,0.8,1.2))
+
+ggsave(filename = "results/figures/commercial_panels_fig.png", commercial_panels_stats, height = 5, width = 8)
+
+
+### Figure 8
+message("Creating Figure 8")
+
+
+
+refit_predictions_tmb <- nsclc_pred_refit_tmb %>%
+  get_predictions(new_data = nsclc_tables$test) %>%
+  pred_intervals(pred_model = nsclc_pred_refit_tmb, biomarker_values = nsclc_tmb_values$test,
+                 gen_model = nsclc_gen_model, training_matrix = nsclc_tables$train$matrix,
+                 gene_lengths = ensembl_gene_lengths, max_panel_length = 600000, biomarker = "TMB")
+
+count_predictions_tmb <- nsclc_pred_count_tmb %>%
+  get_predictions(new_data = nsclc_tables$test, max_panel_length = 600000) %>%
+  {data.frame(estimated_value = .$predictions[nsclc_tmb_values$test[["Tumor_Sample_Barcode"]],],
+              true_value = nsclc_tmb_values$test[["TMB"]],
+              model = "Count", lower = NA, upper = NA)}
+
+linear_predictions_tmb <- nsclc_pred_linear_tmb %>%
+  get_predictions(new_data = nsclc_linear_tables$test, max_panel_length = 600000) %>%
+  {data.frame(estimated_value = .$predictions[nsclc_tmb_values$test[["Tumor_Sample_Barcode"]],],
+              true_value = nsclc_tmb_values$test[["TMB"]],
+              model = "Linear", lower = NA, upper = NA)}
+
+# write_tsv(data.frame(Hugo_Symbol = names(which(nsclc_pred_first_tmb$panel_genes[, max(which(nsclc_pred_first_tmb$panel_lengths <= 600000))]))),
+#           file = "data/panel_0.6_genes.tsv")
+
+# panel_0.6 <- "data/panel_0.6_bed.bed"
+# sample_0.6_test = data.frame(SampleID = nsclc_tables$test$sample_list, BED = panel_0.6, stringsAsFactors = FALSE)
+#
+# testset_0.6 <- nsclc_maf_grch38 %>%
+#   filter(Tumor_Sample_Barcode %in% nsclc_tables$test$sample_list) %>%
+#   readData(exomef, covarf, mutContextf, ref, samplef = sample_0.6_test)
+# write_rds(testset_0.6, "data/temporary_storage/testset_0.6")
+# testset_0.6 <- read_rds("data/temporary_storage/testset_0.6")
+#
+# test_pred_0.6 <- pred_TMB(testset_0.6, WES = testset_WES, cores = 1, params = trainedModel, mut.nonsil = T,
+#                              gid_nonsil_p = trainset$get_nonsil_passengers(0.95)) %>%
+#   mutate(estimated_value = mean(nsclc_tmb_values$test$TMB) *ecTMB_panel_TMB/ mean(WES_TMB),
+#          true_value = mean(nsclc_tmb_values$test$TMB)*WES_TMB / mean(WES_TMB),
+#          Tumor_Sample_Barcode = sample) %>%
+#   select(Tumor_Sample_Barcode, estimated_value, true_value)
+# write_tsv(test_pred_0.6, "data/pre_loaded/test_pred_0.6.tsv")
+
+ectmb_predictions_tmb <- read_tsv("data/pre_loaded/test_pred_0.6.tsv") %>%
+  mutate(lower = NA, upper = NA, model = "ecTMB") %>%
+  column_to_rownames("Tumor_Sample_Barcode")
+
+
+testset_predictions <- bind_rows(refit_predictions_tmb$prediction_intervals, ectmb_predictions_tmb, count_predictions_tmb, linear_predictions_tmb) %>%
+  mutate(model = factor(model, levels = c("Refitted T", "ecTMB", "Count", "Linear"))) %>%
+  {ggplot() + geom_point(data = ., aes(x = true_value, y = estimated_value), size = 0.5) + facet_wrap(~model, nrow = 2) +
+    geom_ribbon(data = refit_predictions_tmb$confidence_region %>% mutate(model = factor(model, levels = c("Refitted T", "ecTMB", "Count", "Linear"))), 
+                aes(x = x, ymin = y_lower, ymax = y_upper),
+                alpha = 0.2, fill = "red")  +
+    geom_abline(colour = "blue", linetype = 2) +
+    geom_hline(yintercept = 300, alpha = 0.5, linetype = 2) +
+    geom_vline(xintercept = 300, alpha = 0.5, linetype = 2) +
+    scale_x_continuous(trans = scales::pseudo_log_trans(), breaks = c(0,10**(1:3))) +
+    scale_y_continuous(trans = scales::pseudo_log_trans(), breaks = c(0,10**(1:3)), limit = c(0,NA)) +
+    theme_minimal() + labs(x = "True TMB", y = "Predicted TMB")}
+
+ggsave(testset_predictions, filename = "results/figures/testset_predictions_fig.png", width = 8, height = 7)
+
+
+
+### Section 3.2 stats
+tst_170_length <- model_stats %>%
+  filter(panel == "TST-170") %>%
+  pull(panel_length) %>%
+  unique()
+
+tst_170_alt_length <- refit_stats_tmb %>%
+  filter(panel_length <= 1000000 * tst_170_length) %>%
+  pull(panel_length) %>%
+  max()/1000000
+
+tst_170_alt_r <- refit_stats_tmb %>%
+  filter(panel_length == 1000000*tst_170_alt_length) %>%
+  filter(metric == "R") %>%
+  pull(stat)
+
+tst_170_r <- model_stats %>%
+  filter(panel == "TST-170") %>%
+  filter(metric == "Regression ~ (R^2)") %>%
+  filter(model == "OLM") %>%
+  pull(stat)
+
+n_tmb_h <- sum(nsclc_tmb_values$val$TMB >= 300)
+n_tmb_l <- sum(nsclc_tmb_values$val$TMB < 300)
+
+prop_tmb_h <- mean(nsclc_tmb_values$val$TMB >= 300)
+prop_tmb_l <- mean(nsclc_tmb_values$val$TMB < 300)
+
+t_0.6_r_tmb <- refit_predictions_tmb %>%
+  {1 - sum((.$prediction_intervals$estimated_value - .$prediction_intervals$true_value)^2)/
+    sum((.$prediction_intervals$true_value - mean(.$prediction_intervals$true_value))^2)}
+
+count_0.6_r_tmb <- count_predictions_tmb %>%
+  {1 - sum((.$estimated_value - .$true_value)^2)/
+    sum((.$true_value - mean(.$true_value))^2)}
+
+linear_0.6_r_tmb <- linear_predictions_tmb %>%
+  {1 - sum((.$estimated_value - .$true_value)^2)/
+    sum((.$true_value - mean(.$true_value))^2)}
+
+ectmb_0.6_r_tmb <- ectmb_predictions_tmb %>%
+  {1 - sum((.$estimated_value - .$true_value)^2)/
+    sum((.$true_value - mean(.$true_value))^2)}
+
+prop_confidence_tmb <- refit_predictions_tmb %>%
+  {mean((.$prediction_intervals$upper >= .$prediction_intervals$estimated_value) &
+        (.$prediction_intervals$lower <= .$prediction_intervals$estimated_value))}
+
+s3.2.stats <- data.frame(tst_170_length = tst_170_length,
+                         tst_170_alt_length = tst_170_alt_length,
+                         tst_170_r = tst_170_r,
+                         tst_170_alt_r = tst_170_alt_r,
+                         n_tmb_h = n_tmb_h,
+                         n_tmb_l = n_tmb_l,
+                         prop_tmb_h = prop_tmb_h,
+                         prop_tmb_l = prop_tmb_l,
+                         t_0.6_r_tmb = t_0.6_r_tmb,
+                         count_0.6_r_tmb = count_0.6_r_tmb,
+                         linear_0.6_r_tmb = linear_0.6_r_tmb,
+                         ectmb_0.6_r_tmb = ectmb_0.6_r_tmb,
+                         prop_confidence_tmb = prop_confidence_tmb)
+
+write_tsv(s3.2.stats, "results/s3.2.stats.tsv")
+
+
+
+### Figure 9
+message("Creating Figure 9")
+
+
+
+first_stats_tib <- nsclc_pred_first_tib %>%
+  get_predictions(new_data = nsclc_tables$val) %>%
+  get_stats(biomarker_values = nsclc_tib_values$val, model = "First-fit T", threshold = 10)
+
+refit_stats_tib <- nsclc_pred_refit_tib %>%
+  get_predictions(new_data = nsclc_tables$val) %>%
+  get_stats(biomarker_values = nsclc_tib_values$val, model = "Refitted T", threshold = 10)
+
+indel_stats <- bind_rows(refit_stats_tib, first_stats_tib) %>%
+  mutate(model = factor(model, levels = c("Refitted T", "First-fit T"))) %>% 
+  mutate(type = if_else(metric == "R", "Regression ~ (R^2)", "Classification ~ (AUPRC)")) %>%
+  mutate(type = factor(type, levels = c("Regression ~ (R^2)", "Classification ~ (AUPRC)"))) %>%
+  mutate(panel_length = panel_length / 1000000) %>%
+  ggplot(aes(x = panel_length, y = stat, linetype = model)) + geom_line(size = 1) + ylim(0, 1) +
+  theme_minimal() + facet_wrap(~type, labeller = label_parsed, strip.position = "top") + theme(legend.position = "bottom") + labs(x = "Panel Size (Mb)", y = "") +
+  scale_linetype(name = "Procedure:", labels = list(TeX("Refitted $\\hat{T}$"), TeX("First-Fit $\\hat{T}$")))
+
+ggsave(filename = "results/figures/indel_stats_fig.png", plot = indel_stats, height = 4, width = 8)
+
+
+### Figure 10
+message("Creating Figure 10")
+
+refit_predictions_tib <- nsclc_pred_refit_tib %>%
+  get_predictions(new_data = nsclc_tables$test) %>%
+  pred_intervals(pred_model = nsclc_pred_refit_tib, biomarker_values = nsclc_tib_values$test,
+                 gen_model = nsclc_gen_model, training_matrix = nsclc_tables$train$matrix,
+                 gene_lengths = ensembl_gene_lengths, max_panel_length = 600000, biomarker = "TIB")
+
+count_predictions_tib <- nsclc_pred_count_tib %>%
+  get_predictions(new_data = nsclc_tables$test, max_panel_length = 600000) %>%
+  {data.frame(estimated_value = .$predictions[nsclc_tib_values$test[["Tumor_Sample_Barcode"]],],
+              true_value = nsclc_tib_values$test[["TIB"]],
+              model = "Count", lower = NA, upper = NA)}
+
+linear_predictions_tib <- nsclc_pred_linear_tib %>%
+  get_predictions(new_data = nsclc_linear_tables$test, max_panel_length = 600000) %>%
+  {data.frame(estimated_value = .$predictions[nsclc_tib_values$test[["Tumor_Sample_Barcode"]],],
+              true_value = nsclc_tib_values$test[["TIB"]],
+              model = "Linear", lower = NA, upper = NA)}
+
+testset_indel <- bind_rows(refit_predictions_tib$prediction_intervals, count_predictions_tib, linear_predictions_tib) %>%
+  mutate(model = factor(model, levels = c("Refitted T", "ecTMB", "Count", "Linear"))) %>% 
+  {ggplot() + geom_point(data = ., aes(x = true_value, y = estimated_value), size = 0.5) + facet_wrap(~model, nrow = 2) +
+  geom_ribbon(data = refit_predictions_tib$confidence_region %>% mutate(model = factor(model, levels = c("Refitted T", "ecTMB", "Count", "Linear"))), 
+              aes(x = x, ymin = y_lower, ymax = y_upper),
+              alpha = 0.2, fill = "red") +
+  geom_abline(colour = "blue", linetype = 2) +
+  geom_hline(yintercept = 10, alpha = 0.5, linetype = 2) +
+  geom_vline(xintercept = 10, alpha = 0.5, linetype = 2) +
+  scale_x_continuous(trans = scales::pseudo_log_trans(), breaks = c(0,10**(1:2))) + 
+  scale_y_continuous(trans = scales::pseudo_log_trans(), breaks = c(0,10**(1:2)), limit = c(0,NA)) +  
+    theme_minimal() + labs(x = "True TIB", y = "Predicted TIB")}
+
+ggsave(filename = "results/figures/testset_indel_fig.png", plot = testset_indel, height = 6, width = 8)
+
+
+
+### Section 3.3 stats
+n_tib_h <- sum(nsclc_tib_values$val$TIB >= 10)
+n_tib_l <- sum(nsclc_tib_values$val$TIB < 10)
+
+prop_tib_h <- mean(nsclc_tib_values$val$TIB >= 10)
+prop_tib_l <- mean(nsclc_tib_values$val$TIB < 10)
+
+t_0.6_r_tib <- refit_predictions_tib %>%
+  {1 - sum((.$prediction_intervals$estimated_value - .$prediction_intervals$true_value)^2)/
+      sum((.$prediction_intervals$true_value - mean(.$prediction_intervals$true_value))^2)}
+
+count_0.6_r_tib <- count_predictions_tib %>%
+  {1 - sum((.$estimated_value - .$true_value)^2)/
+    sum((.$true_value - mean(.$true_value))^2)}
+
+linear_0.6_r_tib <- linear_predictions_tib %>%
+  {1 - sum((.$estimated_value - .$true_value)^2)/
+    sum((.$true_value - mean(.$true_value))^2)}
+
+prop_confidence_tib <- refit_predictions_tib %>%
+  {mean((.$prediction_intervals$upper >= .$prediction_intervals$estimated_value) &
+          (.$prediction_intervals$lower <= .$prediction_intervals$estimated_value))}
+
+s3.3.stats <- data.frame(n_tib_h = n_tib_h,
+                         n_tib_l = n_tib_l,
+                         prop_tib_h = prop_tib_h,
+                         prop_tib_l = prop_tib_l,
+                         t_0.6_r_tib = t_0.6_r_tib,
+                         count_0.6_r_tib = count_0.6_r_tib,
+                         linear_0.6_r_tib = linear_0.6_r_tib,
+                         prop_confidence_tib = prop_confidence_tib)
+
+write_tsv(s3.3.stats, "results/s3.3.stats.tsv")
+
+
+
+### Section 3.4 Stats
+
+
+tst_170_genes <- intersect(read_tsv("data/tst_170_genes.tsv")$Hugo_Symbol, ensembl_gene_lengths$Hugo_Symbol)
+
+
+# nsclc_pred_first_tmb_aug <- pred_first_fit(gen_model = nsclc_gen_model, lambda = exp(seq(-18, -26, length.out = 100)),
+#                                         gene_lengths = ensembl_gene_lengths, training_matrix = nsclc_tables$train$matrix, 
+#                                         free_genes = tst_170_genes)
+# write_rds(x = nsclc_pred_first_tmb_aug, file = "data/pre_loaded/nsclc_pred_first_tmb_aug")
+
+nsclc_pred_first_tmb_aug <- read_rds("data/pre_loaded/nsclc_pred_first_tmb_aug")
+
+t_tst_170_test <- pred_refit_panel(pred_first = nsclc_pred_first_tmb, gene_lengths = ensembl_gene_lengths, model = "T",
+                                     genes = tst_170_genes, training_data = nsclc_tables$train, training_values = nsclc_tmb_values$train) %>% 
+  get_predictions(new_data = nsclc_tables$test) %>% 
+  get_stats(biomarker_values = nsclc_tmb_values$test)
+
+count_tst_170_test <- pred_refit_panel(pred_first = nsclc_pred_first_tmb, gene_lengths = ensembl_gene_lengths, model = "Count",
+                                           genes = tst_170_genes, training_data = nsclc_tables$train, training_values = nsclc_tmb_values$train) %>% 
+  get_predictions(new_data = nsclc_tables$test) %>% 
+  get_stats(biomarker_values = nsclc_tmb_values$test)
+
+linear_tst_170_test <- pred_refit_panel(pred_first = nsclc_pred_first_tmb, gene_lengths = ensembl_gene_lengths, model = "OLM",
+                                                 genes = tst_170_genes, training_data = nsclc_linear_tables$train, training_values = nsclc_tmb_values$train) %>% 
+  get_predictions(new_data = nsclc_linear_tables$test) %>% 
+  get_stats(biomarker_values = nsclc_tmb_values$test)
+
+t_tst_170_test_aug <- pred_refit_range(pred_first = nsclc_pred_first_tmb_aug, gene_lengths = ensembl_gene_lengths, model = "T",
+                                   training_data = nsclc_tables$train, training_values = nsclc_tmb_values$train) %>% 
+  get_predictions(new_data = nsclc_tables$test) %>% 
+  get_stats(biomarker_values = nsclc_tmb_values$test) %>% 
+  filter(panel_length <= 600000) %>% 
+  group_by(metric) %>% 
+  summarise(stat = max(stat)) %>% 
+  mutate(metric = factor(metric, levels = c("R", "AUPRC"))) %>% 
+  arrange(metric)
+
+count_tst_170_test_aug <- pred_refit_range(pred_first = nsclc_pred_first_tmb_aug, gene_lengths = ensembl_gene_lengths, model = "Count",
+                                       training_data = nsclc_tables$train, training_values = nsclc_tmb_values$train, max_panel_length = 600000) %>% 
+  get_predictions(new_data = nsclc_tables$test) %>% 
+  get_stats(biomarker_values = nsclc_tmb_values$test) %>% 
+  filter(panel_length <= 600000) %>% 
+  group_by(metric) %>% 
+  summarise(stat = max(stat)) %>% 
+  mutate(metric = factor(metric, levels = c("R", "AUPRC"))) %>% 
+  arrange(metric)
+
+linear_tst_170_test_aug <- pred_refit_range(pred_first = nsclc_pred_first_tmb_aug, gene_lengths = ensembl_gene_lengths, model = "OLM",
+                                       training_data = nsclc_linear_tables$train, training_values = nsclc_tmb_values$train, max_panel_length = 600000) %>% 
+  get_predictions(new_data = nsclc_linear_tables$test) %>% 
+  get_stats(biomarker_values = nsclc_tmb_values$test) %>% 
+  filter(panel_length <= 600000) %>% 
+  group_by(metric) %>% 
+  summarise(stat = max(stat)) %>% 
+  mutate(metric = factor(metric, levels = c("R", "AUPRC"))) %>% 
+  arrange(metric)
+
+# write_tsv(data.frame(Hugo_Symbol = names(which(nsclc_pred_first_tmb_aug$panel_genes[, max(which(nsclc_pred_first_tmb_aug$panel_lengths <= 600000))]))),
+#           file = "data/panel_aug_genes.tsv")
+
+# panel_aug <- "data/panel_aug_bed.bed"
+# sample_aug_test = data.frame(SampleID = nsclc_tables$test$sample_list, BED = panel_aug, stringsAsFactors = FALSE)
+
+# testset_aug <- nsclc_maf_grch38 %>%
+#   filter(Tumor_Sample_Barcode %in% nsclc_tables$test$sample_list) %>%
+#   readData(exomef, covarf, mutContextf, ref, samplef = sample_aug_test)
+# write_rds(testset_aug, "data/temporary_storage/testset_aug")
+# testset_aug <- read_rds("data/temporary_storage/testset_aug")
+
+# test_pred_aug <- pred_TMB(testset_aug, WES = testset_WES, cores = 1, params = trainedModel, mut.nonsil = T,
+#                              gid_nonsil_p = trainset$get_nonsil_passengers(0.95)) %>%
+#   mutate(estimated_value = mean(nsclc_tmb_values$test$TMB) *ecTMB_panel_TMB/ mean(WES_TMB),
+#          true_value = mean(nsclc_tmb_values$test$TMB)*WES_TMB / mean(WES_TMB),
+#          Tumor_Sample_Barcode = sample) %>%
+#   select(Tumor_Sample_Barcode, estimated_value, true_value)
+# write_tsv(test_pred_aug, "data/pre_loaded/test_pred_aug.tsv")
+
+# sample_tst_170_test = data.frame(SampleID = nsclc_tables$test$sample_list, BED = TST_170_panel, stringsAsFactors = FALSE)
+# 
+# testset_tst_170 <- nsclc_maf_grch38 %>%
+#   filter(Tumor_Sample_Barcode %in% nsclc_tables$test$sample_list) %>%
+#   readData(exomef, covarf, mutContextf, ref, samplef = sample_tst_170_test)
+# write_rds(testset_tst_170, "data/temporary_storage/testset_tst_170")
+# testset_tst_170 <- read_rds("data/temporary_storage/testset_tst_170")
+
+# test_pred_tst_170 <- pred_TMB(testset_tst_170, WES = testset_WES, cores = 1, params = trainedModel, mut.nonsil = T,
+#                              gid_nonsil_p = trainset$get_nonsil_passengers(0.95)) %>%
+#   mutate(estimated_values = mean(nsclc_tmb_values$test$TMB) *ecTMB_panel_TMB/ mean(WES_TMB),
+#          true_values = mean(nsclc_tmb_values$test$TMB)*WES_TMB / mean(WES_TMB),
+#          Tumor_Sample_Barcode = sample) %>%
+#   select(Tumor_Sample_Barcode, estimated_values, true_values) %>%
+#   mutate(panel = "TST-170")
+# 
+# write_tsv(test_pred_tst_170, "data/pre_loaded/test_pred_tst_170.tsv")
+
+classes_test_tmb <- nsclc_tmb_values$test[["TMB"]] >= 300
+
+ectmb_tst_170_r <- read_tsv("data/pre_loaded/test_pred_tst_170.tsv") %>%
+  column_to_rownames("Tumor_Sample_Barcode") %>% 
+  {1 - sum((.$estimated_value - .$true_value)^2)/
+      sum((.$true_value - mean(.$true_value))^2)}
+
+ectmb_tst_170_auprc <- read_tsv("data/pre_loaded/test_pred_tst_170.tsv") %>%
+  column_to_rownames("Tumor_Sample_Barcode") %>% 
+  {PRROC::pr.curve(scores.class0 = .$estimated_value[classes_test_tmb], 
+                   scores.class1 = .$estimated_value[!classes_test_tmb])$auc.integral}
+
+
+ectmb_aug_r <- read_tsv("data/pre_loaded/test_pred_aug.tsv") %>%
+  column_to_rownames("Tumor_Sample_Barcode") %>% 
+  {1 - sum((.$estimated_value - .$true_value)^2)/
+      sum((.$true_value - mean(.$true_value))^2)}
+
+ectmb_aug_auprc <- read_tsv("data/pre_loaded/test_pred_aug.tsv") %>%
+  column_to_rownames("Tumor_Sample_Barcode") %>% 
+  {PRROC::pr.curve(scores.class0 = .$estimated_value[classes_test_tmb], 
+                   scores.class1 = .$estimated_value[!classes_test_tmb])$auc.integral}
+
+s3.4.table <- data.frame(Model = c("Refitted T", "ecTMB", "Count", "Linear"),
+                         RT = signif(c(t_tst_170_test$stat[1], ectmb_tst_170_r, count_tst_170_test$stat[1], linear_tst_170_test$stat[1]),2),
+                         RA = signif(c(t_tst_170_test_aug$stat[1], ectmb_aug_r, count_tst_170_test_aug$stat[1], linear_tst_170_test_aug$stat[1]),2),
+                         CT = signif(c(t_tst_170_test$stat[2], ectmb_tst_170_auprc, count_tst_170_test$stat[2], linear_tst_170_test$stat[2]),2),
+                         CA = signif(c(t_tst_170_test_aug$stat[2], ectmb_aug_auprc, count_tst_170_test_aug$stat[2], linear_tst_170_test_aug$stat[2]),2))
+
+write_tsv(s3.4.table, "results/s3.4.table.tsv")
+
+
+# Lyu-style Analysis
+gene_mutation_proportions <- nsclc_linear_tables$train$matrix %>% 
+  apply(2, function(x) {mean(x >0)})
+
+elevated_genes <- nsclc_linear_tables$train$gene_list[gene_mutation_proportions > 0.1] # first requirement for Lyu
+short_genes <- ensembl_gene_lengths[nsclc_linear_tables$train$gene_list, ] %>% # second requirement for Lyu
+  filter(max_cds < 15000) %>% 
+  pull(Hugo_Symbol)
+
+gene_wilcox <- function (mutation_vector, tmb_values) {
+  group_1 <- tmb_values[mutation_vector > 0]
+  group_0 <- tmb_values[mutation_vector == 0]
+  return(wilcox.test(group_1, group_0, alternative = "two.sided")$p.value)
+}
+
+wilcox_gene_ps <- rep(NA, length(nsclc_linear_tables$train$gene_list))
+for (i in 1:length(wilcox_gene_ps)) {
+  try(wilcox_gene_ps[i] <- gene_wilcox(nsclc_linear_tables$train$matrix[, i], nsclc_tmb_values$train$TMB))
+}
+wilcox_sig_genes <- nsclc_linear_tables$train$gene_list[p.adjust(wilcox_gene_ps, method = "bonferroni") < 0.05]
+wilcox_sig_genes <- wilcox_sig_genes[!is.na(wilcox_sig_genes)] # third requirement for Lyu
+
+lyu_gene_panel <- intersect(short_genes, intersect(elevated_genes, wilcox_sig_genes))
+
+pred_refit_panel(model = "OLM", pred_first = nsclc_pred_first_tmb, gene_lengths = ensembl_gene_lengths, genes = lyu_gene_panel, training_data = nsclc_tables$train, training_values = nsclc_tmb_values$train) %>% 
+  get_predictions(new_data = nsclc_tables$val) %>% 
+  get_stats(biomarker_values = nsclc_tmb_values$val)
+
+pred_refit_panel(model = "Count", pred_first = nsclc_pred_first_tmb, gene_lengths = ensembl_gene_lengths, genes = lyu_gene_panel, training_data = nsclc_tables$train, training_values = nsclc_tmb_values$train) %>% 
+  get_predictions(new_data = nsclc_tables$val) %>% 
+  get_stats(biomarker_values = nsclc_tmb_values$val)
+
+pred_refit_panel(model = "T", pred_first = nsclc_pred_first_tmb, gene_lengths = ensembl_gene_lengths, genes = lyu_gene_panel, training_data = nsclc_tables$train, training_values = nsclc_tmb_values$train) %>% 
+  get_predictions(new_data = nsclc_tables$val) %>% 
+  get_stats(biomarker_values = nsclc_tmb_values$val)
+
+## Extra numbers for referees (smoking BMRs)
+
+smokers_sampleIDs <- nsclc_survival %>% 
+  filter(SMOKING_HISTORY == "Current Smoker") %>% 
+  pull(CASE_ID)
+smokers_mu <- nsclc_tmb_values$train %>% 
+  filter(Tumor_Sample_Barcode %in% smokers_sampleIDs) %>% 
+  pull(TMB) %>% 
+  log() 
+mean(smokers_mu)
+sd(smokers_mu)
+
+reformed_smoker_sampleIDs <- nsclc_survival %>% 
+  filter(!(SMOKING_HISTORY %in% c("Current Smoker", "Lifelong Non-Smoker"))) %>% 
+  pull(CASE_ID)
+reformed_smokers_mu <- nsclc_tmb_values$train %>% 
+  filter(Tumor_Sample_Barcode %in% reformed_smoker_sampleIDs) %>% 
+  pull(TMB) %>% 
+  log() 
+mean(reformed_smokers_mu)
+sd(reformed_smokers_mu)
+
+nonsmokers_sampleIDs <- nsclc_survival %>% 
+  filter(SMOKING_HISTORY == "Lifelong Non-Smoker") %>% 
+  pull(CASE_ID)
+nonsmokers_mu <- nsclc_tmb_values$train %>% 
+  filter(Tumor_Sample_Barcode %in% nonsmokers_sampleIDs) %>% 
+  pull(TMB) %>% 
+  log() 
+mean(nonsmokers_mu)
+sd(nonsmokers_mu)
+
+
+#  Immunotherapy dataset (Hellman)
+nsclc_val_hell_maf <- read_tsv("data/nsclc_mskcc_2018/data_mutations_extended.txt") %>% 
+  select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
+nsclc_val_hell_tables <- get_mutation_tables(nsclc_val_hell_maf, 
+                                        split = c(train = 0, val = 0, test = 75),
+                                        gene_list = nsclc_tables$train$gene_list,
+                                        acceptable_genes = ensembl_gene_lengths$Hugo_Symbol,
+                                        for_biomarker = "TIB",
+                                        include_synonymous = FALSE)
+nsclc_val_hell_tmb_values <- get_biomarker_tables(nsclc_val_hell_maf, biomarker = "TMB", split =  c(train = 0, val = 0, test = 75))
+nsclc_refit_stats_val_hell <- nsclc_pred_refit_tmb %>%
+  get_predictions(new_data = nsclc_val_hell_tables$test) %>%
+  get_stats(biomarker_values = nsclc_val_hell_tmb_values$test, metrics = c("R"), model = "Refitted T", threshold = 300) %>% 
+  mutate(Dataset = "External Test", cancer_type = "Non-Small Cell Lung")
+
+nsclc_val_hell_predictions <- nsclc_pred_refit_tmb %>%
+  get_predictions(new_data = nsclc_val_hell_tables$test) %>%
+  pred_intervals(pred_model = nsclc_pred_refit_tmb, biomarker_values = nsclc_val_hell_tmb_values$test,
+                 gen_model = nsclc_gen_model, training_matrix = nsclc_tables$train$matrix,
+                 gene_lengths = ensembl_gene_lengths, max_panel_length = 600000, biomarker = "TMB") 
+nsclc_val_hell_predictions$prediction_intervals <- mutate(nsclc_val_hell_predictions$prediction_intervals, Dataset = "Hellman et al.")
+
+
+#  Immunotherapy dataset (Rizvi)
+nsclc_val_rizvi_maf <- read_tsv("data/luad_mskcc_2015/data_mutations_extended.txt") %>% 
+  select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
+nsclc_val_rizvi_tables <- get_mutation_tables(nsclc_val_rizvi_maf, 
+                                             split = c(train = 0, val = 0, test = 34),
+                                             gene_list = nsclc_tables$train$gene_list,
+                                             acceptable_genes = ensembl_gene_lengths$Hugo_Symbol,
+                                             for_biomarker = "TIB",
+                                             include_synonymous = FALSE)
+nsclc_val_rizvi_tmb_values <- get_biomarker_tables(nsclc_val_rizvi_maf, biomarker = "TMB", split =  c(train = 0, val = 0, test = 34))
+nsclc_refit_stats_val_hell <- nsclc_pred_refit_tmb %>%
+  get_predictions(new_data = nsclc_val_rizvi_tables$test) %>%
+  get_stats(biomarker_values = nsclc_val_rizvi_tmb_values$test, metrics = c("R"), model = "Refitted T", threshold = 300) %>% 
+  mutate(Dataset = "External Test", cancer_type = "Non-Small Cell Lung")
+
+nsclc_val_rizvi_predictions <- nsclc_pred_refit_tmb %>%
+  get_predictions(new_data = nsclc_val_rizvi_tables$test) %>%
+  pred_intervals(pred_model = nsclc_pred_refit_tmb, biomarker_values = nsclc_val_rizvi_tmb_values$test,
+                 gen_model = nsclc_gen_model, training_matrix = nsclc_tables$train$matrix,
+                 gene_lengths = ensembl_gene_lengths, max_panel_length = 600000, biomarker = "TMB") 
+
+nsclc_val_rizvi_predictions$prediction_intervals <- mutate(nsclc_val_rizvi_predictions$prediction_intervals, Dataset = "Rizvi et al.")
+
+# Validation sets prediction figure
+nsclc_val_pred_fig <- bind_rows(nsclc_val_hell_predictions$prediction_intervals,
+                                nsclc_val_rizvi_predictions$prediction_intervals) %>%
+  mutate(model = "Refitted T") %>% 
+  {ggplot() + geom_point(data = ., aes(x = true_value, y = estimated_value, shape = Dataset), size = 1) + 
+      geom_ribbon(data = nsclc_val_hell_predictions$confidence_region %>% mutate(model = factor(model, levels = c("Refitted T", "ecTMB", "Count", "Linear"))), 
+                  aes(x = x, ymin = y_lower, ymax = y_upper),
+                  alpha = 0.2, fill = "red")  +
+      geom_abline(colour = "blue", linetype = 2) +
+      geom_hline(yintercept = 300, alpha = 0.5, linetype = 2) +
+      geom_vline(xintercept = 300, alpha = 0.5, linetype = 2) +
+      scale_x_continuous(trans = scales::pseudo_log_trans(), breaks = c(0,10**(1:3))) +
+      scale_y_continuous(trans = scales::pseudo_log_trans(), breaks = c(0,10**(1:3)), limit = c(0,NA)) +
+      theme_minimal() + labs(x = "True TMB", y = "Predicted TMB")} 
+
+ggsave(filename = "results/figures/nsclc_val_pred.png", plot = nsclc_val_pred_fig, height = 3, width = 5)
+
+nsclc_val_hell_predictions$prediction_intervals %>% 
+  {1 - sum((.$true_value - .$estimated_value)^2)/sum((.$true_value - mean(.$true_value))^2)}
+
+nsclc_val_rizvi_predictions$prediction_intervals %>% 
+  {1 - sum((.$true_value - .$estimated_value)^2)/sum((.$true_value - mean(.$true_value))^2)}
+
+bind_rows(nsclc_val_rizvi_predictions$prediction_intervals, nsclc_val_hell_predictions$prediction_intervals) %>% 
+  {1 - sum((.$true_value - .$estimated_value)^2)/sum((.$true_value - mean(.$true_value))^2)}
+
+
+# Validation set immunotherapy response
+nsclc_val_hell_clinical <- read_tsv("data/nsclc_mskcc_2018/data_clinical_patient.txt", comment = "#") %>% 
+  inner_join(read_tsv("data/nsclc_mskcc_2018/data_clinical_sample.txt", comment = "#"), by = "PATIENT_ID") %>% 
+  mutate(Tumor_Sample_Barcode = SAMPLE_ID) %>% 
+  inner_join(nsclc_val_hell_predictions$prediction_intervals, by = "Tumor_Sample_Barcode") %>% 
+  select(Tumor_Sample_Barcode, estimated_value, true_value, PFS_STATUS, PFS_MONTHS, DURABLE_CLINICAL_BENEFIT, SEX, AGE_YRS, CANCER_TYPE, NONSYNONYMOUS_MUTATION_BURDEN) 
+
+nsclc_val_rizvi_clinical <- read_tsv("data/luad_mskcc_2015/data_clinical_patient.txt", comment = "#") %>% 
+  inner_join(read_tsv("data/luad_mskcc_2015/data_clinical_sample.txt", comment = "#"), by = "PATIENT_ID") %>% 
+  mutate(Tumor_Sample_Barcode = SAMPLE_ID) %>% 
+  inner_join(nsclc_val_rizvi_predictions$prediction_intervals, by = "Tumor_Sample_Barcode") %>% 
+  select(Tumor_Sample_Barcode, estimated_value, true_value, EVENT_TYPE, PFS_MONTHS, DURABLE_CLINICAL_BENEFIT, SEX, AGE, CANCER_TYPE, NONSYNONYMOUS_MUTATION_BURDEN) 
+
+
+nsclc_val_hell_predictions$prediction_intervals %>% 
+  {pr.curve(scores.class0 = nsclc_val_hell_clinical %>% 
+              filter(NONSYNONYMOUS_MUTATION_BURDEN > 300) %>% 
+              pull(estimated_value),
+            scores.class1 = nsclc_val_hell_clinical %>% 
+              filter(NONSYNONYMOUS_MUTATION_BURDEN <= 300) %>% 
+              pull(estimated_value))}
+
+
+nsclc_val_rizvi_predictions$prediction_intervals %>% 
+  {pr.curve(scores.class0 = nsclc_val_rizvi_clinical %>% 
+              filter(NONSYNONYMOUS_MUTATION_BURDEN > 300) %>% 
+              pull(estimated_value),
+            scores.class1 = nsclc_val_rizvi_clinical %>% 
+              filter(NONSYNONYMOUS_MUTATION_BURDEN <= 300) %>% 
+              pull(estimated_value))}
+
+bind_rows(nsclc_val_rizvi_predictions$prediction_intervals, nsclc_val_hell_predictions$prediction_intervals) %>% 
+  {pr.curve(scores.class0 = bind_rows(nsclc_val_rizvi_clinical, nsclc_val_hell_clinical) %>% 
+              filter(NONSYNONYMOUS_MUTATION_BURDEN > 300) %>% 
+              pull(estimated_value),
+            scores.class1 = bind_rows(nsclc_val_rizvi_clinical, nsclc_val_hell_clinical) %>% 
+              filter(NONSYNONYMOUS_MUTATION_BURDEN <= 300) %>% 
+              pull(estimated_value))}
+
+
+estimated_tmb_pr_hell <- roc.curve(scores.class0 = nsclc_val_hell_clinical %>% 
+                                     filter(DURABLE_CLINICAL_BENEFIT == "Durable Clinical Benefit") %>% 
+                                     pull(estimated_value),
+                                   scores.class1 = nsclc_val_hell_clinical %>% 
+                                     filter(DURABLE_CLINICAL_BENEFIT == "No Durable Benefit") %>% 
+                                     pull(estimated_value),
+                                   curve = T)
+
+true_tmb_pr_hell <- roc.curve(scores.class0 = nsclc_val_hell_clinical %>% 
+                                filter(DURABLE_CLINICAL_BENEFIT == "Durable Clinical Benefit") %>% 
+                                pull(NONSYNONYMOUS_MUTATION_BURDEN),
+                              scores.class1 = nsclc_val_hell_clinical %>% 
+                                filter(DURABLE_CLINICAL_BENEFIT == "No Durable Benefit") %>% 
+                                pull(NONSYNONYMOUS_MUTATION_BURDEN),
+                              curve = T)
+
+estimated_tmb_pr_rizvi <- roc.curve(scores.class0 = nsclc_val_rizvi_clinical %>% 
+                                     filter(DURABLE_CLINICAL_BENEFIT == "Durable clinical benefit beyond 6 months") %>% 
+                                     pull(estimated_value),
+                                   scores.class1 = nsclc_val_rizvi_clinical %>% 
+                                     filter(DURABLE_CLINICAL_BENEFIT != "Durable clinical benefit beyond 6 months") %>% 
+                                     pull(estimated_value),
+                                   curve = T)
+
+true_tmb_pr_rizvi <- roc.curve(scores.class0 = nsclc_val_rizvi_clinical %>% 
+                                filter(DURABLE_CLINICAL_BENEFIT == "Durable clinical benefit beyond 6 months") %>% 
+                                pull(NONSYNONYMOUS_MUTATION_BURDEN),
+                              scores.class1 = nsclc_val_rizvi_clinical %>% 
+                                filter(DURABLE_CLINICAL_BENEFIT != "Durable clinical benefit beyond 6 months") %>% 
+                                pull(NONSYNONYMOUS_MUTATION_BURDEN),
+                              curve = T)
+
+setEPS()
+png(file = "results/figures/response_pred_roc.png", width = 500, height = 400) 
+plot(true_tmb_pr_hell, legend = FALSE, color = "black", auc.main = FALSE, main = "", xlab = "False Positive Rate", ylab = "True Positive Rate")
+plot(estimated_tmb_pr_hell, legend = FALSE, color = "black", lty = 2, add = TRUE)
+plot(true_tmb_pr_rizvi, legend = FALSE, color = "#F8766D", add = TRUE)
+plot(estimated_tmb_pr_rizvi, legend = FALSE, color = "#F8766D", lty = 2, add = TRUE)
+lines(seq(0,1,0.1), seq(0,1,0.1), lty = 3)
+dev.off()
+
+# Robustness analysis
+
+# nsclc_train_subset_1 <- nsclc_tables$train
+# nsclc_train_subset_1$matrix <- nsclc_train_subset_1$matrix[-(1:200), ]
+# nsclc_train_subset_1$sample_list <- nsclc_train_subset_1$sample_list[-(1:200)]
+# nsclc_gen_model_subset_1 <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = nsclc_train_subset_1,
+#                                           progress = TRUE)
+# nsclc_pred_first_subset_1 <- pred_first_fit(gen_model = nsclc_gen_model_subset_1, lambda = exp(seq(-18, -26, length.out = 100)),
+#                                        gene_lengths = ensembl_gene_lengths, training_matrix = nsclc_train_subset_1$matrix)
+# write_rds(nsclc_pred_first_subset_1, "data/pre_loaded/nsclc_pred_first_subset_1")
+nsclc_pred_first_subset_1 <- read_rds("data/pre_loaded/nsclc_pred_first_subset_1")
+nsclc_pred_refit_subset_1 <- pred_refit_range(pred_first = nsclc_pred_first_subset_1, gene_lengths = ensembl_gene_lengths)
+
+# nsclc_train_subset_2 <- nsclc_tables$train
+# nsclc_train_subset_2$matrix <- nsclc_train_subset_2$matrix[-(201:400), ]
+# nsclc_train_subset_2$sample_list <- nsclc_train_subset_2$sample_list[-(201:400)]
+# 
+# nsclc_gen_model_subset_2 <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = nsclc_train_subset_2,
+#                                           progress = TRUE)
+# nsclc_pred_first_subset_2 <- pred_first_fit(gen_model = nsclc_gen_model_subset_2, lambda = exp(seq(-18, -26, length.out = 100)),
+#                                             gene_lengths = ensembl_gene_lengths, training_matrix = nsclc_train_subset_2$matrix)
+# write_rds(nsclc_pred_first_subset_2, "data/pre_loaded/nsclc_pred_first_subset_2")
+nsclc_pred_first_subset_2 <- read_rds("data/pre_loaded/nsclc_pred_first_subset_2")
+nsclc_pred_refit_subset_2 <- pred_refit_range(pred_first = nsclc_pred_first_subset_2, gene_lengths = ensembl_gene_lengths)
+
+# nsclc_train_subset_3 <- nsclc_tables$train
+# nsclc_train_subset_3$matrix <- nsclc_train_subset_3$matrix[-(401:600), ]
+# nsclc_train_subset_3$sample_list <- nsclc_train_subset_3$sample_list[-(401:600)]
+# 
+# nsclc_gen_model_subset_3 <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = nsclc_train_subset_3, 
+#                                           progress = TRUE)
+# nsclc_pred_first_subset_3 <- pred_first_fit(gen_model = nsclc_gen_model_subset_3, lambda = exp(seq(-18, -26, length.out = 100)),
+#                                             gene_lengths = ensembl_gene_lengths, training_matrix = nsclc_train_subset_3$matrix)
+# write_rds(nsclc_pred_first_subset_3, "data/pre_loaded/nsclc_pred_first_subset_3")
+nsclc_pred_first_subset_3 <- read_rds("data/pre_loaded/nsclc_pred_first_subset_3")
+nsclc_pred_refit_subset_3 <- pred_refit_range(pred_first = nsclc_pred_first_subset_3, gene_lengths = ensembl_gene_lengths)
+
+# nsclc_train_subset_4 <- nsclc_tables$train
+# nsclc_train_subset_4$matrix <- nsclc_train_subset_4$matrix[-(601:800), ]
+# nsclc_train_subset_4$sample_list <- nsclc_train_subset_4$sample_list[-(601:800)]
+# 
+# nsclc_gen_model_subset_4 <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = nsclc_train_subset_4, 
+#                                           progress = TRUE)
+# nsclc_pred_first_subset_4 <- pred_first_fit(gen_model = nsclc_gen_model_subset_4, lambda = exp(seq(-18, -26, length.out = 100)),
+#                                             gene_lengths = ensembl_gene_lengths, training_matrix = nsclc_train_subset_4$matrix)
+# write_rds(nsclc_pred_first_subset_4, "data/pre_loaded/nsclc_pred_first_subset_4")
+nsclc_pred_first_subset_4 <- read_rds("data/pre_loaded/nsclc_pred_first_subset_4")
+nsclc_pred_refit_subset_4 <- pred_refit_range(pred_first = nsclc_pred_first_subset_4, gene_lengths = ensembl_gene_lengths)
+
+robust_fig <- bind_rows(nsclc_pred_first_tmb %>% 
+            get_predictions(new_data = nsclc_tables$val) %>%
+            get_stats(biomarker_values = nsclc_tmb_values$val, model = "First-fit T", threshold = 300) %>% 
+            mutate(subset = 1, Data = "Training (Full)"),
+          nsclc_pred_refit_tmb %>% 
+            get_predictions(new_data = nsclc_tables$val) %>%
+            get_stats(biomarker_values = nsclc_tmb_values$val, model = "Refitted T", threshold = 300) %>% 
+            mutate(subset = 1, Data = "Training (Full)"),
+          nsclc_pred_first_subset_1 %>%
+            get_predictions(new_data = nsclc_tables$val) %>%
+            get_stats(biomarker_values = nsclc_tmb_values$val, model = "First-fit T", threshold = 300) %>%
+            mutate(subset = 1, Data = "Training (Subset)"),
+          nsclc_pred_refit_subset_1 %>%
+            get_predictions(new_data = nsclc_tables$val) %>%
+            get_stats(biomarker_values = nsclc_tmb_values$val, model = "Refitted T", threshold = 300) %>%
+            mutate(subset = 1, Data = "Training (Subset)"),
+          nsclc_pred_first_subset_2 %>%
+            get_predictions(new_data = nsclc_tables$val) %>%
+            get_stats(biomarker_values = nsclc_tmb_values$val, model = "First-fit T", threshold = 300) %>%
+            mutate(subset = 2, Data = "Training (Subset)"),
+          nsclc_pred_refit_subset_2 %>%
+            get_predictions(new_data = nsclc_tables$val) %>%
+            get_stats(biomarker_values = nsclc_tmb_values$val, model = "Refitted T", threshold = 300) %>%
+            mutate(subset = 2, Data = "Training (Subset)"),
+          nsclc_pred_first_subset_3 %>%
+            get_predictions(new_data = nsclc_tables$val) %>%
+            get_stats(biomarker_values = nsclc_tmb_values$val, model = "First-fit T", threshold = 300) %>%
+            mutate(subset = 3, Data = "Training (Subset)"),
+          nsclc_pred_refit_subset_3 %>%
+            get_predictions(new_data = nsclc_tables$val) %>%
+            get_stats(biomarker_values = nsclc_tmb_values$val, model = "Refitted T", threshold = 300) %>%
+            mutate(subset = 3, Data = "Training (Subset)"),
+          nsclc_pred_first_subset_4 %>%
+            get_predictions(new_data = nsclc_tables$val) %>%
+            get_stats(biomarker_values = nsclc_tmb_values$val, model = "First-fit T", threshold = 300) %>%
+            mutate(subset = 4, Data = "Training (Subset)"),
+          nsclc_pred_refit_subset_4 %>%
+            get_predictions(new_data = nsclc_tables$val) %>%
+            get_stats(biomarker_values = nsclc_tmb_values$val, model = "Refitted T", threshold = 300) %>%
+            mutate(subset = 4, Data = "Training (Subset)")) %>%
+  mutate(model = factor(model, levels = c("Refitted T", "First-fit T"))) %>% 
+  mutate(type = if_else(metric == "R", "Regression ~ (R^2)", "Classification ~ (AUPRC)")) %>%
+  mutate(type = factor(type, levels = c("Regression ~ (R^2)", "Classification ~ (AUPRC)"))) %>%
+  filter(panel_length <= 2000000) %>%
+  filter(type == "Regression ~ (R^2)", model == "Refitted T", Data == "Training (Subset)") %>%
+  mutate(panel_length = panel_length / 1000000) %>%
+  ggplot(aes(x = panel_length, y = stat, colour = factor(subset))) + geom_line(size = 1) + xlim(0.2, 1.5) +  ylim(0.75, 0.92) +
+  theme_minimal() +
+  theme(legend.position = "bottom") + labs(x = "Panel Size (Mb)", y = TeX("Regression ($R^2$)")) +
+  scale_linetype(name = "Procedure:", labels = list(TeX("Refitted $\\hat{T}$"), TeX("First-Fit $\\hat{T}$"))) + 
+  scale_alpha_manual(values = c(0.3, 1)) + 
+  scale_colour_discrete(name = "Training Subset:")
+
+ggsave(filename = "results/figures/robust.png", plot = robust_fig, height = 4, width = 4)
+
+### Melanoma fits
+skcm_maf <- read_tsv("data/skcm_tcga_pub_2015/data_mutations_extended.txt") %>% 
+  select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
+
+message("Getting tables")
+skcm_tables <- get_mutation_tables(maf = skcm_maf, 
+                                   include_synonymous = FALSE,
+                                   acceptable_genes = ensembl_gene_lengths$Hugo_Symbol,
+                                   for_biomarker = "TMB",
+                                   split = c(train = 250, val = 0, test = 96))
+
+message("Getting generative model")
+# skcm_gen_model <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = skcm_tables$train, 
+#                                 progress = TRUE)
+skcm_gen_model <- read_rds("data/pre_loaded/skcm_gen_model")
+
+# skcm_pred_first_tmb <- pred_first_fit(gen_model = skcm_gen_model,
+#                                       lambda = exp(seq(-18, -35, length.out = 100)),
+#                                       gene_lengths = ensembl_gene_lengths,
+#                                       training_matrix = skcm_tables$train$matrix,
+#                                       marker_mut_types = c("NS"))
+# write_rds(skcm_pred_first_tmb, "data/pre_loaded/skcm_pred_first_tmb")
+
+skcm_pred_first_tmb <- read_rds("data/pre_loaded/skcm_pred_first_tmb")
+skcm_pred_refit_tmb <- pred_refit_range(pred_first = skcm_pred_first_tmb, 
+                                        gene_lengths = ensembl_gene_lengths,
+                                        marker_mut_types = c("NS"))
+
+skcm_tmb_values <- get_biomarker_tables(skcm_maf, biomarker = "TMB", split =  c(train = 250, val = 0, test = 96))
+
+
+### Colorectal fits
+
+coadread_maf <- read_tsv("data/coadread_dfci_2016/data_mutations_extended.txt") %>% 
+  select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
+
+message("Getting tables")
+coadread_tables <- get_mutation_tables(maf = coadread_maf, 
+                                       include_synonymous = FALSE,
+                                       acceptable_genes = ensembl_gene_lengths$Hugo_Symbol,
+                                       for_biomarker = "TMB",
+                                       split = c(train = 500.1, val = 0, test = 119)) #don't ask about the .1, this needs fixing
+
+message("Getting generative model")
+# coadread_gen_model <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = coadread_tables$train,
+#                                     progress = TRUE)
+# write_rds(coadread_gen_model, "data/pre_loaded/coadread_gen_model")
+coadread_gen_model <- read_rds("data/pre_loaded/coadread_gen_model")
+
+# coadread_pred_first_tmb <- pred_first_fit(gen_model = coadread_gen_model,
+#                                           lambda = exp(seq(-18, -26, length.out = 100)),
+#                                           gene_lengths = ensembl_gene_lengths,
+#                                           training_matrix = coadread_tables$train$matrix,
+#                                           marker_mut_types = c("NS"))
+# write_rds(x = coadread_pred_first_tmb, "data/pre_loaded/coadread_pred_first_tmb")
+
+coadread_pred_first_tmb <- read_rds("data/pre_loaded/coadread_pred_first_tmb")
+coadread_pred_refit_tmb <- pred_refit_range(pred_first = coadread_pred_first_tmb, 
+                                            gene_lengths = ensembl_gene_lengths,
+                                            marker_mut_types = c("NS"))
+
+coadread_tmb_values <- get_biomarker_tables(coadread_maf, biomarker = "TMB", split =  c(train = 500.1, val = 0, test = 119))
+
+
+
+### Bladder fits
+
+blca_maf <- read_tsv("data/blca_tcga_pan_can_atlas_2018/data_mutations_extended.txt") %>% 
+  select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
+
+message("Getting tables")
+blca_tables <- get_mutation_tables(maf = blca_maf, 
+                                   include_synonymous = FALSE,
+                                   acceptable_genes = ensembl_gene_lengths$Hugo_Symbol,
+                                   for_biomarker = "TMB",
+                                   split = c(train = 300.1, val = 0, test = 109)) #don't ask about the .1, this needs fixing
+
+message("Getting generative model")
+
+# blca_gen_model <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = blca_tables$train,
+#                                 progress = TRUE)
+# write_rds(blca_gen_model, "data/pre_loaded/blca_gen_model")
+blca_gen_model <- read_rds("data/pre_loaded/blca_gen_model")
+
+# blca_pred_first_tmb <- pred_first_fit(gen_model = blca_gen_model, 
+#                                       lambda = exp(seq(-18, -26, length.out = 100)),
+#                                       gene_lengths = ensembl_gene_lengths, 
+#                                       training_matrix = blca_tables$train$matrix,
+#                                       marker_mut_types = c("NS"))
+# write_rds(blca_pred_first_tmb, "data/pre_loaded/blca_pred_first_tmb")
+
+blca_pred_first_tmb <- read_rds("data/pre_loaded/blca_pred_first_tmb")
+blca_pred_refit_tmb <- pred_refit_range(pred_first = blca_pred_first_tmb, 
+                                        gene_lengths = ensembl_gene_lengths,
+                                        marker_mut_types = c("NS"))
+
+blca_tmb_values <- get_biomarker_tables(blca_maf, biomarker = "TMB", split =  c(train = 300.1, val = 0, test = 109)) 
+
+
+### Renal fits
+kirc_maf <- read_tsv("data/kirc_tcga/data_mutations_extended.txt") %>% 
+  select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
+
+message("Getting tables")
+kirc_tables <- get_mutation_tables(maf = kirc_maf, 
+                                   include_synonymous = FALSE,
+                                   acceptable_genes = ensembl_gene_lengths$Hugo_Symbol,
+                                   for_biomarker = "TMB",
+                                   split = c(train = 350.1, val = 0, test = 101)) #don't ask about the .1, this needs fixing
+
+message("Getting generative model")
+# kirc_gen_model <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = kirc_tables$train,
+#                                 progress = TRUE)
+# write_rds(kirc_gen_model, "data/pre_loaded/kirc_gen_model")
+kirc_gen_model <- read_rds("data/pre_loaded/kirc_gen_model")
+
+# kirc_pred_first_tmb <- pred_first_fit(gen_model = kirc_gen_model, 
+#                                       lambda = exp(seq(-18, -26, length.out = 200)),
+#                                       gene_lengths = ensembl_gene_lengths, 
+#                                       training_matrix = kirc_tables$train$matrix,
+#                                       marker_mut_types = c("NS"))
+# write_rds(kirc_pred_first_tmb, "data/pre_loaded/kirc_pred_first_tmb")
+kirc_pred_first_tmb <- read_rds("data/pre_loaded/kirc_pred_first_tmb")
+kirc_pred_refit_tmb <- pred_refit_range(pred_first = kirc_pred_first_tmb, 
+                                        gene_lengths = ensembl_gene_lengths,
+                                        marker_mut_types = c("NS"))
+
+kirc_tmb_values <- get_biomarker_tables(kirc_maf, biomarker = "TMB", split =  c(train = 350.1, val = 0, test = 101)) 
+
+### Prostate fits
+
+prad_maf <- read_tsv("data/prad_p1000/data_mutations_extended.txt") %>% 
+  select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
+
+message("Getting tables")
+prad_tables <- get_mutation_tables(maf = prad_maf, 
+                                   include_synonymous = FALSE,
+                                   acceptable_genes = ensembl_gene_lengths$Hugo_Symbol,
+                                   for_biomarker = "TMB",
+                                   split = c(train = 700.1, val = 0, test = 312)) #don't ask about the .1, this needs fixing
+
+message("Getting generative model")
+# prad_gen_model <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = prad_tables$train,
+#                                 progress = TRUE)
+# write_rds(prad_gen_model, "data/pre_loaded/prad_gen_model")
+prad_gen_model <- read_rds("data/pre_loaded/prad_gen_model")
+
+# prad_pred_first_tmb <- pred_first_fit(gen_model = prad_gen_model, 
+#                                       lambda = exp(seq(-18, -26, length.out = 100)),
+#                                       gene_lengths = ensembl_gene_lengths, 
+#                                       training_matrix = prad_tables$train$matrix,
+#                                       marker_mut_types = c("NS"))
+# write_rds(prad_pred_first_tmb, "data/pre_loaded/prad_pred_first_tmb")
+
+prad_pred_first_tmb <- read_rds("data/pre_loaded/prad_pred_first_tmb")
+prad_pred_refit_tmb <- pred_refit_range(pred_first = prad_pred_first_tmb, 
+                                        gene_lengths = ensembl_gene_lengths,
+                                        marker_mut_types = c("NS"))
+
+prad_tmb_values <- get_biomarker_tables(prad_maf, biomarker = "TMB", split =  c(train = 700.1, val = 0, test = 312)) 
+
+### Breast fits
+
+brca_maf <- read_tsv("data/brca_tcga_pan_can_atlas_2018/data_mutations_extended.txt") %>% 
+  select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
+
+message("Getting tables")
+brca_tables <- get_mutation_tables(maf = brca_maf, 
+                                   include_synonymous = FALSE,
+                                   acceptable_genes = ensembl_gene_lengths$Hugo_Symbol,
+                                   for_biomarker = "TMB",
+                                   split = c(train = 700.1, val = 0, test = 309)) 
+
+message("Getting generative model")
+# brca_gen_model <- fit_gen_model(gene_lengths = ensembl_gene_lengths, table = brca_tables$train,
+#                                 progress = TRUE)
+# write_rds(brca_gen_model, "data/pre_loaded/brca_gen_model")
+brca_gen_model <- read_rds("data/pre_loaded/brca_gen_model")
+
+# brca_pred_first_tmb <- pred_first_fit(gen_model = brca_gen_model, 
+#                                       lambda = exp(seq(-18, -26, length.out = 100)),
+#                                       gene_lengths = ensembl_gene_lengths, 
+#                                       training_matrix = brca_tables$train$matrix,
+#                                       marker_mut_types = c("NS"))
+# write_rds(brca_pred_first_tmb, "data/pre_loaded/brca_pred_first_tmb")
+
+brca_pred_first_tmb <- read_rds("data/pre_loaded/brca_pred_first_tmb")
+brca_pred_refit_tmb <- pred_refit_range(pred_first = brca_pred_first_tmb, 
+                                        gene_lengths = ensembl_gene_lengths,
+                                        marker_mut_types = c("NS"))
+
+brca_tmb_values <- get_biomarker_tables(brca_maf, biomarker = "TMB", split =  c(train = 700.1, val = 0, test = 309)) 
+
+
+
+### SKCM WES external validation
+skcm_val_maf <- read_tsv("data/skcm_yale/data_mutations_extended.txt") %>% 
+  select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
+skcm_val_tables <- get_mutation_tables(skcm_val_maf, 
+                                       split = c(train = 0, val = 0, test = 91),
+                                       gene_list = skcm_tables$train$gene_list,
+                                       acceptable_genes = ensembl_gene_lengths$Hugo_Symbol,
+                                       for_biomarker = "TMB",
+                                       include_synonymous = FALSE)
+
+skcm_val_tmb_values <- get_biomarker_tables(skcm_val_maf, biomarker = "TMB", split =  c(train = 0, val = 0, test = 91))
+
+skcm_refit_stats <- skcm_pred_refit_tmb %>%
+  get_predictions(new_data = skcm_tables$test) %>%
+  get_stats(biomarker_values = skcm_tmb_values$test, metrics = c("R"), model = "Refitted T", threshold = 300) %>% 
+  mutate(Dataset = "Internal Validation", cancer_type = "Melanoma")
+
+skcm_refit_stats_val <- skcm_pred_refit_tmb %>%
+  get_predictions(new_data = skcm_val_tables$test) %>%
+  get_stats(biomarker_values = skcm_val_tmb_values$test, metrics = c("R"), model = "Refitted T", threshold = 300) %>% 
+  mutate(Dataset = "External Test", cancer_type = "Melanoma")
+
+
+
+### COADREAD WES external validation
+coadread_val_maf <- read_tsv("data/coadread_genentech/data_mutations_extended.txt", comment = "#") %>% 
+  select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position) %>% 
+  mutate(Tumor_Sample_Barcode = paste0("T", Tumor_Sample_Barcode))
+coadread_val_tables <- get_mutation_tables(coadread_val_maf, 
+                                           split = c(train = 0, val = 0, test = 72),
+                                           gene_list = coadread_tables$train$gene_list,
+                                           acceptable_genes = ensembl_gene_lengths$Hugo_Symbol,
+                                           for_biomarker = "TMB",
+                                           include_synonymous = FALSE)
+coadread_val_tmb_values <- get_biomarker_tables(coadread_val_maf, biomarker = "TMB", split =  c(train = 0, val = 0, test = 72))
+
+
+coadread_refit_stats <- coadread_pred_refit_tmb %>%
+  get_predictions(new_data = coadread_tables$test) %>%
+  get_stats(biomarker_values = coadread_tmb_values$test, metrics = c("R"), model = "Refitted T", threshold = 300) %>% 
+  mutate(Dataset = "Internal Validation", cancer_type = "Colorectal")
+
+coadread_refit_stats_val <- coadread_pred_refit_tmb %>%
+  get_predictions(new_data = coadread_val_tables$test) %>%
+  get_stats(biomarker_values = coadread_val_tmb_values$test, metrics = c("R"), model = "Refitted T", threshold = 300) %>% 
+  mutate(Dataset = "External Test", cancer_type = "Colorectal")
+
+
+
+### BLCA WES external validation
+blca_val_maf <- read_tsv("data/blca_bgi/data_mutations_extended.txt") %>% 
+  select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
+blca_val_tables <- get_mutation_tables(blca_val_maf, 
+                                       split = c(train = 0, val = 0, test = 99),
+                                       gene_list = blca_tables$train$gene_list,
+                                       acceptable_genes = ensembl_gene_lengths$Hugo_Symbol,
+                                       for_biomarker = "TMB",
+                                       include_synonymous = FALSE)
+blca_val_tmb_values <- get_biomarker_tables(blca_val_maf, biomarker = "TMB", split =  c(train = 0, val = 0, test = 99))
+
+
+blca_refit_stats <- blca_pred_refit_tmb %>%
+  get_predictions(new_data = blca_tables$test) %>%
+  get_stats(biomarker_values = blca_tmb_values$test, metrics = c("R"), model = "Refitted T", threshold = 300) %>% 
+  mutate(Dataset = "Internal Validation", cancer_type = "Bladder")
+
+blca_refit_stats_val <- blca_pred_refit_tmb %>%
+  get_predictions(new_data = blca_val_tables$test) %>%
+  get_stats(biomarker_values = blca_val_tmb_values$test, metrics = c("R"), model = "Refitted T", threshold = 300) %>% 
+  mutate(Dataset = "External Test", cancer_type = "Bladder")
+
+
+### KIRC WES external validation
+kirc_val_maf <- read_tsv("data/kirc_bgi/data_mutations_extended.txt") %>% 
+  select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
+kirc_val_tables <- get_mutation_tables(kirc_val_maf, 
+                                       split = c(train = 0, val = 0, test = 91),
+                                       gene_list = kirc_tables$train$gene_list,
+                                       acceptable_genes = ensembl_gene_lengths$Hugo_Symbol,
+                                       for_biomarker = "TMB",
+                                       include_synonymous = FALSE)
+kirc_val_tmb_values <- get_biomarker_tables(kirc_val_maf, biomarker = "TMB", split =  c(train = 0, val = 0, test = 91))
+
+kirc_refit_stats <- kirc_pred_refit_tmb %>%
+  get_predictions(new_data = kirc_tables$test) %>%
+  get_stats(biomarker_values = kirc_tmb_values$test, metrics = c("R"), model = "Refitted T", threshold = 300) %>% 
+  mutate(Dataset = "Internal Validation", cancer_type = "Renal")
+
+kirc_refit_stats_val <- kirc_pred_refit_tmb %>%
+  get_predictions(new_data = kirc_val_tables$test) %>%
+  get_stats(biomarker_values = kirc_val_tmb_values$test, metrics = c("R"), model = "Refitted T", threshold = 300) %>% 
+  mutate(Dataset = "External Test", cancer_type = "Renal")
+
+### PRAD WES external validation
+prad_val_maf <- read_tsv("data/prad_fhcrc/data_mutations_extended.txt") %>% 
+  select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
+prad_val_tables <- get_mutation_tables(prad_val_maf, 
+                                       split = c(train = 0, val = 0, test = 141),
+                                       gene_list = prad_tables$train$gene_list,
+                                       acceptable_genes = ensembl_gene_lengths$Hugo_Symbol,
+                                       for_biomarker = "TMB",
+                                       include_synonymous = FALSE)
+prad_val_tmb_values <- get_biomarker_tables(prad_val_maf, biomarker = "TMB", split =  c(train = 0, val = 0, test = 141))
+
+prad_refit_stats <- prad_pred_refit_tmb %>%
+  get_predictions(new_data = prad_tables$test) %>%
+  get_stats(biomarker_values = prad_tmb_values$test, metrics = c("R"), model = "Refitted T", threshold = 300) %>% 
+  mutate(Dataset = "Internal Validation", cancer_type = "Prostate")
+
+prad_refit_stats_val <- prad_pred_refit_tmb %>%
+  get_predictions(new_data = prad_val_tables$test) %>%
+  get_stats(biomarker_values = prad_val_tmb_values$test, metrics = c("R"), model = "Refitted T", threshold = 300) %>% 
+  mutate(Dataset = "External Test", cancer_type = "Prostate")
+
+
+### BRCA WES external validation
+brca_val_maf <- read_tsv("data/brca_smc_2018/data_mutations_extended.txt") %>% 
+  select(Tumor_Sample_Barcode, Hugo_Symbol, Variant_Classification, Chromosome, Start_Position, End_Position)
+brca_val_tables <- get_mutation_tables(brca_val_maf, 
+                                       split = c(train = 0, val = 0, test = 185),
+                                       gene_list = brca_tables$train$gene_list,
+                                       acceptable_genes = ensembl_gene_lengths$Hugo_Symbol,
+                                       for_biomarker = "TMB",
+                                       include_synonymous = FALSE)
+brca_val_tmb_values <- get_biomarker_tables(brca_val_maf, biomarker = "TMB", split =  c(train = 0, val = 0, test = 185))
+
+brca_refit_stats <- brca_pred_refit_tmb %>%
+  get_predictions(new_data = brca_tables$test) %>%
+  get_stats(biomarker_values = brca_tmb_values$test, metrics = c("R"), model = "Refitted T", threshold = 300) %>% 
+  mutate(Dataset = "Internal Validation", cancer_type = "Breast")
+
+brca_refit_stats_val <- brca_pred_refit_tmb %>%
+  get_predictions(new_data = brca_val_tables$test) %>%
+  get_stats(biomarker_values = brca_val_tmb_values$test, metrics = c("R"), model = "Refitted T", threshold = 300) %>% 
+  mutate(Dataset = "External Test", cancer_type = "Breast")
+
+
+
+
+external_validation_fig <- bind_rows(skcm_refit_stats, skcm_refit_stats_val, 
+                                     coadread_refit_stats, coadread_refit_stats_val, 
+                                     blca_refit_stats, blca_refit_stats_val,
+                                     kirc_refit_stats, kirc_refit_stats_val,
+                                     brca_refit_stats, brca_refit_stats_val,
+                                     prad_refit_stats, prad_refit_stats_val) %>%
+  mutate(Dataset = factor(Dataset, levels = c("Internal Validation", "External Test"))) %>% 
+  mutate(model = factor(model, levels = c("Refitted T", "First-fit T"))) %>% 
+  mutate(type = if_else(metric == "R", "Regression ~ (R^2)", "Classification ~ (AUPRC)")) %>%
+  mutate(type = factor(type, levels = c("Regression ~ (R^2)", "Classification ~ (AUPRC)"))) %>%
+  filter(panel_length <= 2000000) %>%
+  mutate(panel_length = panel_length / 1000000) %>%
+  ggplot(aes(x = panel_length, y = stat, colour = Dataset)) + geom_line(size = 1) + ylim(0, 1) + xlim(0.2, 1.5) +
+  theme_minimal() + facet_wrap(~cancer_type, labeller = label_parsed, strip.position = "top") +
+  theme(legend.position = "bottom") + labs(x = "Panel Size (Mb)", y = TeX("$R^2$")) +
+  scale_color_manual(name = "Dataset:", values = c("black", "blue"), labels = list("Internal Validation", "External Test"))
+
+ggsave(filename = "results/figures/external_validation_fig.png", external_validation_fig, width = 5, height = 4)
+
+  
